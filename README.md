@@ -26,11 +26,7 @@
 - **Ant Design 5** - 组件库
 - **Univer** - Excel 编辑引擎
 - **Univer Presets** - 使用 0.15.x 预设模式（Core + HyperLink）
-<<<<<<< HEAD
 - **React Quill** - 富文本编辑器
-=======
-- **React Quill** - 富文本编辑器 - 替换为markdown文档
->>>>>>> 2a9a14e2b9895a1a2638f951c5fc5ac5034159bd
 - **XLSX** - Excel 文件导入/导出
 
 ## 📦 快速开始
@@ -198,8 +194,4 @@ ComponentName/
 
 ## 📝 License
 
-<<<<<<< HEAD
 All rights reserved
-=======
-All rights reserved
->>>>>>> 2a9a14e2b9895a1a2638f951c5fc5ac5034159bd
