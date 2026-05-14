@@ -1,0 +1,21 @@
+.box {
+  width: 200px;
+  height: 64px;
+}
+.box span:nth-child(2) {
+  width: 100px;
+  font-size: 16px;
+  display: flex;
+}
+.box .firIcon svg {
+  width: 24px;
+  height: 24px;
+}
+.box .secIcon svg {
+  width: 12px;
+  height: 12px;
+}
+:global .ant-dropdown-menu svg {
+  width: 14px !important;
+  height: 14px !important;
+}

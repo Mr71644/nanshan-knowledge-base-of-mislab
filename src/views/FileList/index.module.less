@@ -1,0 +1,39 @@
+.fileList {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+
+    :global {
+        .ant-table-body {
+            scrollbar-width: auto;
+            scrollbar-color: auto;
+
+            &::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: #ccc;
+                border-radius: 5px;
+            }
+        }
+    }
+}
+
+.spin {
+    position: absolute;
+    top: 50%;
+    left: 55%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.eyeIcon {
+    span {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}

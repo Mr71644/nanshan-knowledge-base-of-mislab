@@ -1,0 +1,49 @@
+.adminContent :global .ant-table-body {
+  scrollbar-width: thin;
+  scrollbar-color: #cfcfcf transparent;
+}
+
+.adminContent :global .ant-table-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.adminContent :global .ant-table-body::-webkit-scrollbar-thumb {
+  background: #cfcfcf;
+  border-radius: 6px;
+}
+
+.adminContent :global .ant-table-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.adminContent :global .ant-table-wrapper {
+  overflow-x: hidden;
+}
+
+.adminContent :global .ant-table-cell {
+  word-break: break-all;
+}
+
+.scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cfcfcf transparent;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: #cfcfcf;
+  border-radius: 6px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.selectedRow {
+  background-color: #f9f9f9 !important;
+}
