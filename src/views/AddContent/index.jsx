@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 import useMarkDownToolbar, { toolbarButtons, insertText } from '@/hooks/useMarkDownTooBar'
 import { useMessage } from '@/hooks/useMessage';
 import { addContent } from '@/apis/content';
-import { uploadMarkdownImage, previewMarkdownImage } from '@/apis/image';
+import { uploadMarkdownImage } from '@/apis/image';
 import style from './index.module.css'
 
 const { Content } = Layout
@@ -174,27 +174,8 @@ const AddContent = () => {
             }
 
             if (fileId) {
-                // 使用 previewMarkdownImage API 获取预览 URL
-                const previewRes = await previewMarkdownImage(fileId)
-
-                // 提取预览 URL
-                let url = null
-                if (typeof previewRes === 'string') {
-                    url = previewRes
-                } else if (previewRes.data) {
-                    url = previewRes.data
-                }
-
-                console.log('Extracted preview URL:', url)
-                if (url) {
-                    // 使用预览 URL
-                    callback(url)
-                } else {
-                    // 预览 URL 获取失败，使用 blob URL 作为备选
-                    callback(blobUrl)
-                }
+                callback('minio:' + fileId)
             } else {
-                // 文件 ID 获取失败，使用 blob URL 作为备选
                 const blobUrl = URL.createObjectURL(file)
                 console.log('Using blob URL as fallback:', blobUrl)
                 callback(blobUrl)
@@ -356,6 +337,7 @@ const AddContent = () => {
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm]}
                                             components={components}
+                                            urlTransform={(url) => url}
                                         >
                                             {processMarkdown(value)}
                                         </ReactMarkdown>
