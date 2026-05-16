@@ -5,6 +5,29 @@ import { previewMarkdownImage } from '@/apis/image'
 const urlCache = new Map()
 const CACHE_TTL = 5 * 60 * 1000
 
+const MAX_CONCURRENT = 3
+const pendingQueue = []
+let activeCount = 0
+
+const processQueue = () => {
+    while (activeCount < MAX_CONCURRENT && pendingQueue.length > 0) {
+        const next = pendingQueue.shift()
+        activeCount++
+        next.task().finally(() => {
+            activeCount--
+            processQueue()
+        })
+    }
+}
+
+const enqueuePreview = (fileId) => {
+    return new Promise((resolve, reject) => {
+        const task = () => previewMarkdownImage(fileId).then(resolve).catch(reject)
+        pendingQueue.push({ task })
+        processQueue()
+    })
+}
+
 const AsyncImage = ({ node, src, alt, title, ...props }) => {
     const [resolvedUrl, setResolvedUrl] = useState(null)
     const [loading, setLoading] = useState(false)
@@ -32,7 +55,7 @@ const AsyncImage = ({ node, src, alt, title, ...props }) => {
         let cancelled = false
         setLoading(true)
 
-        previewMarkdownImage(fileId).then((res) => {
+        enqueuePreview(fileId).then((res) => {
             if (cancelled) return
             let url = null
             if (typeof res === 'string') url = res
