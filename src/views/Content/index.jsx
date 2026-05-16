@@ -23,17 +23,14 @@ const MarkdownToolbar = ({ textareaRef, onChange, onImageUpload }) => {
 
         if (button.isImage) {
             onImageUpload(button, (url) => {
-                console.log('Image upload callback received URL:', url?.substring(0, 100) + '...')
                 if (url) {
                     const insertText = `![${button.placeholder}](${url})`
-                    console.log('Inserting markdown:', insertText)
                     const textarea = textareaRef.current
                     if (textarea) {
                         const start = textarea.selectionStart
                         const end = textarea.selectionEnd
                         const text = textarea.value
                         const newText = text.substring(0, start) + insertText + text.substring(end)
-                        console.log('New text:', newText.substring(0, 200) + '...')
                         onChange(newText)
                         setTimeout(() => {
                             textarea.focus()
@@ -41,7 +38,6 @@ const MarkdownToolbar = ({ textareaRef, onChange, onImageUpload }) => {
                         }, 0)
                     }
                 } else {
-                    console.error('No URL received in callback')
                 }
             })
             return
@@ -118,6 +114,7 @@ const Area = () => {
     const { success, error, contextHolder } = useMessage()
     const { components } = useMarkDownToolbar()
     const [value, setValue] = useState('')
+    const [previewValue, setPreviewValue] = useState('')
     const [isEdit, setIsEdit] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [isLegacyHtml, setIsLegacyHtml] = useState(false)
@@ -130,10 +127,13 @@ const Area = () => {
     const navigate = useNavigate()
 
     const processMarkdown = (text) => {
-        // 处理无序列表中的有序列表标记，添加反斜杠转义
-        // 注意：只在无序列表项中处理，避免影响其他内容
         return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
     }
+
+    useEffect(() => {
+        const timer = setTimeout(() => setPreviewValue(value), 300)
+        return () => clearTimeout(timer)
+    }, [value])
 
     const handleImageUpload = async (button, callback) => {
         const input = document.createElement('input')
@@ -275,6 +275,7 @@ const Area = () => {
             updateTime: formatDate(detail.updateTime)
         }
         setValue(detail.content)
+        setPreviewValue(detail.content)
         setIsLegacyHtml(isHtmlContent(detail.content))
     }
     const back = () => {
@@ -323,7 +324,6 @@ const Area = () => {
                 value,
                 param.folder,
                 (current, total) => {
-                    console.log(`图片迁移进度: ${current}/${total}`)
                 }
             )
 
@@ -485,7 +485,7 @@ const Area = () => {
                                                     remarkPlugins={[remarkGfm]}
                                                     components={components}
                                                 >
-                                                    {processMarkdown(value)}
+                                                    {processMarkdown(previewValue)}
                                                 </ReactMarkdown>
                                             </div>
                                         </div>
