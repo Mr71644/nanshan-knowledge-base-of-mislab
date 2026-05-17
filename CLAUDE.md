@@ -52,7 +52,10 @@ All view components are exported as `Memo[ComponentName]` (wrapped in `memo()`).
 
 ### API layer (`src/utils/request.js`)
 
-- Axios instance with base URL `http://101.43.146.27/new-app/api`
+- Axios instance with base URL from environment variable `import.meta.env.VITE_API_BASE_URL`
+- Environment configuration:
+  - `.env.development` → `http://101.43.146.27/new-app/api`（测试环境，`pnpm dev` 时使用）
+  - `.env.production` → `http://119.27.181.240:4529`（生产环境，`pnpm build` 时使用）
 - Request interceptor: auto-attaches `Authorization: Bearer ${token}`
 - Response interceptor: unwraps to `response.data`; on 401 → clears token, shows warning, redirects to `#/login`
 - API modules in `src/apis/` split by domain (`content.js`, `excel.js`, `folder.js`, `file.js`, etc.)
@@ -92,17 +95,53 @@ Token lifecycle: login → stored in `localStorage` → attached via request int
 
 - `useMessage` (`src/hooks/useMessage.jsx`): wraps Ant Design Message with `{ content, callBack, delayTime, show }` config
 
-## Git workflow guidance
+## Git workflow
 
-This project uses GitHub for remote collaboration. During development, proactively remind the user about git operations at appropriate moments based on standard GitHub workflow:
+### Branch structure
 
-- **Before starting a new feature or fix**: remind to create a feature branch (`git checkout -b feature/xxx`) from the latest main
-- **After completing a logical unit of work**: remind to commit (`git add .` → `git commit -m "..."`)
-- **Before starting work each session**: remind to pull latest changes (`git pull`)
-- **After a feature is complete and tested**: remind to merge back to main or create a PR
-- **When switching between features**: remind to commit or stash current changes first
+```
+main（生产分支，始终保持可发布状态）
+  └── develop（开发主分支，所有人代码汇总）
+        ├── feature/xxx    新功能开发
+        ├── fix/xxx        bug 修复
+        └── optimize/xxx   优化改进
+```
+
+### Workflow
+
+- **开始新任务前**: `git checkout develop` → `git pull` → `git checkout -b feature/xxx`
+- **开发完成后**: push feature 分支 → 在 GitHub 创建 PR 到 develop
+- **测试通过后**: 在 GitHub 创建 PR 从 develop 到 main，合并后部署生产
+- **直接在 develop 上的小改动**: 直接提交推送，不需要 PR
+
+### Version tags
+
+每次打包部署到生产环境时，在 main 分支打 tag：
+
+```bash
+git checkout main
+git pull
+git tag -a v1.0.0 -m "部署说明：简要描述本次部署内容"
+git push origin v1.0.0
+```
+
+版本号规则：`v主版本.次版本.修订号`
+- 主版本：重大改版（v1 → v2）
+- 次版本：新功能（v1.0 → v1.1）
+- 修订号：bug 修复（v1.0.0 → v1.0.1）
+
+测试环境部署不打 tag（在 develop 分支直接打包即可）。
+
+### Guidance for user
 
 The user is a beginner — keep git instructions simple. **IMPORTANT: Do NOT execute git commands directly.** Instead, guide the user step by step: tell them what command to run, explain why, and let them execute it themselves. This helps the user learn the git workflow.
+
+Proactively remind the user about git operations:
+- Before starting a new feature or fix: create a branch from develop
+- After completing a logical unit of work: commit
+- Before starting work each session: pull latest changes
+- After a feature is complete and tested: create PR
+- Before building for production deployment: remind to merge develop → main and tag
 
 ## Known issues
 

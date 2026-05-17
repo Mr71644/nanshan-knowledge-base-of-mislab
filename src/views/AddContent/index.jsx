@@ -1,4 +1,4 @@
-import { memo, useState, useRef } from 'react'
+import { memo, useState, useRef, useEffect } from 'react'
 import { theme, Layout, Form, Input, FloatButton, Spin, Tooltip, Button, Space } from 'antd'
 import { RollbackOutlined, CheckOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 import useMarkDownToolbar, { toolbarButtons, insertText } from '@/hooks/useMarkDownTooBar'
 import { useMessage } from '@/hooks/useMessage';
 import { addContent } from '@/apis/content';
-import { uploadMarkdownImage, previewMarkdownImage } from '@/apis/image';
+import { uploadMarkdownImage } from '@/apis/image';
 import style from './index.module.css'
 
 const { Content } = Layout
@@ -18,17 +18,14 @@ const MarkdownToolbar = ({ textareaRef, onChange, onImageUpload }) => {
 
         if (button.isImage) {
             onImageUpload(button, (url) => {
-                console.log('Image upload callback received URL:', url?.substring(0, 100) + '...')
                 if (url) {
                     const insertText = `![${button.placeholder}](${url})`
-                    console.log('Inserting markdown:', insertText)
                     const textarea = textareaRef.current
                     if (textarea) {
                         const start = textarea.selectionStart
                         const end = textarea.selectionEnd
                         const text = textarea.value
                         const newText = text.substring(0, start) + insertText + text.substring(end)
-                        console.log('New text:', newText.substring(0, 200) + '...')
                         onChange(newText)
                         setTimeout(() => {
                             textarea.focus()
@@ -36,7 +33,6 @@ const MarkdownToolbar = ({ textareaRef, onChange, onImageUpload }) => {
                         }, 0)
                     }
                 } else {
-                    console.error('No URL received in callback')
                 }
             })
             return
@@ -114,16 +110,20 @@ const AddContent = () => {
     const { error, contextHolder } = useMessage()
     const { components } = useMarkDownToolbar()
     const [value, setValue] = useState('')
+    const [previewValue, setPreviewValue] = useState('')
     const [loading, setLoading] = useState(false)
     const textareaRef = useRef(null)
     const title = useRef('')
     const author = useRef('')
 
     const processMarkdown = (text) => {
-        // 处理无序列表中的有序列表标记，添加反斜杠转义
-        // 注意：只在无序列表项中处理，避免影响其他内容
         return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
     }
+
+    useEffect(() => {
+        const timer = setTimeout(() => setPreviewValue(value), 300)
+        return () => clearTimeout(timer)
+    }, [value])
 
     const handleImageUpload = async (button, callback) => {
         const input = document.createElement('input')
@@ -148,7 +148,6 @@ const AddContent = () => {
                 if (!isNaN(folderId) && folderId > 0) {
                     uploadParams.id = folderId
                     uploadParams.folderId = folderId
-                    console.log('Using folderId:', folderId)
                 }
             }
             const uploadRes = await uploadMarkdownImage(uploadParams)
@@ -165,38 +164,15 @@ const AddContent = () => {
                 } else if (uploadRes.data.file_id) {
                     fileId = uploadRes.data.file_id
                 } else {
-                    // 打印 data 的所有属性
-                    console.log('All data properties:', Object.keys(uploadRes.data))
-                    console.log('Data object:', uploadRes.data)
                 }
             } else if (uploadRes.id) {
                 fileId = uploadRes.id
             }
 
             if (fileId) {
-                // 使用 previewMarkdownImage API 获取预览 URL
-                const previewRes = await previewMarkdownImage(fileId)
-
-                // 提取预览 URL
-                let url = null
-                if (typeof previewRes === 'string') {
-                    url = previewRes
-                } else if (previewRes.data) {
-                    url = previewRes.data
-                }
-
-                console.log('Extracted preview URL:', url)
-                if (url) {
-                    // 使用预览 URL
-                    callback(url)
-                } else {
-                    // 预览 URL 获取失败，使用 blob URL 作为备选
-                    callback(blobUrl)
-                }
+                callback('minio:' + fileId)
             } else {
-                // 文件 ID 获取失败，使用 blob URL 作为备选
                 const blobUrl = URL.createObjectURL(file)
-                console.log('Using blob URL as fallback:', blobUrl)
                 callback(blobUrl)
             }
         } catch (e) {
@@ -356,8 +332,9 @@ const AddContent = () => {
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm]}
                                             components={components}
+                                            urlTransform={(url) => url}
                                         >
-                                            {processMarkdown(value)}
+                                            {processMarkdown(previewValue)}
                                         </ReactMarkdown>
                                     </div>
                                 </div>

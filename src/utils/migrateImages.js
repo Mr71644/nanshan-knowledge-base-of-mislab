@@ -1,4 +1,4 @@
-import { uploadMarkdownImage, previewMarkdownImage } from '@/apis/image'
+import { uploadMarkdownImage } from '@/apis/image'
 
 /**
  * 将 HTML 中的 base64 图片上传到 MinIO，返回替换后的 HTML
@@ -50,14 +50,7 @@ export async function migrateBase64Images(html, folderId, onProgress) {
             else if (uploadRes.id) fileId = uploadRes.id
 
             if (fileId) {
-                const previewRes = await previewMarkdownImage(fileId)
-                let url = null
-                if (typeof previewRes === 'string') url = previewRes
-                else if (previewRes.data) url = previewRes.data
-
-                if (url) {
-                    migratedHtml = migratedHtml.replace(dataUri, url)
-                }
+                migratedHtml = migratedHtml.replace(dataUri, 'minio:' + fileId)
             }
         } catch (e) {
             console.error(`图片迁移失败 (第${i + 1}张):`, e)
