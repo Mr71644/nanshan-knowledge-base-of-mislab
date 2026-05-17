@@ -1,4 +1,138 @@
+import { useState, useEffect } from 'react'
 import { BoldOutlined, ItalicOutlined, LinkOutlined, OrderedListOutlined, UnorderedListOutlined, PictureOutlined, CodeOutlined, TableOutlined, AlignLeftOutlined, AlignCenterOutlined } from '@ant-design/icons'
+import { previewMarkdownImage } from '@/apis/image'
+
+const urlCache = new Map()
+const CACHE_TTL = 5 * 60 * 1000
+
+const MAX_CONCURRENT = 3
+const pendingQueue = []
+let activeCount = 0
+
+const processQueue = () => {
+    while (activeCount < MAX_CONCURRENT && pendingQueue.length > 0) {
+        const next = pendingQueue.shift()
+        activeCount++
+        next.task().finally(() => {
+            activeCount--
+            processQueue()
+        })
+    }
+}
+
+const enqueuePreview = (fileId) => {
+    return new Promise((resolve, reject) => {
+        const task = () => previewMarkdownImage(fileId).then(resolve).catch(reject)
+        pendingQueue.push({ task })
+        processQueue()
+    })
+}
+
+const AsyncImage = ({ node, src, alt, title, ...props }) => {
+    const [resolvedUrl, setResolvedUrl] = useState(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(false)
+
+    useEffect(() => {
+        if (!src || typeof src !== 'string') {
+            setError(true)
+            return
+        }
+
+        if (!src.startsWith('minio:')) {
+            setResolvedUrl(src)
+            return
+        }
+
+        const fileId = src.slice(6)
+
+        const cached = urlCache.get(fileId)
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            setResolvedUrl(cached.url)
+            return
+        }
+
+        let cancelled = false
+        setLoading(true)
+
+        enqueuePreview(fileId).then((res) => {
+            if (cancelled) return
+            let url = null
+            if (typeof res === 'string') url = res
+            else if (res.data) url = res.data
+
+            if (url) {
+                urlCache.set(fileId, { url, timestamp: Date.now() })
+                setResolvedUrl(url)
+            } else {
+                setError(true)
+            }
+        }).catch(() => {
+            if (!cancelled) setError(true)
+        }).finally(() => {
+            if (!cancelled) setLoading(false)
+        })
+
+        return () => { cancelled = true }
+    }, [src])
+
+    if (!src || typeof src !== 'string') {
+        return <span style={{ color: 'red' }}>图片加载失败</span>
+    }
+
+    if (error) {
+        return <span style={{ color: 'red' }}>图片加载失败</span>
+    }
+
+    if (loading) {
+        return (
+            <div style={{
+                maxWidth: '100%',
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                margin: '10px 0',
+                color: '#999'
+            }}>
+                图片加载中...
+            </div>
+        )
+    }
+
+    if (!resolvedUrl) return null
+
+    return (
+        <img
+            src={resolvedUrl}
+            alt={alt || '图片'}
+            title={title}
+            {...props}
+            style={{
+                maxWidth: '100%',
+                height: 'auto',
+                display: 'block',
+                margin: '10px 0',
+                border: '1px solid #ddd',
+                padding: '4px',
+                borderRadius: '4px',
+                ...props.style
+            }}
+            onError={(e) => {
+                e.target.style.display = 'none'
+                const errorSpan = document.createElement('span')
+                errorSpan.textContent = '图片加载失败'
+                errorSpan.style.color = 'red'
+                errorSpan.style.display = 'block'
+                errorSpan.style.textAlign = 'center'
+                e.target.parentNode.insertBefore(errorSpan, e.target.nextSibling)
+            }}
+        />
+    )
+}
 
 export const toolbarButtons = [
     { icon: <BoldOutlined />, before: '**', after: '**', placeholder: '粗体文本', title: '粗体' },
@@ -34,41 +168,7 @@ export const insertText = (textareaRef, before, after = '', placeholder = '') =>
 
 const useMarkDownToolbar = () => {
     const components = {
-        img: ({ node, src, alt, title, ...props }) => {
-            console.log('Image props:', { src, alt, title, props })
-            // 确保 src 存在且是字符串
-            if (!src || typeof src !== 'string') {
-                return <span style={{ color: 'red' }}>图片加载失败</span>
-            }
-            return (
-                <img 
-                    src={src} 
-                    alt={alt || '图片'} 
-                    title={title}
-                    {...props} 
-                    style={{ 
-                        maxWidth: '100%',
-                        height: 'auto',
-                        display: 'block',
-                        margin: '10px 0',
-                        border: '1px solid #ddd',
-                        padding: '4px',
-                        borderRadius: '4px',
-                        ...props.style 
-                    }} 
-                    onError={(e) => {
-                        console.error('Image load error:', e)
-                        e.target.style.display = 'none'
-                        const errorSpan = document.createElement('span')
-                        errorSpan.textContent = '图片加载失败'
-                        errorSpan.style.color = 'red'
-                        errorSpan.style.display = 'block'
-                        errorSpan.style.textAlign = 'center'
-                        e.target.parentNode.insertBefore(errorSpan, e.target.nextSibling)
-                    }}
-                />
-            )
-        },
+        img: AsyncImage,
         a: ({ node, ...props }) => {
             return (
                 <a 
