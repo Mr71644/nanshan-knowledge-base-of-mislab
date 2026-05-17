@@ -93,32 +93,30 @@
 }
 
 :global {
-    .ant-menu-inline {
-        .ant-menu-item,
-        .ant-menu-submenu-title {
-            margin-block: 1px;
-        }
+    .ant-tree .ant-tree-treenode {
+        padding: 1px 0;
     }
 
-    .ant-menu-root > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-        background: transparent !important;
-        border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-        margin-left: 24px !important;
-    }
-    .ant-menu-root > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-        background: transparent !important;
-        border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-        margin-left: 42px !important;
-    }
-    .ant-menu-root > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-        background: transparent !important;
-        border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-        margin-left: 60px !important;
-    }
-
-    .ant-menu-inline .ant-menu-item-selected {
+    .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
         background-color: rgba(22, 119, 255, 0.08) !important;
         font-weight: 500;
+    }
+
+    .ant-tree .ant-tree-node-content-wrapper {
+        height: 28px;
+        line-height: 28px;
+    }
+
+    .ant-tree-treenode-draggable {
+        cursor: grab;
+    }
+
+    .ant-tree-treenode-drag-over {
+        background-color: rgba(22, 119, 255, 0.06);
+    }
+
+    .ant-tree-indent-unit {
+        width: 18px;
     }
 }
 
@@ -134,66 +132,15 @@
     }
 }
 
-.menuExpandIcon {
+.treeExpandIcon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 12px;
     height: 12px;
-    transform-origin: 50% 50%;
 
     svg {
         width: 10px;
         height: 10px;
-    }
-}
-
-.menuExpandIconOpenState {
-    opacity: .95;
-    transform: rotate(90deg);
-}
-
-.menuExpandIconCloseState {
-    opacity: .72;
-    transform: rotate(0deg);
-}
-
-.menuExpandIconAnimateOpen {
-    animation: menuExpandOpen .22s cubic-bezier(.4, 0, .2, 1) forwards;
-}
-
-.menuExpandIconAnimateClose {
-    animation: menuExpandClose .22s cubic-bezier(.4, 0, .2, 1) forwards;
-}
-
-@keyframes menuExpandOpen {
-    0% {
-        transform: rotate(0deg);
-        opacity: .72;
-    }
-
-    100% {
-        transform: rotate(90deg);
-        opacity: .95;
-    }
-}
-
-@keyframes menuExpandClose {
-    0% {
-        transform: rotate(90deg);
-        opacity: .95;
-    }
-
-    100% {
-        transform: rotate(0deg);
-        opacity: .72;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-    .menuExpandIconAnimateOpen,
-    .menuExpandIconAnimateClose {
-        animation: none;
     }
 }

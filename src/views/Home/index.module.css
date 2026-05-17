@@ -76,34 +76,36 @@
   background: transparent;
 }
 
-/* 紧凑行间距 */
-:global .ant-menu-inline .ant-menu-item,
-:global .ant-menu-inline .ant-menu-submenu-title {
-  margin-block: 1px;
+/* Tree 节点间距 */
+:global .ant-tree .ant-tree-treenode {
+  padding: 1px 0;
 }
 
-/* 竖向引导线 - 按层级分别对齐箭头 */
-:global .ant-menu-root > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-  background: transparent !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-  margin-left: 24px !important;
-}
-:global .ant-menu-root > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-  background: transparent !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-  margin-left: 42px !important;
-}
-:global .ant-menu-root > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub > .ant-menu-submenu > .ant-menu-sub.ant-menu-inline {
-  background: transparent !important;
-  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-  margin-left: 60px !important;
-}
-
-/* 选中项增强 */
-:global .ant-menu-inline .ant-menu-item-selected {
+/* 选中高亮 */
+:global .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
   background-color: rgba(22, 119, 255, 0.08) !important;
   font-weight: 500;
 }
+
+/* 紧凑行高 */
+:global .ant-tree .ant-tree-node-content-wrapper {
+  height: 28px;
+  line-height: 28px;
+}
+
+/* 拖拽视觉反馈 */
+:global .ant-tree-treenode-draggable {
+  cursor: grab;
+}
+:global .ant-tree-treenode-drag-over {
+  background-color: rgba(22, 119, 255, 0.06);
+}
+
+/* 缩进单位 */
+:global .ant-tree-indent-unit {
+  width: 18px;
+}
+
 .authority {
   position: relative;
   overflow: hidden;
@@ -114,55 +116,14 @@
   width: 24px;
   height: 24px;
 }
-.menuExpandIcon {
+.treeExpandIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 12px;
   height: 12px;
-  transform-origin: 50% 50%;
 }
-.menuExpandIcon svg {
+.treeExpandIcon svg {
   width: 10px;
   height: 10px;
-}
-.menuExpandIconOpenState {
-  opacity: 0.95;
-  transform: rotate(90deg);
-}
-.menuExpandIconCloseState {
-  opacity: 0.72;
-  transform: rotate(0deg);
-}
-.menuExpandIconAnimateOpen {
-  animation: menuExpandOpen 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.menuExpandIconAnimateClose {
-  animation: menuExpandClose 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes menuExpandOpen {
-  0% {
-    transform: rotate(0deg);
-    opacity: 0.72;
-  }
-  100% {
-    transform: rotate(90deg);
-    opacity: 0.95;
-  }
-}
-@keyframes menuExpandClose {
-  0% {
-    transform: rotate(90deg);
-    opacity: 0.95;
-  }
-  100% {
-    transform: rotate(0deg);
-    opacity: 0.72;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .menuExpandIconAnimateOpen,
-  .menuExpandIconAnimateClose {
-    animation: none;
-  }
 }
