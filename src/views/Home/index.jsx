@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -20,6 +20,7 @@ import { clearUserInfo } from '@/store/modules/user';
 import { clearToken } from '@/utils';
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
+import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
@@ -79,9 +80,6 @@ const Home = () => {
     const [folderTree, SetFolderTree] = useState([])
     const [openKeys, setOpenKeys] = useState([])
     const [selectedKeys, setSelectedKeys] = useState([])
-    const [animatingExpandKey, setAnimatingExpandKey] = useState('')
-    const [expandAnimationType, setExpandAnimationType] = useState('')
-    const expandAnimationTimerRef = useRef(null)
     const [collapsed, setCollapsed] = useState(false);
     const [siderWidth, setSiderWidth] = useState(320);
     const isDragging = useRef(false);
@@ -177,34 +175,8 @@ const Home = () => {
             })
         }
     }
-    const toggleOpenKey = (key) => {
-        setOpenKeys((prev) => {
-            if (prev.includes(key)) return prev.filter(item => item !== key)
-            return [...prev, key]
-        })
-    }
     const handleOpenChange = (nextOpenKeys) => {
-        const openedKey = nextOpenKeys.find((key) => !openKeys.includes(key))
-        const closedKey = openKeys.find((key) => !nextOpenKeys.includes(key))
-
-        if (openedKey) {
-            playExpandAnimation(openedKey, false)
-        } else if (closedKey) {
-            playExpandAnimation(closedKey, true)
-        }
-
         setOpenKeys(nextOpenKeys)
-    }
-    const playExpandAnimation = (key, isOpen) => {
-        if (expandAnimationTimerRef.current) {
-            clearTimeout(expandAnimationTimerRef.current)
-        }
-        setAnimatingExpandKey(key)
-        setExpandAnimationType(isOpen ? 'close' : 'open')
-        expandAnimationTimerRef.current = setTimeout(() => {
-            setAnimatingExpandKey('')
-            setExpandAnimationType('')
-        }, 220)
     }
     const handleResizeMouseDown = useCallback((e) => {
         e.preventDefault()
@@ -229,55 +201,194 @@ const Home = () => {
         document.addEventListener('mousemove', onMouseMove)
         document.addEventListener('mouseup', onMouseUp)
     }, [siderWidth])
-    const transformToMenuItems = (data) => {
+    const getIconByStatus = (status) => {
+        if (status === 1) return <EditOutlined />
+        if (status === 2) return <FolderOutlined />
+        if (status === 3) return <TableOutlined />
+        if (status === 4) return <FileOutlined />
+    }
+    const transformToTreeData = (data) => {
         return data.map(item => {
-            const returnIcon = () => {
-                if (item.status === 1) return <EditOutlined />
-                if (item.status === 2) return <FolderOutlined />
-                if (item.status === 3) return <TableOutlined />
-                if (item.status === 4) return <FileOutlined />
-            }
-            const key = getMenuKeyByItem(item)
-            const children = item.children && item.children.length > 0
-                ? transformToMenuItems(item.children)
-                : undefined
-
-            const isOpen = openKeys.includes(key)
-            const animationClass = animatingExpandKey === key
-                ? (expandAnimationType === 'open' ? style.menuExpandIconAnimateOpen : style.menuExpandIconAnimateClose)
-                : ''
-
+            const hasChildren = item.children && item.children.length > 0
             return {
-                key,
-                icon: children
-                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                        <span
-                            className={`${style.menuExpandIcon} ${isOpen ? style.menuExpandIconOpenState : style.menuExpandIconCloseState} ${animationClass}`}
-                            onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                playExpandAnimation(key, isOpen)
-                                toggleOpenKey(key)
-                            }}
-                        >
-                            <RightOutlined />
-                        </span>
-                        {returnIcon()}
-                    </span>
-                    : returnIcon(),
-                label: (
-                    <Tooltip title={item.name}>
-                        {item.name}
-                    </Tooltip>
-                )
-                ,
-                children,
-                onTitleClick: item.status === 2 && children?.length
-                    ? () => navigate(key)
-                    : undefined,
+                key: getMenuKeyByItem(item),
+                icon: getIconByStatus(item.status),
+                isLeaf: !hasChildren,
+                children: hasChildren ? transformToTreeData(item.children) : [],
+                rawData: item
             }
-        });
-    };
+        })
+    }
+    const renderTitle = (nodeData) => {
+        const item = nodeData.rawData
+        return (
+            <Tooltip title={item.name}>
+                <span>{item.name}</span>
+            </Tooltip>
+        )
+    }
+    const renderSwitcherIcon = ({ expanded }) => (
+        <span className={style.treeExpandIcon}>
+            <RightOutlined style={{
+                transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                opacity: expanded ? 0.95 : 0.72,
+                transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
+            }} />
+        </span>
+    )
+    const handleTreeNodeClick = (node) => {
+        const key = node.key
+        if (key.slice(0, 4) === 'file') {
+            preview(key.slice(4))
+        } else if (key.startsWith('/content/') || key.startsWith('/excel/')) {
+            window.open(`${window.location.origin}${window.location.pathname}#${key}`, '_blank')
+        } else {
+            navigate(key)
+        }
+    }
+    const isDescendant = (tree, folderId, target) => {
+        const findNode = (data, id) => {
+            for (const item of data) {
+                if (item.id === id && item.status === 2) return item
+                if (item.children) {
+                    const found = findNode(item.children, id)
+                    if (found) return found
+                }
+            }
+            return null
+        }
+        const isInSubtree = (node, t) => {
+            if (!node) return false
+            if (node.id === t.id && node.status === t.status) return true
+            if (node.children) return node.children.some(child => isInSubtree(child, t))
+            return false
+        }
+        const folderNode = findNode(tree, folderId)
+        return isInSubtree(folderNode, target)
+    }
+    const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
+        const dragItem = dragNode.rawData
+        const dropItem = dropNode.rawData
+
+        // 放在节点上：仅允许目标是文件夹（移入该文件夹）
+        if (dropPosition === 0) {
+            return dropItem.status === 2
+        }
+
+        // 防循环：拖拽文件夹时，禁止拖入自身子树
+        if (dragItem.status === 2 && isDescendant(folderTree, dragItem.id, dropItem)) {
+            return false
+        }
+
+        return true
+    }
+    const handleDrop = async (info) => {
+        const dragNode = info.dragNode
+        const dropNode = info.node
+        const dragItem = dragNode.rawData
+        const dropItem = dropNode.rawData
+
+        const dragFolderId = dragItem.folderId ?? null
+        const dropFolderId = dropItem.folderId ?? null
+
+        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
+        SetFolderTree(newTreeData)
+
+        if (!info.dropToGap && dropItem.status === 2) {
+            // 情况 A：拖入文件夹（移入目标文件夹）
+            try {
+                await moveTreeItem(dragItem.id, dragItem.status, dropItem.id)
+            } catch (e) {
+                error({ content: '移动失败，请重试' })
+                getTree()
+            }
+        } else if (dragFolderId === dropFolderId) {
+            // 情况 B：同层排序
+            const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
+            const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
+            try {
+                await sortTreeItems(dropFolderId, orderedIds)
+            } catch (e) {
+                error({ content: '排序保存失败，请重试' })
+                getTree()
+            }
+        } else {
+            // 情况 C：跨层 gap drop（移到目标节点所在层级）
+            try {
+                await moveTreeItem(dragItem.id, dragItem.status, dropFolderId)
+            } catch (e) {
+                error({ content: '移动失败，请重试' })
+                getTree()
+            }
+        }
+    }
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
+        const newTreeData = JSON.parse(JSON.stringify(treeData))
+
+        // 通过 key 查找并操作节点
+        const dragKey = dragNode.key
+        const dropKey = dropNode.key
+
+        const loop = (data, key, callback) => {
+            for (let i = 0; i < data.length; i++) {
+                if (getMenuKeyByItem(data[i]) === key) {
+                    return callback(data[i], i, data)
+                }
+                if (data[i].children) {
+                    loop(data[i].children, key, callback)
+                }
+            }
+        }
+
+        // 移除拖拽节点
+        let dragObj
+        loop(newTreeData, dragKey, (item, index, arr) => {
+            arr.splice(index, 1)
+            dragObj = item
+        })
+
+        if (!dropToGap) {
+            // 放在节点内部（不应发生，allowDrop 已阻止）
+            loop(newTreeData, dropKey, (item) => {
+                item.children = item.children || []
+                item.children.unshift(dragObj)
+            })
+        } else {
+            // 放在节点之间的间隙
+            // dropPosition 是绝对位置，需要减去节点在父数组中的索引得到相对位置
+            const dropPosArr = dropNode.pos.split('-')
+            const dropIndex = Number(dropPosArr[dropPosArr.length - 1])
+            const relativePosition = dropPosition - dropIndex
+
+            let ar
+            let i
+            loop(newTreeData, dropKey, (_item, index, arr) => {
+                ar = arr
+                i = index
+            })
+
+            if (relativePosition === -1) {
+                // 放在目标节点前面
+                ar.splice(i, 0, dragObj)
+            } else {
+                // 放在目标节点后面
+                ar.splice(i + 1, 0, dragObj)
+            }
+        }
+
+        return newTreeData
+    }
+    const findSiblingsByParentId = (treeData, parentFolderId) => {
+        if (parentFolderId === null) return treeData
+        for (const item of treeData) {
+            if (item.id === parentFolderId) return item.children || []
+            if (item.children) {
+                const found = findSiblingsByParentId(item.children, parentFolderId)
+                if (found.length > 0) return found
+            }
+        }
+        return []
+    }
     useEffect(() => {
         if (visible && message === '登录成功') {
             success({
@@ -321,13 +432,6 @@ const Home = () => {
         if (parentKeys.length === 0) return
         setOpenKeys(prev => Array.from(new Set([...prev, ...parentKeys])))
     }, [location.pathname, folderTree])
-    useEffect(() => {
-        return () => {
-            if (expandAnimationTimerRef.current) {
-                clearTimeout(expandAnimationTimerRef.current)
-            }
-        }
-    }, [])
     return (
         <Layout style={{
             height: '100vh',
@@ -431,25 +535,22 @@ const Home = () => {
                     fontSize: '25px',
                     color: '#1677ff'
                 }} /> : '知邮南山 - MISLab'}</div>
-                <Menu
-                    mode="inline"
-                    inlineIndent={18}
-                    openKeys={openKeys}
+                <Tree
+                    showIcon
+                    blockNode
+                    showLine={{ showLeafIcon: false }}
+                    treeData={transformToTreeData(folderTree)}
+                    expandedKeys={openKeys}
                     selectedKeys={selectedKeys}
-                    onOpenChange={handleOpenChange}
-                    expandIcon={() => null}
-                    items={
-                        transformToMenuItems(folderTree)
-                    }
-                    onClick={(e) => {
-                        if (e.key.slice(0, 4) === 'file') {
-                            preview(e.key.slice(4));
-                        } else if (e.key.startsWith('/content/') || e.key.startsWith('/excel/')) {
-                            window.open(`${window.location.origin}${window.location.pathname}#${e.key}`, '_blank');
-                        } else {
-                            navigate(e.key);
-                        }
+                    onExpand={handleOpenChange}
+                    onSelect={(keys, info) => {
+                        if (info.node) handleTreeNodeClick(info.node)
                     }}
+                    titleRender={renderTitle}
+                    switcherIcon={renderSwitcherIcon}
+                    draggable
+                    allowDrop={handleAllowDrop}
+                    onDrop={handleDrop}
                 />
                 {!collapsed && (
                     <div

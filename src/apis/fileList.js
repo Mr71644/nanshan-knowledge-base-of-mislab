@@ -34,7 +34,27 @@ const togglePin = (itemId, itemStatus, pin) => {
     })
 }
 
+// 排序文件树中的同级节点
+const sortTreeItems = (parentFolderId, orderedIds) => {
+    return request({
+        url: '/home/sort',
+        method: 'PUT',
+        data: { parentFolderId, orderedIds }
+    })
+}
+
+// 移动文件/文件夹到目标文件夹
+const moveTreeItem = (itemId, itemStatus, targetFolderId) => {
+    return request({
+        url: '/home/move',
+        method: 'PUT',
+        data: { itemId, itemStatus, targetFolderId }
+    })
+}
+
 export {
     getFileList,
-    togglePin
+    togglePin,
+    sortTreeItems,
+    moveTreeItem
 }
