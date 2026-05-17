@@ -43,8 +43,18 @@ const sortTreeItems = (parentFolderId, orderedIds) => {
     })
 }
 
+// 移动文件/文件夹到目标文件夹
+const moveTreeItem = (itemId, itemStatus, targetFolderId) => {
+    return request({
+        url: '/home/move',
+        method: 'PUT',
+        data: { itemId, itemStatus, targetFolderId }
+    })
+}
+
 export {
     getFileList,
     togglePin,
-    sortTreeItems
+    sortTreeItems,
+    moveTreeItem
 }
