@@ -56,7 +56,25 @@
 }
 .sider::-webkit-scrollbar-track {
   background: transparent;
-  /* 背景透明减少滚动条视觉冲击 */
+}
+
+/* 紧凑行间距 */
+:global .ant-menu-inline .ant-menu-item,
+:global .ant-menu-inline .ant-menu-submenu-title {
+  margin-block: 1px;
+}
+
+/* 竖向引导线 - 用 border-left 替代伪元素 */
+:global .ant-menu-sub.ant-menu-inline {
+  background: transparent !important;
+  border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+  margin-left: 11px !important;
+}
+
+/* 选中项增强 */
+:global .ant-menu-inline .ant-menu-item-selected {
+  background-color: rgba(22, 119, 255, 0.08) !important;
+  font-weight: 500;
 }
 .authority {
   position: relative;

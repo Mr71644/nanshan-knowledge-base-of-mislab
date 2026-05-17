@@ -387,7 +387,7 @@ const Home = () => {
                 }} /> : '知邮南山 - MISLab'}</div>
                 <Menu
                     mode="inline"
-                    inlineIndent={8}
+                    inlineIndent={16}
                     openKeys={openKeys}
                     selectedKeys={selectedKeys}
                     onOpenChange={handleOpenChange}

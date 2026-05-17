@@ -70,7 +70,26 @@
 
     &::-webkit-scrollbar-track {
         background: transparent;
-        /* 背景透明减少滚动条视觉冲击 */
+    }
+}
+
+:global {
+    .ant-menu-inline {
+        .ant-menu-item,
+        .ant-menu-submenu-title {
+            margin-block: 1px;
+        }
+    }
+
+    .ant-menu-sub.ant-menu-inline {
+        background: transparent !important;
+        border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+        margin-left: 11px !important;
+    }
+
+    .ant-menu-inline .ant-menu-item-selected {
+        background-color: rgba(22, 119, 255, 0.08) !important;
+        font-weight: 500;
     }
 }
 
