@@ -79,6 +79,7 @@
 /* Tree 节点间距 */
 :global .ant-tree .ant-tree-treenode {
   padding: 1px 0;
+  overflow: hidden;
 }
 
 /* 选中高亮 */
@@ -91,6 +92,9 @@
 :global .ant-tree .ant-tree-node-content-wrapper {
   height: 28px;
   line-height: 28px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 拖拽视觉反馈 */

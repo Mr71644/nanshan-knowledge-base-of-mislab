@@ -95,6 +95,7 @@
 :global {
     .ant-tree .ant-tree-treenode {
         padding: 1px 0;
+        overflow: hidden;
     }
 
     .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
@@ -105,6 +106,9 @@
     .ant-tree .ant-tree-node-content-wrapper {
         height: 28px;
         line-height: 28px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .ant-tree-treenode-draggable {
