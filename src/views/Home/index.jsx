@@ -291,19 +291,42 @@ const Home = () => {
         const dragFolderId = dragItem.folderId ?? null
         const dropFolderId = dropItem.folderId ?? null
 
-        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
-        SetFolderTree(newTreeData)
+        const findFolderName = (tree, targetFolderId) => {
+            if (targetFolderId === null || targetFolderId === undefined) return '根目录'
+            for (const item of tree) {
+                if (String(item.id) === String(targetFolderId) && item.status === 2) return item.name
+                if (item.children) {
+                    const found = findFolderName(item.children, targetFolderId)
+                    if (found) return found
+                }
+            }
+            return null
+        }
 
-        if (!info.dropToGap && dropItem.status === 2) {
-            // 情况 A：拖入文件夹（移入目标文件夹）
+        const doMove = async (targetFolderId) => {
+            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, targetFolderId)
+            SetFolderTree(newTreeData)
             try {
-                await moveTreeItem(dragItem.id, dragItem.status, dropItem.id)
+                await moveTreeItem(dragItem.id, dragItem.status, targetFolderId)
             } catch (e) {
                 error({ content: '移动失败，请重试' })
                 getTree()
             }
-        } else if (dragFolderId === dropFolderId) {
-            // 情况 B：同层排序
+        }
+
+        if (!info.dropToGap && dropItem.status === 2) {
+            // 情况 A：拖入文件夹（移入目标文件夹）
+            Modal.confirm({
+                title: '确认移动',
+                content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => doMove(dropItem.id)
+            })
+        } else if (String(dragFolderId) === String(dropFolderId)) {
+            // 情况 B：同层排序（无需确认）
+            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
+            SetFolderTree(newTreeData)
             const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
             const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
             try {
@@ -314,15 +337,17 @@ const Home = () => {
             }
         } else {
             // 情况 C：跨层 gap drop（移到目标节点所在层级）
-            try {
-                await moveTreeItem(dragItem.id, dragItem.status, dropFolderId)
-            } catch (e) {
-                error({ content: '移动失败，请重试' })
-                getTree()
-            }
+            const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
+            Modal.confirm({
+                title: '确认移动',
+                content: `确定将「${dragItem.name}」移动到「${targetFolderName}」吗？`,
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => doMove(dropFolderId)
+            })
         }
     }
-    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
         // 通过 key 查找并操作节点
@@ -376,12 +401,15 @@ const Home = () => {
             }
         }
 
+        // 更新移动节点的 folderId，确保后续拖拽时 case 判断正确
+        dragObj.folderId = newParentFolderId
+
         return newTreeData
     }
     const findSiblingsByParentId = (treeData, parentFolderId) => {
-        if (parentFolderId === null) return treeData
+        if (parentFolderId === null || parentFolderId === undefined) return treeData
         for (const item of treeData) {
-            if (item.id === parentFolderId) return item.children || []
+            if (String(item.id) === String(parentFolderId)) return item.children || []
             if (item.children) {
                 const found = findSiblingsByParentId(item.children, parentFolderId)
                 if (found.length > 0) return found
