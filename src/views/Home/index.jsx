@@ -248,74 +248,97 @@ const Home = () => {
     }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
         if (dropPosition === 0) return false
-        const dragParentPos = dragNode.pos.split('-').slice(0, -1).join('-')
-        const dropParentPos = dropNode.pos.split('-').slice(0, -1).join('-')
-        return dragParentPos === dropParentPos
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        return dragParentId === dropParentId
     }
     const handleDrop = async (info) => {
         const dragNode = info.dragNode
         const dropNode = info.node
 
-        const dragParentPos = dragNode.pos.split('-').slice(0, -1).join('-')
-        const dropParentPos = dropNode.pos.split('-').slice(0, -1).join('-')
-        if (dragParentPos !== dropParentPos) return
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        if (dragParentId !== dropParentId) return
 
-        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode)
+        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
         SetFolderTree(newTreeData)
 
-        const parentFolderId = findParentFolderId(folderTree, dropParentPos)
-        const siblings = findSiblingsByPos(newTreeData, dropParentPos)
+        const siblings = findSiblingsByParentId(newTreeData, dropParentId)
         const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
 
         try {
-            await sortTreeItems(parentFolderId, orderedIds)
+            await sortTreeItems(dropParentId, orderedIds)
         } catch (e) {
             error({ content: '排序保存失败，请重试' })
             getTree()
         }
     }
-    const reorderTreeData = (treeData, dragNode, dropNode) => {
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
-        const dragPath = dragNode.pos.split('-').map(Number)
-        const dropPath = dropNode.pos.split('-').map(Number)
-        const dragIndex = dragPath.pop()
-        const dropIndex = dropPath.pop()
 
-        const getArrayByPath = (data, path) => {
-            let current = data
-            for (const idx of path) {
-                current = current[idx].children
+        // 通过 key 查找并操作节点
+        const dragKey = dragNode.key
+        const dropKey = dropNode.key
+
+        const loop = (data, key, callback) => {
+            for (let i = 0; i < data.length; i++) {
+                if (getMenuKeyByItem(data[i]) === key) {
+                    return callback(data[i], i, data)
+                }
+                if (data[i].children) {
+                    loop(data[i].children, key, callback)
+                }
             }
-            return current
         }
 
-        const array = getArrayByPath(newTreeData, dragPath)
-        const [removed] = array.splice(dragIndex, 1)
+        // 移除拖拽节点
+        let dragObj
+        loop(newTreeData, dragKey, (item, index, arr) => {
+            arr.splice(index, 1)
+            dragObj = item
+        })
 
-        let insertIndex = dropIndex
-        if (dragPath.join('-') === dropPath.join('-') && dragIndex < dropIndex) {
-            insertIndex--
+        if (!dropToGap) {
+            // 放在节点内部（不应发生，allowDrop 已阻止）
+            loop(newTreeData, dropKey, (item) => {
+                item.children = item.children || []
+                item.children.unshift(dragObj)
+            })
+        } else {
+            // 放在节点之间的间隙
+            // dropPosition 是绝对位置，需要减去节点在父数组中的索引得到相对位置
+            const dropPosArr = dropNode.pos.split('-')
+            const dropIndex = Number(dropPosArr[dropPosArr.length - 1])
+            const relativePosition = dropPosition - dropIndex
+
+            let ar
+            let i
+            loop(newTreeData, dropKey, (_item, index, arr) => {
+                ar = arr
+                i = index
+            })
+
+            if (relativePosition === -1) {
+                // 放在目标节点前面
+                ar.splice(i, 0, dragObj)
+            } else {
+                // 放在目标节点后面
+                ar.splice(i + 1, 0, dragObj)
+            }
         }
-        array.splice(insertIndex, 0, removed)
+
         return newTreeData
     }
-    const findSiblingsByPos = (treeData, posString) => {
-        if (!posString) return treeData
-        const path = posString.split('-').map(Number)
-        let current = treeData
-        for (const idx of path) {
-            current = current[idx]?.children || []
+    const findSiblingsByParentId = (treeData, parentFolderId) => {
+        if (parentFolderId === null) return treeData
+        for (const item of treeData) {
+            if (item.id === parentFolderId) return item.children || []
+            if (item.children) {
+                const found = findSiblingsByParentId(item.children, parentFolderId)
+                if (found.length > 0) return found
+            }
         }
-        return current
-    }
-    const findParentFolderId = (treeData, posString) => {
-        if (!posString) return null
-        const path = posString.split('-').map(Number)
-        let current = treeData
-        for (let i = 0; i < path.length - 1; i++) {
-            current = current[path[i]].children
-        }
-        return current[path[path.length - 1]]?.id || null
+        return []
     }
     useEffect(() => {
         if (visible && message === '登录成功') {

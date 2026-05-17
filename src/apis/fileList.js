@@ -34,15 +34,13 @@ const togglePin = (itemId, itemStatus, pin) => {
     })
 }
 
-// 排序文件树中的同级节点（mock 版，后端接口就绪后替换为真实请求）
+// 排序文件树中的同级节点
 const sortTreeItems = (parentFolderId, orderedIds) => {
-    console.log('[mock] sortTreeItems', { parentFolderId, orderedIds })
-    return Promise.resolve({ data: { code: 200, message: 'success' } })
-    // return request({
-    //     url: '/home/sort',
-    //     method: 'PUT',
-    //     data: { parentFolderId, orderedIds }
-    // })
+    return request({
+        url: '/home/sort',
+        method: 'PUT',
+        data: { parentFolderId, orderedIds }
+    })
 }
 
 export {
