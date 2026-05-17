@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
@@ -83,6 +83,8 @@ const Home = () => {
     const [expandAnimationType, setExpandAnimationType] = useState('')
     const expandAnimationTimerRef = useRef(null)
     const [collapsed, setCollapsed] = useState(false);
+    const [siderWidth, setSiderWidth] = useState(320);
+    const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const { message, type, visible } = useSelector(state => state.message)
@@ -204,6 +206,29 @@ const Home = () => {
             setExpandAnimationType('')
         }, 220)
     }
+    const handleResizeMouseDown = useCallback((e) => {
+        e.preventDefault()
+        isDragging.current = true
+        const startX = e.clientX
+        const startWidth = siderWidth
+        document.body.style.cursor = 'col-resize'
+        document.body.style.userSelect = 'none'
+
+        const onMouseMove = (e) => {
+            if (!isDragging.current) return
+            const newWidth = Math.min(500, Math.max(180, startWidth + e.clientX - startX))
+            setSiderWidth(newWidth)
+        }
+        const onMouseUp = () => {
+            isDragging.current = false
+            document.body.style.cursor = ''
+            document.body.style.userSelect = ''
+            document.removeEventListener('mousemove', onMouseMove)
+            document.removeEventListener('mouseup', onMouseUp)
+        }
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+    }, [siderWidth])
     const transformToMenuItems = (data) => {
         return data.map(item => {
             const returnIcon = () => {
@@ -217,9 +242,29 @@ const Home = () => {
                 ? transformToMenuItems(item.children)
                 : undefined
 
+            const isOpen = openKeys.includes(key)
+            const animationClass = animatingExpandKey === key
+                ? (expandAnimationType === 'open' ? style.menuExpandIconAnimateOpen : style.menuExpandIconAnimateClose)
+                : ''
+
             return {
                 key,
-                icon: returnIcon(),
+                icon: children
+                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <span
+                            className={`${style.menuExpandIcon} ${isOpen ? style.menuExpandIconOpenState : style.menuExpandIconCloseState} ${animationClass}`}
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                playExpandAnimation(key, isOpen)
+                                toggleOpenKey(key)
+                            }}
+                        >
+                            <RightOutlined />
+                        </span>
+                        {returnIcon()}
+                    </span>
+                    : returnIcon(),
                 label: (
                     <Tooltip title={item.name}>
                         {item.name}
@@ -370,7 +415,7 @@ const Home = () => {
                 />
             </Tooltip>
             <Sider
-                width={250}
+                width={siderWidth}
                 breakpoint="lg"
                 collapsed={collapsed}
                 onCollapse={setCollapsed}
@@ -378,6 +423,7 @@ const Home = () => {
                 style={{
                     background: colorBgContainer,
                     overflowY: 'scroll',
+                    position: 'relative',
                 }}
                 className={style.sider}
             >
@@ -387,29 +433,11 @@ const Home = () => {
                 }} /> : '知邮南山 - MISLab'}</div>
                 <Menu
                     mode="inline"
-                    inlineIndent={8}
+                    inlineIndent={18}
                     openKeys={openKeys}
                     selectedKeys={selectedKeys}
                     onOpenChange={handleOpenChange}
-                    expandIcon={({ isOpen, eventKey }) => {
-                        const animationClass = animatingExpandKey === eventKey
-                            ? (expandAnimationType === 'open' ? style.menuExpandIconAnimateOpen : style.menuExpandIconAnimateClose)
-                            : ''
-
-                        return (
-                            <span
-                                className={`${style.menuExpandIcon} ${isOpen ? style.menuExpandIconOpenState : style.menuExpandIconCloseState} ${animationClass}`}
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    playExpandAnimation(eventKey, isOpen)
-                                    toggleOpenKey(eventKey)
-                                }}
-                            >
-                                <RightOutlined />
-                            </span>
-                        )
-                    }}
+                    expandIcon={() => null}
                     items={
                         transformToMenuItems(folderTree)
                     }
@@ -423,6 +451,12 @@ const Home = () => {
                         }
                     }}
                 />
+                {!collapsed && (
+                    <div
+                        className={style.resizeHandle}
+                        onMouseDown={handleResizeMouseDown}
+                    />
+                )}
             </Sider>
             <Layout
                 style={{
