@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -178,6 +178,19 @@ const Home = () => {
     const handleOpenChange = (nextOpenKeys) => {
         setOpenKeys(nextOpenKeys)
     }
+    const collectAllFolderKeys = (tree) => {
+        const keys = []
+        const walk = (items) => {
+            for (const item of items) {
+                if (item.status === 2) keys.push(getMenuKeyByItem(item))
+                if (item.children) walk(item.children)
+            }
+        }
+        walk(tree)
+        return keys
+    }
+    const handleExpandAll = () => setOpenKeys(collectAllFolderKeys(folderTree))
+    const handleCollapseAll = () => setOpenKeys([])
     const handleResizeMouseDown = useCallback((e) => {
         e.preventDefault()
         isDragging.current = true
@@ -559,10 +572,26 @@ const Home = () => {
                 }}
                 className={style.sider}
             >
-                <div className={style.logo}>{collapsed ? <CloudOutlined style={{
-                    fontSize: '25px',
-                    color: '#1677ff'
-                }} /> : '知邮南山 - MISLab'}</div>
+                <div className={style.logo}>
+                    {collapsed ? <CloudOutlined style={{
+                        fontSize: '25px',
+                        color: '#1677ff'
+                    }} /> : (
+                        <>
+                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                            <Space size={4} className={style.logoActions}>
+                                <Tooltip title="展开全部">
+                                    <Button type="text" size="small" onClick={handleExpandAll}
+                                        icon={<FolderOpenOutlined />} />
+                                </Tooltip>
+                                <Tooltip title="折叠全部">
+                                    <Button type="text" size="small" onClick={handleCollapseAll}
+                                        icon={<FolderOutlined />} />
+                                </Tooltip>
+                            </Space>
+                        </>
+                    )}
+                </div>
                 <Tree
                     showIcon
                     blockNode
