@@ -4,9 +4,13 @@ import store from '@/store'
 import { clearUserInfo } from '@/store/modules/user'
 import { showMessage } from '@/store/modules/message'
 // axios 实例：统一封装项目内所有 HTTP 请求
-// API 地址通过环境变量配置，见 .env.development / .env.production
+// 注意：建议在部署或开发时改为使用环境变量（Vite 的 import.meta.env.VITE_API_BASE_URL）
 const request = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    // node node_modules/cors-anywhere/server.js
+    // 解决跨域问题（可在本地开发时通过代理或 cors-anywhere 处理）
+    // baseURL: 'http://localhost:8080/http://1.117.70.79:4529',
+    // 生产/演示地址（在代码中硬编码，推荐替换为环境变量）
+    baseURL: 'http://101.43.146.27/new-app/api',
 })
 
 // 添加请求拦截器
