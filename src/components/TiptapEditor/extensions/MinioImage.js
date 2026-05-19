@@ -1,101 +1,153 @@
 import { Image } from '@tiptap/extension-image'
+import { ResizableNodeView } from '@tiptap/core'
 import { urlCache, enqueuePreview, CACHE_TTL } from '@/utils/imageCache'
 
 const MinioImage = Image.extend({
+    addOptions() {
+        return {
+            ...this.parent?.(),
+            resize: {
+                enabled: true,
+                minWidth: 30,
+                alwaysPreserveAspectRatio: true,
+            },
+        }
+    },
+
     addNodeView() {
-        return ({ node }) => {
-            const wrapper = document.createElement('span')
-            wrapper.style.display = 'block'
-            wrapper.style.maxWidth = '100%'
-            wrapper.style.margin = '10px 0'
+        return ({ node, getPos, editor }) => {
+            const img = createBaseImg(node.attrs.alt)
+            const currentSrc = { value: node.attrs.src }
 
-            renderSrc(wrapper, node.attrs.src, node.attrs.alt)
+            applySrc(img, currentSrc, node.attrs.src, node.attrs.alt)
 
-            return {
-                dom: wrapper,
-                update(updatedNode) {
+            const nodeView = new ResizableNodeView({
+                element: img,
+                editor,
+                node,
+                getPos,
+                onResize(width, height) {
+                    img.style.width = `${width}px`
+                    img.style.height = `${height}px`
+                },
+                onCommit(width, height) {
+                    const pos = getPos()
+                    if (pos === undefined) return
+                    editor
+                        .chain()
+                        .setNodeSelection(pos)
+                        .updateAttributes('image', { width, height })
+                        .run()
+                },
+                onUpdate(updatedNode) {
                     if (updatedNode.type.name !== 'image') return false
-                    wrapper.innerHTML = ''
-                    renderSrc(wrapper, updatedNode.attrs.src, updatedNode.attrs.alt)
+                    if (updatedNode.attrs.src !== currentSrc.value) {
+                        currentSrc.value = updatedNode.attrs.src
+                        applySrc(img, currentSrc, updatedNode.attrs.src, updatedNode.attrs.alt)
+                    }
                     return true
                 },
-                destroy() {
-                    wrapper.innerHTML = ''
+                options: {
+                    directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
+                    min: { width: 30 },
+                    preserveAspectRatio: true,
                 },
-            }
+            })
+
+            return nodeView
         }
+    },
+
+    renderMarkdown(node) {
+        const src = node.attrs?.src ?? ''
+        const alt = node.attrs?.alt ?? '图片'
+        const width = node.attrs?.width
+        if (width) {
+            const attrs = [`src="${src}"`, `alt="${alt}"`, `width="${width}"`]
+            return `<img ${attrs.join(' ')}>`
+        }
+        return `![${alt}](${src})`
     },
 })
 
-function renderSrc(container, src, alt) {
+function createBaseImg(alt) {
+    const img = document.createElement('img')
+    img.alt = alt || '图片'
+    img.style.maxWidth = '100%'
+    img.style.height = 'auto'
+    img.style.display = 'block'
+    img.style.border = '1px solid #ddd'
+    img.style.borderRadius = '4px'
+    img.onerror = () => {
+        img.style.display = 'none'
+        if (img.parentNode) {
+            const error = document.createElement('span')
+            error.textContent = '图片加载失败'
+            error.style.color = 'red'
+            img.parentNode.appendChild(error)
+        }
+    }
+    return img
+}
+
+function setLoadingState(img) {
+    img.style.minHeight = '200px'
+    img.style.background = '#f5f5f5'
+    img.style.border = '1px solid #ddd'
+}
+
+function clearLoadingState(img) {
+    img.style.minHeight = ''
+    img.style.background = ''
+}
+
+function applySrc(img, currentSrc, src, alt) {
     if (!src || typeof src !== 'string') {
-        appendError(container)
+        img.src = ''
+        img.alt = '图片加载失败'
+        img.style.color = 'red'
         return
     }
 
     if (!src.startsWith('minio:')) {
-        container.appendChild(createImg(src, alt))
+        img.src = src
+        img.alt = alt || '图片'
         return
     }
 
     const fileId = src.slice(6)
     const cached = urlCache.get(fileId)
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        container.appendChild(createImg(cached.url, alt))
+        img.src = cached.url
+        img.alt = alt || '图片'
         return
     }
 
-    const placeholder = document.createElement('div')
-    placeholder.className = 'minio-image-loading'
-    placeholder.style.cssText = 'max-width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;color:#999;'
-    placeholder.textContent = '图片加载中...'
-    container.appendChild(placeholder)
-
+    setLoadingState(img)
     enqueuePreview(fileId).then((res) => {
+        if (src !== currentSrc.value) return
         let url = null
         if (typeof res === 'string') url = res
         else if (res && res.data) url = res.data
 
         if (url) {
             urlCache.set(fileId, { url, timestamp: Date.now() })
-            container.removeChild(placeholder)
-            container.appendChild(createImg(url, alt))
+            clearLoadingState(img)
+            img.src = url
+            img.alt = alt || '图片'
         } else {
-            container.removeChild(placeholder)
-            appendError(container)
+            clearLoadingState(img)
+            img.src = ''
+            img.alt = '图片加载失败'
+            img.style.color = 'red'
         }
     }).catch(() => {
-        if (container.contains(placeholder)) {
-            container.removeChild(placeholder)
-        }
-        appendError(container)
+        if (src !== currentSrc.value) return
+        clearLoadingState(img)
+        img.src = ''
+        img.alt = '图片加载失败'
+        img.style.color = 'red'
     })
-}
-
-function createImg(src, alt) {
-    const img = document.createElement('img')
-    img.src = src
-    img.alt = alt || '图片'
-    img.style.maxWidth = '100%'
-    img.style.height = 'auto'
-    img.style.display = 'block'
-    img.style.border = '1px solid #ddd'
-    img.style.padding = '4px'
-    img.style.borderRadius = '4px'
-    img.onerror = () => {
-        if (img.parentNode) {
-            img.style.display = 'none'
-            appendError(img.parentNode)
-        }
-    }
-    return img
-}
-
-function appendError(container) {
-    const errorSpan = document.createElement('span')
-    errorSpan.textContent = '图片加载失败'
-    errorSpan.style.color = 'red'
-    container.appendChild(errorSpan)
 }
 
 export default MinioImage

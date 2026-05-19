@@ -580,10 +580,39 @@
   pointer-events: none;
 }
 
-/* 图片 */
-.tiptapContent :global(.tiptap-prosemirror) img {
+/* 图片 resize 容器 */
+.tiptapContent :global(.tiptap-prosemirror) [data-resize-container] {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.tiptapContent :global(.tiptap-prosemirror) [data-resize-container] img {
   max-width: 100%;
   height: auto;
+}
+
+/* 图片 resize 手柄 */
+.tiptapContent :global(.tiptap-prosemirror) [data-resize-handle] {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 2px solid #1890ff;
+  border-radius: 2px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tiptapContent :global(.tiptap-prosemirror) [data-resize-wrapper]:hover [data-resize-handle],
+.tiptapContent :global(.tiptap-prosemirror) [data-resize-container][data-resize-state="true"] [data-resize-handle] {
+  opacity: 1;
+}
+
+/* 选中图片高亮边框 */
+.tiptapContent :global(.tiptap-prosemirror) .ProseMirror-selectednode [data-resize-wrapper] img {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
 }
 
 /* 链接 */
