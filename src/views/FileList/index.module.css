@@ -53,3 +53,28 @@
 .pinnedRow .eyeIcon span {
   color: #666 !important;
 }
+
+.tableWrapper {
+  max-width: 1900px;
+  margin: 0 auto;
+}
+
+.batchBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.batchText {
+  font-size: 14px;
+  color: #666;
+  margin-right: auto;
+}
+
+.batchActions {
+  display: flex;
+  gap: 8px;
+}
