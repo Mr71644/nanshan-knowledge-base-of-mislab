@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -11,6 +11,7 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  * - 全局退出逻辑会清除 token 并重定向到 `/login`
  */
 import { UploadFile } from '@/components/UploadFile';
+import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.css'
 import { useSelector, useDispatch } from 'react-redux';
@@ -84,6 +85,7 @@ const Home = () => {
     const [siderWidth, setSiderWidth] = useState(320);
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [recycleBinOpen, setRecycleBinOpen] = useState(false);
     const [form] = Form.useForm();
     const { message, type, visible } = useSelector(state => state.message)
     const { success, error, contextHolder } = useMessage()
@@ -666,6 +668,14 @@ const Home = () => {
                                     </Button>
                                     : null
                             }
+                            <Button
+                                className={style.authority}
+                                onClick={() => setRecycleBinOpen(true)}>
+                                <DeleteOutlined />
+                                <span style={{
+                                    fontSize: '16px'
+                                }}>回收站</span>
+                            </Button>
                         </Space>
                     </ConfigProvider>
                     <div
@@ -679,6 +689,7 @@ const Home = () => {
                     </div>
                 </Content>
             </Layout>
+            <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
     );
 }
