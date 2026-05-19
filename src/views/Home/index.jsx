@@ -1,7 +1,7 @@
-import { memo, useEffect, useRef, useState, useCallback } from 'react'
+import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -67,6 +67,33 @@ const findParentKeysByTargetKey = (tree = [], targetKey, parentKeys = []) => {
     return []
 }
 
+const walkFilter = (items, keyword, parentKeys = []) => {
+    let matchKeys = new Set()
+    let ancestorKeys = new Set()
+
+    for (const item of items) {
+        const key = getMenuKeyByItem(item)
+        const currentParentKeys = item.status === 2 ? [...parentKeys, key] : parentKeys
+        const nameMatch = item.name.toLowerCase().includes(keyword)
+
+        if (item.children && item.children.length > 0) {
+            const childResult = walkFilter(item.children, keyword, currentParentKeys)
+            if (nameMatch || childResult.matchKeys.size > 0) {
+                if (nameMatch) matchKeys.add(key)
+                matchKeys = new Set([...matchKeys, ...childResult.matchKeys])
+                ancestorKeys = new Set([...ancestorKeys, ...currentParentKeys, ...childResult.ancestorKeys])
+            }
+        } else {
+            if (nameMatch) {
+                matchKeys.add(key)
+                ancestorKeys = new Set([...ancestorKeys, ...currentParentKeys])
+            }
+        }
+    }
+
+    return { matchKeys, ancestorKeys }
+}
+
 const Home = () => {
     const {
         token: { colorBgContainer, borderRadiusLG },
@@ -85,6 +112,14 @@ const Home = () => {
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
+    const [searchText, setSearchText] = useState('')
+
+    const { filteredMatchKeys, searchExpandedKeys } = useMemo(() => {
+        const trimmed = searchText.trim().toLowerCase()
+        if (!trimmed) return { filteredMatchKeys: new Set(), searchExpandedKeys: null }
+        const { matchKeys, ancestorKeys } = walkFilter(folderTree, trimmed, [])
+        return { filteredMatchKeys: matchKeys, searchExpandedKeys: ancestorKeys }
+    }, [searchText, folderTree])
     const { message, type, visible } = useSelector(state => state.message)
     const { success, error, contextHolder } = useMessage()
     const [api, contextHolderNotification] = notification.useNotification({
@@ -234,9 +269,42 @@ const Home = () => {
     }
     const renderTitle = (nodeData) => {
         const item = nodeData.rawData
+        const key = nodeData.key
+        const trimmed = searchText.trim()
+        const isSearching = trimmed.length > 0
+        const isMatch = filteredMatchKeys.has(key)
+        const isAncestorOrSelf = searchExpandedKeys && searchExpandedKeys.has(key)
+
+        let titleContent
+        if (isSearching && isMatch) {
+            const lowerName = item.name.toLowerCase()
+            const lowerKeyword = trimmed.toLowerCase()
+            const parts = []
+            let lastIndex = 0
+            let idx = lowerName.indexOf(lowerKeyword)
+            while (idx !== -1) {
+                if (idx > lastIndex) parts.push(item.name.slice(lastIndex, idx))
+                parts.push(
+                    <span key={idx} className={style.searchHighlight}>
+                        {item.name.slice(idx, idx + trimmed.length)}
+                    </span>
+                )
+                lastIndex = idx + trimmed.length
+                idx = lowerName.indexOf(lowerKeyword, lastIndex)
+            }
+            if (lastIndex < item.name.length) parts.push(item.name.slice(lastIndex))
+            titleContent = parts
+        } else {
+            titleContent = item.name
+        }
+
+        const dimmed = isSearching && !isMatch && !isAncestorOrSelf
+
         return (
             <Tooltip title={item.name}>
-                <span>{item.name}</span>
+                <span className={dimmed ? style.treeNodeDimmed : undefined}>
+                    {titleContent}
+                </span>
             </Tooltip>
         )
     }
@@ -592,12 +660,24 @@ const Home = () => {
                         </>
                     )}
                 </div>
+                {!collapsed && (
+                    <div className={style.treeSearchBox}>
+                        <Input
+                            placeholder="搜索文件/文件夹"
+                            allowClear
+                            suffix={<SearchOutlined />}
+                            size="small"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+                )}
                 <Tree
                     showIcon
                     blockNode
                     showLine={{ showLeafIcon: false }}
                     treeData={transformToTreeData(folderTree)}
-                    expandedKeys={openKeys}
+                    expandedKeys={searchExpandedKeys ? [...new Set([...openKeys, ...searchExpandedKeys])] : openKeys}
                     selectedKeys={selectedKeys}
                     onExpand={handleOpenChange}
                     onSelect={(keys, info) => {
