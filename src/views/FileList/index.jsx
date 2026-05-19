@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover } from 'antd';
-import { FolderOutlined, PlusSquareOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover, Checkbox } from 'antd';
+import { FolderOutlined, DeleteOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
@@ -20,6 +20,19 @@ import style from './index.module.css'
  */
 
 const FileList = () => {
+    const param = useParams()
+    const navigate = useNavigate()
+    const location = useLocation()
+    const { error, contextHolder } = useMessage()
+    const [list, setList] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [selectedRowKeys, setSelectedRowKeys] = useState([])
+    const [selectedRows, setSelectedRows] = useState([])
+    const [batchMode, setBatchMode] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [modalLoding, setModalLoading] = useState(false)
+    const [currentFolder, setCurrentFolder] = useState('')
+    const folderName = useRef('')
     const columns = [
         {
             title: '名称',
@@ -68,7 +81,25 @@ const FileList = () => {
             key: 'updateTime',
         },
         {
-            title: (<div style={{ textAlign: 'center' }}><PlusSquareOutlined /></div>),
+            title: (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', cursor: 'pointer' }} onClick={() => { setBatchMode(true) }}>
+                    {batchMode ? (
+                        <Checkbox
+                            checked={list.length > 0 && selectedRowKeys.length === list.length}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    setSelectedRowKeys(list.map(item => `${item.id}${item.status}`))
+                                    setSelectedRows([...list])
+                                } else {
+                                    setSelectedRowKeys([])
+                                    setSelectedRows([])
+                                }
+                            }}
+                        />
+                    ) : <DeleteOutlined />}
+                </div>
+            ),
             key: 'operation',
             width: 100,
             render: (text, record) => {
@@ -140,14 +171,29 @@ const FileList = () => {
                     if (record.permissionType === 'VIEW') return '可阅读'
                 }
                 return (
-                    <Space size="middle">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
+                        {batchMode && (
+                            <span onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                    checked={selectedRowKeys.includes(`${record.id}${record.status}`)}
+                                    onChange={() => {
+                                        const key = `${record.id}${record.status}`
+                                        const isSelected = selectedRowKeys.includes(key)
+                                        if (isSelected) {
+                                            setSelectedRowKeys(prev => prev.filter(k => k !== key))
+                                            setSelectedRows(prev => prev.filter(r => `${r.id}${r.status}` !== key))
+                                        } else {
+                                            setSelectedRowKeys(prev => [...prev, key])
+                                            setSelectedRows(prev => [...prev, record])
+                                        }
+                                    }}
+                                />
+                            </span>
+                        )}
                         <Popover content={roleName()} className={style.eyeIcon}>
                             <span><EyeOutlined /></span>
                         </Popover>
-                        <div
-                            style={{ textAlign: 'center' }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
+                        <div onClick={(e) => e.stopPropagation()}>
                             <Dropdown
                                 menu={{ items: menuItems }}
                                 trigger={['click']}
@@ -162,23 +208,11 @@ const FileList = () => {
                                 />
                             </Dropdown>
                         </div>
-                    </Space>
+                    </div>
                 );
             },
         },
     ];
-    const param = useParams()
-    const navigate = useNavigate()
-    const location = useLocation()
-    const { error, contextHolder } = useMessage()
-    const [list, setList] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [selectedRowKeys, setSelectedRowKeys] = useState([])
-    const [selectedRows, setSelectedRows] = useState([])
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [modalLoding, setModalLoading] = useState(false)
-    const [currentFolder, setCurrentFolder] = useState('')
-    const folderName = useRef('')
     const getList = async (id = '') => {
         try {
             setLoading(true)
@@ -222,6 +256,7 @@ const FileList = () => {
     const clearSelection = () => {
         setSelectedRowKeys([])
         setSelectedRows([])
+        setBatchMode(false)
     }
     const handleBatchDelete = () => {
         Modal.confirm({
@@ -347,44 +382,47 @@ const FileList = () => {
             {
                 loading
                     ? <Spin size='large' className={style.spin} />
-                    : <>
-                        {selectedRowKeys.length > 0 && (
-                            <div className={style.batchBar}>
+                    : <div className={style.tableWrapper}>
+                        <div className={style.batchBar} style={{ visibility: batchMode ? 'visible' : 'hidden' }}>
+                            {selectedRowKeys.length > 0 && (
                                 <span className={style.batchText}>
                                     已选择 {selectedRowKeys.length} 项
                                 </span>
-                                <div className={style.batchActions}>
-                                    <Button size="small" onClick={clearSelection}>取消选择</Button>
-                                    <Button size="small" danger type="primary" onClick={handleBatchDelete}>移入回收站</Button>
-                                </div>
+                            )}
+                            <div className={style.batchActions}>
+                                <Button size="small" onClick={clearSelection}>取消</Button>
+                                <Button size="small" danger type="primary" disabled={selectedRowKeys.length === 0} onClick={handleBatchDelete}>移入回收站</Button>
                             </div>
-                        )}
+                        </div>
                         <Table
                             columns={columns}
                             dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
                             scroll={{ y: 'calc(100vh - 260px)' }}
-                            rowSelection={{
-                                type: 'checkbox',
-                                selectedRowKeys,
-                                onChange: (keys, rows) => {
-                                    setSelectedRowKeys(keys)
-                                    setSelectedRows(rows)
-                                },
-                            }}
                             onRow={(record) => ({
-                                onClick: (e) => {
-                                    if (e.target.type === 'checkbox') return
-                                    handleClick(record)
-                                }
-                            })}
-                            rowClassName={(record) => {
-                                const isPinned = record.pinned === true || record.pinned === 'true';
-                                return isPinned ? style.pinnedRow : '';
-                            }}
-                            className={style.fileList}
-                        />
-                    </>
+                                onClick: () => {
+                                    if (batchMode) {
+                                        const key = `${record.id}${record.status}`
+                                        const isSelected = selectedRowKeys.includes(key)
+                                        if (isSelected) {
+                                            setSelectedRowKeys(prev => prev.filter(k => k !== key))
+                                            setSelectedRows(prev => prev.filter(r => `${r.id}${r.status}` !== key))
+                                        } else {
+                                            setSelectedRowKeys(prev => [...prev, key])
+                                            setSelectedRows(prev => [...prev, record])
+                                        }
+                                        return
+                                            }
+                                            handleClick(record)
+                                        }
+                                    })}
+                                    rowClassName={(record) => {
+                                        const isPinned = record.pinned === true || record.pinned === 'true';
+                                        return isPinned ? style.pinnedRow : '';
+                                    }}
+                                    className={style.fileList}
+                                />
+                    </div>
             }
             <Modal title={'更改文件夹名称'}
                 open={isModalOpen}
