@@ -33,9 +33,18 @@ const delFile = (id) => {
     })
 }
 
+const delBatch = (items) => {
+    return request({
+        url: '/home/delete/batch',
+        method: 'DELETE',
+        data: { items }
+    })
+}
+
 export {
     delContent,
     delExcel,
     delFolder,
-    delFile
+    delFile,
+    delBatch
 }

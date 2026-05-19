@@ -4,7 +4,7 @@ import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover } fro
 import { FolderOutlined, PlusSquareOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
-import { delContent, delExcel, delFolder, delFile } from '@/apis/delete';
+import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { previewFile } from '@/apis/file';
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
@@ -173,6 +173,8 @@ const FileList = () => {
     const { error, contextHolder } = useMessage()
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(true)
+    const [selectedRowKeys, setSelectedRowKeys] = useState([])
+    const [selectedRows, setSelectedRows] = useState([])
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentFolder, setCurrentFolder] = useState('')
@@ -216,6 +218,31 @@ const FileList = () => {
     const refreshUrl = () => {
         if (param.id === undefined) navigate(`/home`, { state: { refresh: Date.now() } })
         else navigate(`/home/list/${param.id}`, { state: { refresh: Date.now() } })
+    }
+    const clearSelection = () => {
+        setSelectedRowKeys([])
+        setSelectedRows([])
+    }
+    const handleBatchDelete = () => {
+        Modal.confirm({
+            title: '确认删除',
+            content: `确定将选中的 ${selectedRows.length} 项移入回收站吗？`,
+            okText: '确认',
+            cancelText: '取消',
+            onOk: async () => {
+                try {
+                    setLoading(true)
+                    const items = selectedRows.map(r => ({ id: r.id, status: r.status }))
+                    await delBatch(items)
+                    clearSelection()
+                    refreshUrl()
+                } catch (e) {
+                    error({ content: '批量删除失败' })
+                }
+                if (param.id === undefined) getList()
+                else getList(param.id)
+            }
+        })
     }
     const handleMenuClick = async (action, record) => {
         if (action === 'details') {
@@ -320,20 +347,44 @@ const FileList = () => {
             {
                 loading
                     ? <Spin size='large' className={style.spin} />
-                    : <Table
-                        columns={columns}
-                        dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
-                        pagination={false}
-                        scroll={{ y: 'calc(100vh - 260px)' }}
-                        onRow={(record) => ({
-                            onClick: () => handleClick(record)
-                        })}
-                        rowClassName={(record) => {
-                            const isPinned = record.pinned === true || record.pinned === 'true';
-                            return isPinned ? style.pinnedRow : '';
-                        }}
-                        className={style.fileList}
-                    />
+                    : <>
+                        {selectedRowKeys.length > 0 && (
+                            <div className={style.batchBar}>
+                                <span className={style.batchText}>
+                                    已选择 {selectedRowKeys.length} 项
+                                </span>
+                                <div className={style.batchActions}>
+                                    <Button size="small" onClick={clearSelection}>取消选择</Button>
+                                    <Button size="small" danger type="primary" onClick={handleBatchDelete}>移入回收站</Button>
+                                </div>
+                            </div>
+                        )}
+                        <Table
+                            columns={columns}
+                            dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
+                            pagination={false}
+                            scroll={{ y: 'calc(100vh - 260px)' }}
+                            rowSelection={{
+                                type: 'checkbox',
+                                selectedRowKeys,
+                                onChange: (keys, rows) => {
+                                    setSelectedRowKeys(keys)
+                                    setSelectedRows(rows)
+                                },
+                            }}
+                            onRow={(record) => ({
+                                onClick: (e) => {
+                                    if (e.target.type === 'checkbox') return
+                                    handleClick(record)
+                                }
+                            })}
+                            rowClassName={(record) => {
+                                const isPinned = record.pinned === true || record.pinned === 'true';
+                                return isPinned ? style.pinnedRow : '';
+                            }}
+                            className={style.fileList}
+                        />
+                    </>
             }
             <Modal title={'更改文件夹名称'}
                 open={isModalOpen}
