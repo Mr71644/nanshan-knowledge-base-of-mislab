@@ -11,6 +11,7 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  * - 全局退出逻辑会清除 token 并重定向到 `/login`
  */
 import { UploadFile } from '@/components/UploadFile';
+import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.css'
 import { useSelector, useDispatch } from 'react-redux';
@@ -111,6 +112,7 @@ const Home = () => {
     const [siderWidth, setSiderWidth] = useState(320);
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [recycleBinOpen, setRecycleBinOpen] = useState(false);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
 
@@ -746,6 +748,14 @@ const Home = () => {
                                     </Button>
                                     : null
                             }
+                            <Button
+                                className={style.authority}
+                                onClick={() => setRecycleBinOpen(true)}>
+                                <DeleteOutlined />
+                                <span style={{
+                                    fontSize: '16px'
+                                }}>回收站</span>
+                            </Button>
                         </Space>
                     </ConfigProvider>
                     <div
@@ -759,6 +769,7 @@ const Home = () => {
                     </div>
                 </Content>
             </Layout>
+            <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
     );
 }
