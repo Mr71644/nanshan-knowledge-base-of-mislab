@@ -1,11 +1,11 @@
 import React, { memo, useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover, Checkbox } from 'antd';
-import { FolderOutlined, DeleteOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
+import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
-import { previewFile } from '@/apis/file';
+import { downloadSingle, downloadBatch } from '@/utils/download'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
 import style from './index.module.css'
@@ -28,10 +28,11 @@ const FileList = () => {
     const [loading, setLoading] = useState(true)
     const [selectedRowKeys, setSelectedRowKeys] = useState([])
     const [selectedRows, setSelectedRows] = useState([])
-    const [batchMode, setBatchMode] = useState(false)
+    const [batchType, setBatchType] = useState(null) // null | 'delete' | 'download'
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentFolder, setCurrentFolder] = useState('')
+    const [downloading, setDownloading] = useState(false)
     const folderName = useRef('')
     const columns = [
         {
@@ -82,8 +83,8 @@ const FileList = () => {
         },
         {
             title: (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', cursor: 'pointer' }} onClick={() => { setBatchMode(true) }}>
-                    {batchMode ? (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', cursor: 'pointer', gap: 8 }}>
+                    {batchType ? (
                         <Checkbox
                             checked={list.length > 0 && selectedRowKeys.length === list.length}
                             onClick={(e) => e.stopPropagation()}
@@ -97,7 +98,10 @@ const FileList = () => {
                                 }
                             }}
                         />
-                    ) : <DeleteOutlined />}
+                    ) : (<>
+                        <DownloadOutlined onClick={() => setBatchType('download')} />
+                        <DeleteOutlined onClick={() => setBatchType('delete')} />
+                    </>)}
                 </div>
             ),
             key: 'operation',
@@ -117,6 +121,11 @@ const FileList = () => {
                         key: isPinned ? 'unpin' : 'pin',
                         label: isPinned ? '取消置顶' : '置顶',
                         onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
+                    },
+                    {
+                        key: 'download',
+                        label: '下载',
+                        onClick: () => handleMenuClick('download', record),
                     },
                     {
                         key: 'delete',
@@ -142,6 +151,11 @@ const FileList = () => {
                         onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
                     },
                     {
+                        key: 'download',
+                        label: '下载',
+                        onClick: () => handleMenuClick('download', record),
+                    },
+                    {
                         key: 'delete',
                         label: '删除',
                         danger: true,
@@ -151,7 +165,7 @@ const FileList = () => {
                 if (record.status === 4) menuItems = [
                     {
                         key: 'download',
-                        label: '操作',
+                        label: '下载',
                         onClick: () => handleMenuClick('download', record),
                     },
                     {
@@ -172,7 +186,7 @@ const FileList = () => {
                 }
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
-                        {batchMode && (
+                        {batchType && (
                             <span onClick={(e) => e.stopPropagation()}>
                                 <Checkbox
                                     checked={selectedRowKeys.includes(`${record.id}${record.status}`)}
@@ -239,14 +253,26 @@ const FileList = () => {
             setLoading(false)
         }
     }
-    const preview = async (id) => {
+    const handleSingleDownload = async (record) => {
         try {
-            const res = await previewFile(id)
-            window.open(res.data, '_blank')
+            setDownloading(true)
+            await downloadSingle(record.status, record.id, record.name)
         } catch (e) {
-            error({
-                content: '下载文件失败，请检查网络'
-            })
+            error({ content: '下载失败，请检查网络' })
+        } finally {
+            setDownloading(false)
+        }
+    }
+    const handleBatchDownload = async () => {
+        if (selectedRows.length === 0) return
+        try {
+            setDownloading(true)
+            const items = selectedRows.map(r => ({ id: r.id, status: r.status }))
+            await downloadBatch(`批量下载_${selectedRows.length}项`, items)
+        } catch (e) {
+            error({ content: '批量下载失败，请检查网络' })
+        } finally {
+            setDownloading(false)
         }
     }
     const refreshUrl = () => {
@@ -256,7 +282,7 @@ const FileList = () => {
     const clearSelection = () => {
         setSelectedRowKeys([])
         setSelectedRows([])
-        setBatchMode(false)
+        setBatchType(null)
     }
     const handleBatchDelete = () => {
         Modal.confirm({
@@ -314,7 +340,7 @@ const FileList = () => {
             setIsModalOpen(true);
             folderName.current = record.name;
         } else if (action === 'download') {
-            preview(record.id)
+            handleSingleDownload(record)
         } else if (action === 'pin' || action === 'unpin') {
             try {
                 setLoading(true)
@@ -383,7 +409,7 @@ const FileList = () => {
                 loading
                     ? <Spin size='large' className={style.spin} />
                     : <div className={style.tableWrapper}>
-                        <div className={style.batchBar} style={{ visibility: batchMode ? 'visible' : 'hidden' }}>
+                        <div className={style.batchBar} style={{ visibility: batchType ? 'visible' : 'hidden' }}>
                             {selectedRowKeys.length > 0 && (
                                 <span className={style.batchText}>
                                     已选择 {selectedRowKeys.length} 项
@@ -391,7 +417,12 @@ const FileList = () => {
                             )}
                             <div className={style.batchActions}>
                                 <Button size="small" onClick={clearSelection}>取消</Button>
-                                <Button size="small" danger type="primary" disabled={selectedRowKeys.length === 0} onClick={handleBatchDelete}>移入回收站</Button>
+                                {batchType === 'download' && (
+                                    <Button size="small" type="primary" loading={downloading} disabled={selectedRowKeys.length === 0} onClick={handleBatchDownload}>下载</Button>
+                                )}
+                                {batchType === 'delete' && (
+                                    <Button size="small" danger type="primary" disabled={selectedRowKeys.length === 0} onClick={handleBatchDelete}>移入回收站</Button>
+                                )}
                             </div>
                         </div>
                         <Table
@@ -401,7 +432,7 @@ const FileList = () => {
                             scroll={{ y: 'calc(100vh - 260px)' }}
                             onRow={(record) => ({
                                 onClick: () => {
-                                    if (batchMode) {
+                                    if (batchType) {
                                         const key = `${record.id}${record.status}`
                                         const isSelected = selectedRowKeys.includes(key)
                                         if (isSelected) {
