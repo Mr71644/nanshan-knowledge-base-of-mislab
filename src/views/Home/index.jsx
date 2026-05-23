@@ -20,7 +20,7 @@ import { clearUserInfo } from '@/store/modules/user';
 import { clearToken } from '@/utils';
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
-import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
+import { sortTreeItems } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
@@ -327,80 +327,31 @@ const Home = () => {
             navigate(key)
         }
     }
-    const isDescendant = (tree, folderId, target) => {
-        const findNode = (data, id) => {
-            for (const item of data) {
-                if (item.id === id && item.status === 2) return item
-                if (item.children) {
-                    const found = findNode(item.children, id)
-                    if (found) return found
-                }
-            }
-            return null
-        }
-        const isInSubtree = (node, t) => {
-            if (!node) return false
-            if (node.id === t.id && node.status === t.status) return true
-            if (node.children) return node.children.some(child => isInSubtree(child, t))
-            return false
-        }
-        const folderNode = findNode(tree, folderId)
-        return isInSubtree(folderNode, target)
-    }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
-
-        // 放在节点上：仅允许目标是文件夹（移入该文件夹）
-        if (dropPosition === 0) {
-            return dropItem.status === 2
-        }
-
-        // 防循环：拖拽文件夹时，禁止拖入自身子树
-        if (dragItem.status === 2 && isDescendant(folderTree, dragItem.id, dropItem)) {
-            return false
-        }
-
-        return true
+        if (dropPosition === 0) return false
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        return dragParentId === dropParentId
     }
     const handleDrop = async (info) => {
         const dragNode = info.dragNode
         const dropNode = info.node
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
 
-        const dragFolderId = dragItem.folderId ?? null
-        const dropFolderId = dropItem.folderId ?? null
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        if (dragParentId !== dropParentId) return
 
         const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
         SetFolderTree(newTreeData)
 
-        if (!info.dropToGap && dropItem.status === 2) {
-            // 情况 A：拖入文件夹（移入目标文件夹）
-            try {
-                await moveTreeItem(dragItem.id, dragItem.status, dropItem.id)
-            } catch (e) {
-                error({ content: '移动失败，请重试' })
-                getTree()
-            }
-        } else if (dragFolderId === dropFolderId) {
-            // 情况 B：同层排序
-            const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
-            const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
-            try {
-                await sortTreeItems(dropFolderId, orderedIds)
-            } catch (e) {
-                error({ content: '排序保存失败，请重试' })
-                getTree()
-            }
-        } else {
-            // 情况 C：跨层 gap drop（移到目标节点所在层级）
-            try {
-                await moveTreeItem(dragItem.id, dragItem.status, dropFolderId)
-            } catch (e) {
-                error({ content: '移动失败，请重试' })
-                getTree()
-            }
+        const siblings = findSiblingsByParentId(newTreeData, dropParentId)
+        const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
+
+        try {
+            await sortTreeItems(dropParentId, orderedIds)
+        } catch (e) {
+            error({ content: '排序保存失败，请重试' })
+            getTree()
         }
     }
     const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
