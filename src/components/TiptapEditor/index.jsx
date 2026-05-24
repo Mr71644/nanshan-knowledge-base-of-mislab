@@ -22,6 +22,10 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
     const [contextMenu, setContextMenu] = useState(null)
     const menuRef = useRef(null)
     const [headings, setHeadings] = useState([])
+    const [outlineWidth, setOutlineWidth] = useState(280)
+    const resizingRef = useRef(false)
+    const startXRef = useRef(0)
+    const startWidthRef = useRef(0)
 
     const editor = useEditor({
         extensions: [
@@ -159,6 +163,33 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
         }
     }
 
+    const handleResizeStart = (e) => {
+        e.preventDefault()
+        resizingRef.current = true
+        startXRef.current = e.clientX
+        startWidthRef.current = outlineWidth
+
+        const handleResizeMove = (e) => {
+            if (!resizingRef.current) return
+            const diff = startXRef.current - e.clientX
+            const newWidth = Math.max(200, Math.min(500, startWidthRef.current + diff))
+            setOutlineWidth(newWidth)
+        }
+
+        const handleResizeEnd = () => {
+            resizingRef.current = false
+            document.removeEventListener('mousemove', handleResizeMove)
+            document.removeEventListener('mouseup', handleResizeEnd)
+            document.body.style.cursor = ''
+            document.body.style.userSelect = ''
+        }
+
+        document.body.style.cursor = 'col-resize'
+        document.body.style.userSelect = 'none'
+        document.addEventListener('mousemove', handleResizeMove)
+        document.addEventListener('mouseup', handleResizeEnd)
+    }
+
     return (
         <div className={`${style.tiptapEditor} ${fullHeight ? style.tiptapEditorFlex : ''}`}>
             {editable && <EditorToolbar editor={editor} />}
@@ -167,7 +198,11 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
                     <EditorContent editor={editor} className={`${style.tiptapContent} ${fullHeight ? style.tiptapContentFlex : ''}`} />
                 </div>
                 {headings.length > 0 && (
-                    <div className={style.outline}>
+                    <div className={style.outline} style={{ width: outlineWidth }}>
+                        <div
+                            className={style.outlineResizeHandle}
+                            onMouseDown={handleResizeStart}
+                        />
                         <div className={style.outlineTitle}>大纲</div>
                         {headings.map((h, i) => (
                             <div

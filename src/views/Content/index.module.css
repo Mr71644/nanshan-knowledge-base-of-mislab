@@ -48,6 +48,12 @@
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   padding: 16px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.contentPreview::-webkit-scrollbar {
+  display: none;
 }
 
 .contentPreview h1 {
@@ -136,6 +142,10 @@
 
 .contentPreview a {
   color: #1890ff;
+}
+
+.previewLayout {
+  overflow: hidden;
 }
 
 .articleHeader {
