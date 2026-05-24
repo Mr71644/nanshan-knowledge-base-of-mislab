@@ -1,19 +1,4 @@
-import { getToken } from './token'
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
-
-function extractFilename(headers, fallbackName = 'download') {
-    const disposition = headers.get('Content-Disposition')
-    if (!disposition) return fallbackName
-
-    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i)
-    if (utf8Match) return decodeURIComponent(utf8Match[1])
-
-    const match = disposition.match(/filename="([^"]+)"/)
-    if (match) return match[1]
-
-    return fallbackName
-}
+import { request } from '@/utils'
 
 function triggerBrowserDownload(blob, filename) {
     const url = URL.createObjectURL(blob)
@@ -27,47 +12,20 @@ function triggerBrowserDownload(blob, filename) {
 }
 
 export async function downloadSingle(status, id, name) {
-    const token = getToken()
-    const url = `${BASE_URL}/document/download/${status}/${id}`
-
-    const response = await fetch(url, {
+    const blob = await request({
+        url: `/document/download/${status}/${id}`,
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
+        responseType: 'blob',
     })
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            window.location.hash = '/login'
-        }
-        throw new Error(`下载失败: ${response.status}`)
-    }
-
-    const filename = extractFilename(response.headers, name || `document_${id}`)
-    const blob = await response.blob()
-    triggerBrowserDownload(blob, filename)
+    triggerBrowserDownload(blob, name || `document_${id}`)
 }
 
 export async function downloadBatch(archiveName, items) {
-    const token = getToken()
-    const url = `${BASE_URL}/document/download/batch`
-
-    const response = await fetch(url, {
+    const blob = await request({
+        url: '/document/download/batch',
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ archiveName, items })
+        responseType: 'blob',
+        data: { archiveName, items }
     })
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            window.location.hash = '/login'
-        }
-        throw new Error(`批量下载失败: ${response.status}`)
-    }
-
-    const filename = extractFilename(response.headers, `${archiveName}.zip`)
-    const blob = await response.blob()
-    triggerBrowserDownload(blob, filename)
+    triggerBrowserDownload(blob, `${archiveName}.zip`)
 }
