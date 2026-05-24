@@ -565,7 +565,7 @@ const Home = () => {
                         color: '#1677ff'
                     }} /> : (
                         <>
-                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                            <span className={style.logoTitle}>甘蔗育种中心-ZhangLab</span>
                             <Space size={4} className={style.logoActions}>
                                 <Tooltip title="展开全部">
                                     <Button type="text" size="small" onClick={handleExpandAll}
