@@ -14,5 +14,14 @@ export default defineConfig({
             }
         ]
     },
-    base: './'
+    base: './',
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://101.43.146.27/new-app/api',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, '')
+            }
+        }
+    }
 })
