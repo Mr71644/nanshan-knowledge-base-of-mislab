@@ -15,7 +15,7 @@ import style from './index.module.css'
 
 const lowlight = createLowlight(common)
 
-const TiptapEditor = ({ content, editable = true, onChange, folderId, onError }) => {
+const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, fullHeight }) => {
     const lastEditorMd = useRef(content)
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange
@@ -131,9 +131,9 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError })
     if (!editor) return null
 
     return (
-        <div className={style.tiptapEditor}>
+        <div className={`${style.tiptapEditor} ${fullHeight ? style.tiptapEditorFlex : ''}`}>
             {editable && <EditorToolbar editor={editor} />}
-            <EditorContent editor={editor} className={style.tiptapContent} />
+            <EditorContent editor={editor} className={`${style.tiptapContent} ${fullHeight ? style.tiptapContentFlex : ''}`} />
             {contextMenu && (
                 <div
                     ref={menuRef}
