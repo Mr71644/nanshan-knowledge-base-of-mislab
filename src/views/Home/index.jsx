@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -625,18 +625,6 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-            <Tooltip title="退出登录" placement="left">
-                <FloatButton
-                    icon={<LogoutOutlined />}
-                    type='primary'
-                    onClick={exit}
-                    danger
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                    }}
-                />
-            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -731,40 +719,52 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <Space size={50} style={{
-                            marginTop: 20
+                        <div style={{
+                            marginTop: 20,
+                            display: 'flex',
+                            alignItems: 'center',
                         }}>
-                            <MemoAddNewFile></MemoAddNewFile>
-                            <UploadFile></UploadFile>
+                            <Space size={50}>
+                                <MemoAddNewFile></MemoAddNewFile>
+                                <UploadFile></UploadFile>
+                                <Button
+                                    className={style.authority}
+                                    onClick={handleOpenModal}>
+                                    <IdcardOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>用户信息修改</span>
+                                </Button>
+                                {
+                                    userInfo.isAdministrator ?
+                                        <Button
+                                            className={style.authority}
+                                            onClick={() => navigate('/administrator')}>
+                                            <UserOutlined />
+                                            <span style={{
+                                                fontSize: '16px'
+                                            }}>权限管理入口</span>
+                                        </Button>
+                                        : null
+                                }
+                                <Button
+                                    className={style.authority}
+                                    onClick={() => setRecycleBinOpen(true)}>
+                                    <DeleteOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>回收站</span>
+                                </Button>
+                            </Space>
                             <Button
-                                className={style.authority}
-                                onClick={handleOpenModal}>
-                                <IdcardOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>用户信息修改</span>
+                                danger
+                                onClick={exit}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                <LogoutOutlined />
+                                <span style={{ fontSize: '16px' }}>退出登录</span>
                             </Button>
-                            {
-                                userInfo.isAdministrator ?
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => navigate('/administrator')}>
-                                        <UserOutlined />
-                                        <span style={{
-                                            fontSize: '16px'
-                                        }}>权限管理入口</span>
-                                    </Button>
-                                    : null
-                            }
-                            <Button
-                                className={style.authority}
-                                onClick={() => setRecycleBinOpen(true)}>
-                                <DeleteOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>回收站</span>
-                            </Button>
-                        </Space>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{
