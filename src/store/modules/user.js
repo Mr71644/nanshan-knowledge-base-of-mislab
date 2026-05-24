@@ -10,7 +10,7 @@ const userStore = createSlice({
     // 同步修改方法
     reducers: {
         setToken(state, action) {
-            state.userInfo = action.payload
+            state.token = action.payload
             _setToken(action.payload)
         },
         clearUserInfo(state) {
