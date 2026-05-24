@@ -83,13 +83,31 @@
 /* ===== 大纲 ===== */
 
 .outline {
-  width: 200px;
+  width: 280px;
+  min-width: 200px;
+  max-width: 500px;
   flex-shrink: 0;
   padding: 16px 12px;
   border-left: 1px solid #f0f0f0;
   background: #fafafa;
   overflow-y: auto;
   font-size: 13px;
+  position: relative;
+}
+
+.outlineResizeHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 1;
+}
+
+.outlineResizeHandle:hover,
+.outlineResizeHandle:active {
+  background: #1677ff;
 }
 
 .outlineTitle {

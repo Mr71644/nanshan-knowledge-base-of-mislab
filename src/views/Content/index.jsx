@@ -260,7 +260,7 @@ const Area = () => {
                                         </div>
                                     </div>
                                     :
-                                    <>
+                                    <div className={style.previewLayout}>
                                         <div className={style.articleHeader}>
                                             <h1>{title.current}</h1>
                                             <h2>作者：{author.current}</h2>
@@ -279,7 +279,7 @@ const Area = () => {
                                                 <TiptapEditor content={value} editable={false} />
                                             </div>
                                         )}
-                                    </>
+                                    </div>
 
                             )
                     }
