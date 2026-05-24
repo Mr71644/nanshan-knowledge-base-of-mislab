@@ -675,7 +675,6 @@ const Home = () => {
                                 style={{ marginLeft: 'auto' }}
                             >
                                 <LogoutOutlined />
-                                <span style={{ fontSize: '16px' }}>退出登录</span>
                             </Button>
                         </div>
                     </ConfigProvider>
