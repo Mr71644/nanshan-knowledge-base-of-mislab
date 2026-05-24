@@ -35,6 +35,9 @@ const EditorToolbar = ({ editor }) => {
     const [, forceRender] = useState(0)
     const [formatPainter, setFormatPainter] = useState(null)
     const painterTimerRef = useRef(null)
+    const [tablePicker, setTablePicker] = useState(false)
+    const [tableHover, setTableHover] = useState({ rows: 0, cols: 0 })
+    const tablePickerRef = useRef(null)
 
     const deactivateFormatPainter = () => {
         setFormatPainter(null)
@@ -94,6 +97,16 @@ const EditorToolbar = ({ editor }) => {
         return () => { dom.removeEventListener('keydown', handleKeyDown) }
     }, [editor, formatPainter])
 
+    useEffect(() => {
+        if (!tablePicker) return
+        const close = (e) => {
+            if (tablePickerRef.current?.contains(e.target)) return
+            setTablePicker(false)
+        }
+        document.addEventListener('mousedown', close)
+        return () => { document.removeEventListener('mousedown', close) }
+    }, [tablePicker])
+
     if (!editor) return null
 
     const handleClick = (button) => {
@@ -132,9 +145,6 @@ const EditorToolbar = ({ editor }) => {
                 break
             case 'bulletList':
                 chain.toggleBulletList().run()
-                break
-            case 'table':
-                chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
                 break
             case 'blockquote':
                 chain.toggleBlockquote().run()
@@ -246,6 +256,50 @@ const EditorToolbar = ({ editor }) => {
                                 >
                                     {button.icon}
                                 </Button>
+                            </Tooltip>
+                        )
+                    }
+                    if (button.command === 'table') {
+                        return (
+                            <Tooltip key={index} title="表格">
+                                <div ref={tablePickerRef} style={{ position: 'relative', display: 'inline-block' }}>
+                                    <Button
+                                        type={tablePicker ? 'primary' : 'text'}
+                                        size="small"
+                                        onClick={() => setTablePicker(v => !v)}
+                                        className={`${style.toolbarButton} ${tablePicker ? style.toolbarButtonActive : ''}`}
+                                    >
+                                        {button.icon}
+                                    </Button>
+                                    {tablePicker && (
+                                        <div className={style.tablePicker}>
+                                            <div className={style.tablePickerLabel}>
+                                                {tableHover.rows > 0 ? `${tableHover.rows} × ${tableHover.cols}` : '选择表格大小'}
+                                            </div>
+                                            <div
+                                                className={style.tablePickerGrid}
+                                                onMouseLeave={() => setTableHover({ rows: 0, cols: 0 })}
+                                            >
+                                                {Array.from({ length: 6 }, (_, r) =>
+                                                    Array.from({ length: 8 }, (_, c) => (
+                                                        <div
+                                                            key={`${r}-${c}`}
+                                                            className={`${style.tablePickerCell} ${r < tableHover.rows && c < tableHover.cols ? style.tablePickerCellActive : ''}`}
+                                                            onMouseEnter={() => setTableHover({ rows: r + 1, cols: c + 1 })}
+                                                            onClick={() => {
+                                                                editor.chain().focus()
+                                                                    .insertTable({ rows: r + 1, cols: c + 1, withHeaderRow: true })
+                                                                    .run()
+                                                                setTablePicker(false)
+                                                                setTableHover({ rows: 0, cols: 0 })
+                                                            }}
+                                                        />
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </Tooltip>
                         )
                     }

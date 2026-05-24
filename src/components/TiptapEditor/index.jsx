@@ -21,6 +21,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
     onChangeRef.current = onChange
     const [contextMenu, setContextMenu] = useState(null)
     const menuRef = useRef(null)
+    const [headings, setHeadings] = useState([])
 
     const editor = useEditor({
         extensions: [
@@ -70,6 +71,22 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
             editor.setEditable(editable)
         }
     }, [editable, editor])
+
+    useEffect(() => {
+        if (!editor) return
+        const extract = () => {
+            const items = []
+            editor.state.doc.descendants((node, pos) => {
+                if (node.type.name === 'heading') {
+                    items.push({ level: node.attrs.level, text: node.textContent, pos })
+                }
+            })
+            setHeadings(items)
+        }
+        extract()
+        editor.on('update', extract)
+        return () => { editor.off('update', extract) }
+    }, [editor])
 
     useEffect(() => {
         if (!editor || !editable) return
@@ -130,10 +147,41 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
 
     if (!editor) return null
 
+    const scrollToHeading = (pos) => {
+        const coords = editor.view.coordsAtPos(pos)
+        const container = editor.view.dom.closest('.tiptapContent') || editor.view.dom.parentElement
+        if (container) {
+            const containerRect = container.getBoundingClientRect()
+            container.scrollTo({
+                top: container.scrollTop + coords.top - containerRect.top - containerRect.height / 3,
+                behavior: 'smooth',
+            })
+        }
+    }
+
     return (
         <div className={`${style.tiptapEditor} ${fullHeight ? style.tiptapEditorFlex : ''}`}>
             {editable && <EditorToolbar editor={editor} />}
-            <EditorContent editor={editor} className={`${style.tiptapContent} ${fullHeight ? style.tiptapContentFlex : ''}`} />
+            <div className={style.editorBody}>
+                <div className={style.editorMain}>
+                    <EditorContent editor={editor} className={`${style.tiptapContent} ${fullHeight ? style.tiptapContentFlex : ''}`} />
+                </div>
+                {headings.length > 0 && (
+                    <div className={style.outline}>
+                        <div className={style.outlineTitle}>大纲</div>
+                        {headings.map((h, i) => (
+                            <div
+                                key={i}
+                                className={`${style.outlineItem} ${style[`outlineH${h.level}`]}`}
+                                onClick={() => scrollToHeading(h.pos)}
+                                title={h.text}
+                            >
+                                {h.text || '空标题'}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
             {contextMenu && (
                 <div
                     ref={menuRef}
