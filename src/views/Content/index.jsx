@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useEffect } from 'react'
 import { theme, Layout, Form, Input, Spin, FloatButton, Tooltip, Modal } from 'antd'
-import { HighlightOutlined, RollbackOutlined, SaveOutlined, WarningOutlined, LoadingOutlined } from '@ant-design/icons'
+import { HighlightOutlined, RollbackOutlined, SaveOutlined, WarningOutlined, LoadingOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
@@ -26,6 +26,7 @@ const Area = () => {
     const [isLegacyHtml, setIsLegacyHtml] = useState(false)
     const [isMigrating, setIsMigrating] = useState(false)
     const [showMigrateModal, setShowMigrateModal] = useState(false)
+    const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
@@ -205,45 +206,59 @@ const Area = () => {
                         isLoading ? <Spin size='large' className={style.spin} /> :
                             (
                                 isEdit ?
-                                    <>
-                                        <Form
-                                            className={style.editBox}
-                                            initialValues={{ title: title.current, author: author.current }}
-                                            validateTrigger='onChange'
-                                        >
-                                            <Form.Item
-                                                name='title'
-                                                label='文章名称'
-                                                rules={[() => ({
-                                                    validator(_, value) {
-                                                        title.current = value
-                                                        return Promise.resolve()
-                                                    }
-                                                })]}
+                                    <div className={style.editLayout}>
+                                        <div className={style.editHeader}>
+                                            <div
+                                                className={style.editHeaderToggle}
+                                                onClick={() => setHeaderCollapsed(c => !c)}
                                             >
-                                                <Input size='large' style={{ width: '90%' }}></Input>
-                                            </Form.Item>
-                                            <Form.Item
-                                                name='author'
-                                                label='文章作者'
-                                                rules={[() => ({
-                                                    validator(_, value) {
-                                                        author.current = value
-                                                        return Promise.resolve()
-                                                    }
-                                                })]}
-                                            >
-                                                <Input size='large' style={{ width: '90%' }}></Input>
-                                            </Form.Item>
-                                        </Form >
-                                        <TiptapEditor
-                                            content={value}
-                                            editable={true}
-                                            onChange={setValue}
-                                            folderId={param.folder}
-                                            onError={(msg) => error({ content: msg, delayTime: 3000 })}
-                                        />
-                                    </>
+                                                {headerCollapsed ? <DownOutlined /> : <UpOutlined />}
+                                                <span>{headerCollapsed ? '展开信息' : '收起信息'}</span>
+                                            </div>
+                                            {!headerCollapsed && (
+                                                <Form
+                                                    className={style.editBox}
+                                                    initialValues={{ title: title.current, author: author.current }}
+                                                    validateTrigger='onChange'
+                                                >
+                                                    <Form.Item
+                                                        name='title'
+                                                        label='文章名称'
+                                                        rules={[() => ({
+                                                            validator(_, value) {
+                                                                title.current = value
+                                                                return Promise.resolve()
+                                                            }
+                                                        })]}
+                                                    >
+                                                        <Input size='large' style={{ width: '90%' }}></Input>
+                                                    </Form.Item>
+                                                    <Form.Item
+                                                        name='author'
+                                                        label='文章作者'
+                                                        rules={[() => ({
+                                                            validator(_, value) {
+                                                                author.current = value
+                                                                return Promise.resolve()
+                                                            }
+                                                        })]}
+                                                    >
+                                                        <Input size='large' style={{ width: '90%' }}></Input>
+                                                    </Form.Item>
+                                                </Form>
+                                            )}
+                                        </div>
+                                        <div className={style.editContent}>
+                                            <TiptapEditor
+                                                content={value}
+                                                editable={true}
+                                                onChange={setValue}
+                                                folderId={param.folder}
+                                                onError={(msg) => error({ content: msg, delayTime: 3000 })}
+                                                fullHeight
+                                            />
+                                        </div>
+                                    </div>
                                     :
                                     <>
                                         <div className={style.articleHeader}>
