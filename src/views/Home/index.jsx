@@ -18,7 +18,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { request } from '@/utils';  // 页面开始前初始化store，不可删，需要在引入store前引入
 import { showMessage } from '@/store/modules/message';
 import { clearUserInfo } from '@/store/modules/user';
-import { clearToken } from '@/utils';
+
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
 import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
@@ -128,10 +128,17 @@ const Home = () => {
         maxCount: 1
     })
     const exit = () => {
-        dispatch(showMessage({ message: '退出成功', type: 'success' }))
-        dispatch(clearUserInfo())
-        clearToken()
-        navigate('/login')
+        Modal.confirm({
+            title: '确认退出',
+            content: '确定要退出登录吗？',
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+                dispatch(showMessage({ message: '退出成功', type: 'success' }))
+                dispatch(clearUserInfo())
+                navigate('/login')
+            }
+        })
     }
     const handleOpenModal = () => {
         form.setFieldsValue({
@@ -523,11 +530,12 @@ const Home = () => {
     }, [])
 
     useEffect(() => {
-        if (userInfo.username) {
+        if (userInfo.username && !sessionStorage.getItem('welcome_dismissed')) {
             api.open({
                 message: `欢迎您，${userInfo.username}！`,
                 description: `您的角色：${userInfo.roleName?.join('、')}`,
                 duration: false,
+                onClose: () => sessionStorage.setItem('welcome_dismissed', 'true')
             });
         }
     }, [userInfo.username])

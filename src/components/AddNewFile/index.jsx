@@ -73,17 +73,17 @@ const AddNewFile = () => {
     };
     const items = [
         {
-            label: '在线文档',
+            label: '新建文档',
             key: '1',
             icon: <FileMarkdownOutlined />
         },
         {
-            label: '在线Excel',
+            label: '新建Excel',
             key: '2',
             icon: <FileExcelOutlined />
         },
         {
-            label: '文件夹',
+            label: '新建文件夹',
             key: '3',
             icon: <FolderOpenOutlined />
         }
