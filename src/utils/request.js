@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getToken, clearToken } from './token'
+import { getToken } from './token'
 import store from '@/store'
 import { clearUserInfo } from '@/store/modules/user'
 import { showMessage } from '@/store/modules/message'
@@ -33,7 +33,6 @@ request.interceptors.response.use((response) => {
     if (error.response && error.response.status === 401) {
         // 清理 redux store 与 token 存储
         store.dispatch(clearUserInfo())
-        clearToken()
         // 在全局 message reducer 中展示提示（组件内也常用 useMessage）
         store.dispatch(showMessage({ message: '未登录或登录已过期，请重新登录', type: 'warn' }))
         // 使用 hash 路由时直接设置 location.hash 跳转登录
