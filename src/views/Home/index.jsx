@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -11,7 +11,6 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  * - 全局退出逻辑会清除 token 并重定向到 `/login`
  */
 import { UploadFile } from '@/components/UploadFile';
-import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.css'
 import { useSelector, useDispatch } from 'react-redux';
@@ -21,7 +20,7 @@ import { clearUserInfo } from '@/store/modules/user';
 
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
-import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
+import { sortTreeItems } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
@@ -112,7 +111,6 @@ const Home = () => {
     const [siderWidth, setSiderWidth] = useState(320);
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [recycleBinOpen, setRecycleBinOpen] = useState(false);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
 
@@ -336,108 +334,34 @@ const Home = () => {
             navigate(key)
         }
     }
-    const isDescendant = (tree, folderId, target) => {
-        const findNode = (data, id) => {
-            for (const item of data) {
-                if (item.id === id && item.status === 2) return item
-                if (item.children) {
-                    const found = findNode(item.children, id)
-                    if (found) return found
-                }
-            }
-            return null
-        }
-        const isInSubtree = (node, t) => {
-            if (!node) return false
-            if (node.id === t.id && node.status === t.status) return true
-            if (node.children) return node.children.some(child => isInSubtree(child, t))
-            return false
-        }
-        const folderNode = findNode(tree, folderId)
-        return isInSubtree(folderNode, target)
-    }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
-
-        // 放在节点上：仅允许目标是文件夹（移入该文件夹）
-        if (dropPosition === 0) {
-            return dropItem.status === 2
-        }
-
-        // 防循环：拖拽文件夹时，禁止拖入自身子树
-        if (dragItem.status === 2 && isDescendant(folderTree, dragItem.id, dropItem)) {
-            return false
-        }
-
-        return true
+        if (dropPosition === 0) return false
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        return dragParentId === dropParentId
     }
     const handleDrop = async (info) => {
         const dragNode = info.dragNode
         const dropNode = info.node
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
 
-        const dragFolderId = dragItem.folderId ?? null
-        const dropFolderId = dropItem.folderId ?? null
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        if (dragParentId !== dropParentId) return
 
-        const findFolderName = (tree, targetFolderId) => {
-            if (targetFolderId === null || targetFolderId === undefined) return '根目录'
-            for (const item of tree) {
-                if (String(item.id) === String(targetFolderId) && item.status === 2) return item.name
-                if (item.children) {
-                    const found = findFolderName(item.children, targetFolderId)
-                    if (found) return found
-                }
-            }
-            return null
-        }
+        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
+        SetFolderTree(newTreeData)
 
-        const doMove = async (targetFolderId) => {
-            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, targetFolderId)
-            SetFolderTree(newTreeData)
-            try {
-                await moveTreeItem(dragItem.id, dragItem.status, targetFolderId)
-            } catch (e) {
-                error({ content: '移动失败，请重试' })
-                getTree()
-            }
-        }
+        const siblings = findSiblingsByParentId(newTreeData, dropParentId)
+        const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
 
-        if (!info.dropToGap && dropItem.status === 2) {
-            // 情况 A：拖入文件夹（移入目标文件夹）
-            Modal.confirm({
-                title: '确认移动',
-                content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => doMove(dropItem.id)
-            })
-        } else if (String(dragFolderId) === String(dropFolderId)) {
-            // 情况 B：同层排序（无需确认）
-            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
-            SetFolderTree(newTreeData)
-            const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
-            const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
-            try {
-                await sortTreeItems(dropFolderId, orderedIds)
-            } catch (e) {
-                error({ content: '排序保存失败，请重试' })
-                getTree()
-            }
-        } else {
-            // 情况 C：跨层 gap drop（移到目标节点所在层级）
-            const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
-            Modal.confirm({
-                title: '确认移动',
-                content: `确定将「${dragItem.name}」移动到「${targetFolderName}」吗？`,
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => doMove(dropFolderId)
-            })
+        try {
+            await sortTreeItems(dropParentId, orderedIds)
+        } catch (e) {
+            error({ content: '排序保存失败，请重试' })
+            getTree()
         }
     }
-    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
         // 通过 key 查找并操作节点
@@ -491,15 +415,12 @@ const Home = () => {
             }
         }
 
-        // 更新移动节点的 folderId，确保后续拖拽时 case 判断正确
-        dragObj.folderId = newParentFolderId
-
         return newTreeData
     }
     const findSiblingsByParentId = (treeData, parentFolderId) => {
-        if (parentFolderId === null || parentFolderId === undefined) return treeData
+        if (parentFolderId === null) return treeData
         for (const item of treeData) {
-            if (String(item.id) === String(parentFolderId)) return item.children || []
+            if (item.id === parentFolderId) return item.children || []
             if (item.children) {
                 const found = findSiblingsByParentId(item.children, parentFolderId)
                 if (found.length > 0) return found
@@ -625,18 +546,6 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-            <Tooltip title="退出登录" placement="left">
-                <FloatButton
-                    icon={<LogoutOutlined />}
-                    type='primary'
-                    onClick={exit}
-                    danger
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                    }}
-                />
-            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -656,7 +565,7 @@ const Home = () => {
                         color: '#1677ff'
                     }} /> : (
                         <>
-                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                            <span className={style.logoTitle}>甘蔗育种中心-ZhangLab</span>
                             <Space size={4} className={style.logoActions}>
                                 <Tooltip title="展开全部">
                                     <Button type="text" size="small" onClick={handleExpandAll}
@@ -731,40 +640,43 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <Space size={50} style={{
-                            marginTop: 20
+                        <div style={{
+                            marginTop: 20,
+                            display: 'flex',
+                            alignItems: 'center',
                         }}>
-                            <MemoAddNewFile></MemoAddNewFile>
-                            <UploadFile></UploadFile>
+                            <Space size={50}>
+                                <MemoAddNewFile></MemoAddNewFile>
+                                <UploadFile></UploadFile>
+                                <Button
+                                    className={style.authority}
+                                    onClick={handleOpenModal}>
+                                    <IdcardOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>用户信息修改</span>
+                                </Button>
+                                {
+                                    userInfo.isAdministrator ?
+                                        <Button
+                                            className={style.authority}
+                                            onClick={() => navigate('/administrator')}>
+                                            <UserOutlined />
+                                            <span style={{
+                                                fontSize: '16px'
+                                            }}>权限管理入口</span>
+                                        </Button>
+                                        : null
+                                }
+                            </Space>
                             <Button
-                                className={style.authority}
-                                onClick={handleOpenModal}>
-                                <IdcardOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>用户信息修改</span>
+                                danger
+                                onClick={exit}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                <LogoutOutlined />
                             </Button>
-                            {
-                                userInfo.isAdministrator ?
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => navigate('/administrator')}>
-                                        <UserOutlined />
-                                        <span style={{
-                                            fontSize: '16px'
-                                        }}>权限管理入口</span>
-                                    </Button>
-                                    : null
-                            }
-                            <Button
-                                className={style.authority}
-                                onClick={() => setRecycleBinOpen(true)}>
-                                <DeleteOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>回收站</span>
-                            </Button>
-                        </Space>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{
@@ -777,7 +689,6 @@ const Home = () => {
                     </div>
                 </Content>
             </Layout>
-            <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
     );
 }
