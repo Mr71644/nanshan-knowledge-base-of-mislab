@@ -1,7 +1,7 @@
-import { memo, useEffect, useRef, useState, useCallback } from 'react'
+import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -17,10 +17,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { request } from '@/utils';  // 页面开始前初始化store，不可删，需要在引入store前引入
 import { showMessage } from '@/store/modules/message';
 import { clearUserInfo } from '@/store/modules/user';
-import { clearToken } from '@/utils';
+
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
-import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
+import { sortTreeItems } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
@@ -67,6 +67,33 @@ const findParentKeysByTargetKey = (tree = [], targetKey, parentKeys = []) => {
     return []
 }
 
+const walkFilter = (items, keyword, parentKeys = []) => {
+    let matchKeys = new Set()
+    let ancestorKeys = new Set()
+
+    for (const item of items) {
+        const key = getMenuKeyByItem(item)
+        const currentParentKeys = item.status === 2 ? [...parentKeys, key] : parentKeys
+        const nameMatch = item.name.toLowerCase().includes(keyword)
+
+        if (item.children && item.children.length > 0) {
+            const childResult = walkFilter(item.children, keyword, currentParentKeys)
+            if (nameMatch || childResult.matchKeys.size > 0) {
+                if (nameMatch) matchKeys.add(key)
+                matchKeys = new Set([...matchKeys, ...childResult.matchKeys])
+                ancestorKeys = new Set([...ancestorKeys, ...currentParentKeys, ...childResult.ancestorKeys])
+            }
+        } else {
+            if (nameMatch) {
+                matchKeys.add(key)
+                ancestorKeys = new Set([...ancestorKeys, ...currentParentKeys])
+            }
+        }
+    }
+
+    return { matchKeys, ancestorKeys }
+}
+
 const Home = () => {
     const {
         token: { colorBgContainer, borderRadiusLG },
@@ -85,16 +112,31 @@ const Home = () => {
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
+    const [searchText, setSearchText] = useState('')
+
+    const { filteredMatchKeys, searchExpandedKeys } = useMemo(() => {
+        const trimmed = searchText.trim().toLowerCase()
+        if (!trimmed) return { filteredMatchKeys: new Set(), searchExpandedKeys: null }
+        const { matchKeys, ancestorKeys } = walkFilter(folderTree, trimmed, [])
+        return { filteredMatchKeys: matchKeys, searchExpandedKeys: ancestorKeys }
+    }, [searchText, folderTree])
     const { message, type, visible } = useSelector(state => state.message)
     const { success, error, contextHolder } = useMessage()
     const [api, contextHolderNotification] = notification.useNotification({
         maxCount: 1
     })
     const exit = () => {
-        dispatch(showMessage({ message: '退出成功', type: 'success' }))
-        dispatch(clearUserInfo())
-        clearToken()
-        navigate('/login')
+        Modal.confirm({
+            title: '确认退出',
+            content: '确定要退出登录吗？',
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+                dispatch(showMessage({ message: '退出成功', type: 'success' }))
+                dispatch(clearUserInfo())
+                navigate('/login')
+            }
+        })
     }
     const handleOpenModal = () => {
         form.setFieldsValue({
@@ -234,9 +276,42 @@ const Home = () => {
     }
     const renderTitle = (nodeData) => {
         const item = nodeData.rawData
+        const key = nodeData.key
+        const trimmed = searchText.trim()
+        const isSearching = trimmed.length > 0
+        const isMatch = filteredMatchKeys.has(key)
+        const isAncestorOrSelf = searchExpandedKeys && searchExpandedKeys.has(key)
+
+        let titleContent
+        if (isSearching && isMatch) {
+            const lowerName = item.name.toLowerCase()
+            const lowerKeyword = trimmed.toLowerCase()
+            const parts = []
+            let lastIndex = 0
+            let idx = lowerName.indexOf(lowerKeyword)
+            while (idx !== -1) {
+                if (idx > lastIndex) parts.push(item.name.slice(lastIndex, idx))
+                parts.push(
+                    <span key={idx} className={style.searchHighlight}>
+                        {item.name.slice(idx, idx + trimmed.length)}
+                    </span>
+                )
+                lastIndex = idx + trimmed.length
+                idx = lowerName.indexOf(lowerKeyword, lastIndex)
+            }
+            if (lastIndex < item.name.length) parts.push(item.name.slice(lastIndex))
+            titleContent = parts
+        } else {
+            titleContent = item.name
+        }
+
+        const dimmed = isSearching && !isMatch && !isAncestorOrSelf
+
         return (
             <Tooltip title={item.name}>
-                <span>{item.name}</span>
+                <span className={dimmed ? style.treeNodeDimmed : undefined}>
+                    {titleContent}
+                </span>
             </Tooltip>
         )
     }
@@ -259,108 +334,34 @@ const Home = () => {
             navigate(key)
         }
     }
-    const isDescendant = (tree, folderId, target) => {
-        const findNode = (data, id) => {
-            for (const item of data) {
-                if (item.id === id && item.status === 2) return item
-                if (item.children) {
-                    const found = findNode(item.children, id)
-                    if (found) return found
-                }
-            }
-            return null
-        }
-        const isInSubtree = (node, t) => {
-            if (!node) return false
-            if (node.id === t.id && node.status === t.status) return true
-            if (node.children) return node.children.some(child => isInSubtree(child, t))
-            return false
-        }
-        const folderNode = findNode(tree, folderId)
-        return isInSubtree(folderNode, target)
-    }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
-
-        // 放在节点上：仅允许目标是文件夹（移入该文件夹）
-        if (dropPosition === 0) {
-            return dropItem.status === 2
-        }
-
-        // 防循环：拖拽文件夹时，禁止拖入自身子树
-        if (dragItem.status === 2 && isDescendant(folderTree, dragItem.id, dropItem)) {
-            return false
-        }
-
-        return true
+        if (dropPosition === 0) return false
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        return dragParentId === dropParentId
     }
     const handleDrop = async (info) => {
         const dragNode = info.dragNode
         const dropNode = info.node
-        const dragItem = dragNode.rawData
-        const dropItem = dropNode.rawData
 
-        const dragFolderId = dragItem.folderId ?? null
-        const dropFolderId = dropItem.folderId ?? null
+        const dragParentId = dragNode.rawData?.folderId ?? null
+        const dropParentId = dropNode.rawData?.folderId ?? null
+        if (dragParentId !== dropParentId) return
 
-        const findFolderName = (tree, targetFolderId) => {
-            if (targetFolderId === null || targetFolderId === undefined) return '根目录'
-            for (const item of tree) {
-                if (String(item.id) === String(targetFolderId) && item.status === 2) return item.name
-                if (item.children) {
-                    const found = findFolderName(item.children, targetFolderId)
-                    if (found) return found
-                }
-            }
-            return null
-        }
+        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
+        SetFolderTree(newTreeData)
 
-        const doMove = async (targetFolderId) => {
-            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, targetFolderId)
-            SetFolderTree(newTreeData)
-            try {
-                await moveTreeItem(dragItem.id, dragItem.status, targetFolderId)
-            } catch (e) {
-                error({ content: '移动失败，请重试' })
-                getTree()
-            }
-        }
+        const siblings = findSiblingsByParentId(newTreeData, dropParentId)
+        const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
 
-        if (!info.dropToGap && dropItem.status === 2) {
-            // 情况 A：拖入文件夹（移入目标文件夹）
-            Modal.confirm({
-                title: '确认移动',
-                content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => doMove(dropItem.id)
-            })
-        } else if (String(dragFolderId) === String(dropFolderId)) {
-            // 情况 B：同层排序（无需确认）
-            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
-            SetFolderTree(newTreeData)
-            const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
-            const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
-            try {
-                await sortTreeItems(dropFolderId, orderedIds)
-            } catch (e) {
-                error({ content: '排序保存失败，请重试' })
-                getTree()
-            }
-        } else {
-            // 情况 C：跨层 gap drop（移到目标节点所在层级）
-            const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
-            Modal.confirm({
-                title: '确认移动',
-                content: `确定将「${dragItem.name}」移动到「${targetFolderName}」吗？`,
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => doMove(dropFolderId)
-            })
+        try {
+            await sortTreeItems(dropParentId, orderedIds)
+        } catch (e) {
+            error({ content: '排序保存失败，请重试' })
+            getTree()
         }
     }
-    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
         // 通过 key 查找并操作节点
@@ -414,15 +415,12 @@ const Home = () => {
             }
         }
 
-        // 更新移动节点的 folderId，确保后续拖拽时 case 判断正确
-        dragObj.folderId = newParentFolderId
-
         return newTreeData
     }
     const findSiblingsByParentId = (treeData, parentFolderId) => {
-        if (parentFolderId === null || parentFolderId === undefined) return treeData
+        if (parentFolderId === null) return treeData
         for (const item of treeData) {
-            if (String(item.id) === String(parentFolderId)) return item.children || []
+            if (item.id === parentFolderId) return item.children || []
             if (item.children) {
                 const found = findSiblingsByParentId(item.children, parentFolderId)
                 if (found.length > 0) return found
@@ -453,11 +451,12 @@ const Home = () => {
     }, [])
 
     useEffect(() => {
-        if (userInfo.username) {
+        if (userInfo.username && !sessionStorage.getItem('welcome_dismissed')) {
             api.open({
                 message: `欢迎您，${userInfo.username}！`,
                 description: `您的角色：${userInfo.roleName?.join('、')}`,
                 duration: false,
+                onClose: () => sessionStorage.setItem('welcome_dismissed', 'true')
             });
         }
     }, [userInfo.username])
@@ -547,18 +546,6 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-            <Tooltip title="退出登录" placement="left">
-                <FloatButton
-                    icon={<LogoutOutlined />}
-                    type='primary'
-                    onClick={exit}
-                    danger
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                    }}
-                />
-            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -578,7 +565,7 @@ const Home = () => {
                         color: '#1677ff'
                     }} /> : (
                         <>
-                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                            <span className={style.logoTitle}>甘蔗育种中心-ZhangLab</span>
                             <Space size={4} className={style.logoActions}>
                                 <Tooltip title="展开全部">
                                     <Button type="text" size="small" onClick={handleExpandAll}
@@ -592,12 +579,24 @@ const Home = () => {
                         </>
                     )}
                 </div>
+                {!collapsed && (
+                    <div className={style.treeSearchBox}>
+                        <Input
+                            placeholder="搜索文件/文件夹"
+                            allowClear
+                            suffix={<SearchOutlined />}
+                            size="small"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+                )}
                 <Tree
                     showIcon
                     blockNode
                     showLine={{ showLeafIcon: false }}
                     treeData={transformToTreeData(folderTree)}
-                    expandedKeys={openKeys}
+                    expandedKeys={searchExpandedKeys ? [...new Set([...openKeys, ...searchExpandedKeys])] : openKeys}
                     selectedKeys={selectedKeys}
                     onExpand={handleOpenChange}
                     onSelect={(keys, info) => {
@@ -641,32 +640,43 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <Space size={50} style={{
-                            marginTop: 20
+                        <div style={{
+                            marginTop: 20,
+                            display: 'flex',
+                            alignItems: 'center',
                         }}>
-                            <MemoAddNewFile></MemoAddNewFile>
-                            <UploadFile></UploadFile>
+                            <Space size={50}>
+                                <MemoAddNewFile></MemoAddNewFile>
+                                <UploadFile></UploadFile>
+                                <Button
+                                    className={style.authority}
+                                    onClick={handleOpenModal}>
+                                    <IdcardOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>用户信息修改</span>
+                                </Button>
+                                {
+                                    userInfo.isAdministrator ?
+                                        <Button
+                                            className={style.authority}
+                                            onClick={() => navigate('/administrator')}>
+                                            <UserOutlined />
+                                            <span style={{
+                                                fontSize: '16px'
+                                            }}>权限管理入口</span>
+                                        </Button>
+                                        : null
+                                }
+                            </Space>
                             <Button
-                                className={style.authority}
-                                onClick={handleOpenModal}>
-                                <IdcardOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>用户信息修改</span>
+                                danger
+                                onClick={exit}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                <LogoutOutlined />
                             </Button>
-                            {
-                                userInfo.isAdministrator ?
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => navigate('/administrator')}>
-                                        <UserOutlined />
-                                        <span style={{
-                                            fontSize: '16px'
-                                        }}>权限管理入口</span>
-                                    </Button>
-                                    : null
-                            }
-                        </Space>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{

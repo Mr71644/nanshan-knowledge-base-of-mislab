@@ -1,6 +1,10 @@
 import { Image } from '@tiptap/extension-image'
 import { ResizableNodeView } from '@tiptap/core'
-import { urlCache, enqueuePreview, CACHE_TTL } from '@/utils/imageCache'
+import { urlCache, setCache, enqueuePreview, CACHE_TTL } from '@/utils/imageCache'
+
+function escapeAttr(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
 const MinioImage = Image.extend({
     addOptions() {
@@ -63,7 +67,7 @@ const MinioImage = Image.extend({
         const alt = node.attrs?.alt ?? '图片'
         const width = node.attrs?.width
         if (width) {
-            const attrs = [`src="${src}"`, `alt="${alt}"`, `width="${width}"`]
+            const attrs = [`src="${escapeAttr(src)}"`, `alt="${escapeAttr(alt)}"`, `width="${escapeAttr(width)}"`]
             return `<img ${attrs.join(' ')}>`
         }
         return `![${alt}](${src})`
@@ -81,13 +85,20 @@ function createBaseImg(alt) {
     img.onerror = () => {
         img.style.display = 'none'
         if (img.parentNode) {
-            const error = document.createElement('span')
-            error.textContent = '图片加载失败'
-            error.style.color = 'red'
-            img.parentNode.appendChild(error)
+            const span = document.createElement('span')
+            span.textContent = '图片加载失败'
+            span.style.color = 'red'
+            img.parentNode.appendChild(span)
         }
     }
     return img
+}
+
+function clearErrorState(img) {
+    img.style.display = 'block'
+    img.style.color = ''
+    const errorSpan = img.parentNode?.querySelector(':scope > span')
+    if (errorSpan) errorSpan.remove()
 }
 
 function setLoadingState(img) {
@@ -102,6 +113,8 @@ function clearLoadingState(img) {
 }
 
 function applySrc(img, currentSrc, src, alt) {
+    clearErrorState(img)
+
     if (!src || typeof src !== 'string') {
         img.src = ''
         img.alt = '图片加载失败'
@@ -131,7 +144,7 @@ function applySrc(img, currentSrc, src, alt) {
         else if (res && res.data) url = res.data
 
         if (url) {
-            urlCache.set(fileId, { url, timestamp: Date.now() })
+            setCache(fileId, url)
             clearLoadingState(img)
             img.src = url
             img.alt = alt || '图片'

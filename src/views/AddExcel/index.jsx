@@ -63,6 +63,12 @@ const AddExcel = () => {
     const navigate = useNavigate()
     const param = useParams()
     const fileTreeData = useMemo(() => buildFileTreeData(commonFiles), [commonFiles])
+
+    useEffect(() => {
+        if (param.folder === 'main') {
+            navigate('/home', { replace: true })
+        }
+    }, [param.folder, navigate])
     const allTreeKeys = useMemo(() => collectTreeKeys(fileTreeData), [fileTreeData])
 
     const getFileLink = (fileItem = {}) => {

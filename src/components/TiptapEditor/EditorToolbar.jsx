@@ -4,7 +4,6 @@ import {
     BoldOutlined, ItalicOutlined, LinkOutlined,
     OrderedListOutlined, UnorderedListOutlined, PictureOutlined,
     CodeOutlined, TableOutlined, MessageOutlined, CodeSandboxOutlined,
-    ClearOutlined, HighlightOutlined,
 } from '@ant-design/icons'
 import style from './index.module.css'
 
@@ -25,34 +24,13 @@ const toolbarButtons = [
     { icon: 'H1', command: 'heading1', title: '标题1' },
     { icon: 'H2', command: 'heading2', title: '标题2' },
     { icon: 'H3', command: 'heading3', title: '标题3' },
-    { type: 'divider' },
-    { icon: <ClearOutlined />, command: 'clearFormat', title: '清除格式' },
-    { type: 'divider' },
-    { icon: <HighlightOutlined />, command: 'formatPainter', title: '格式刷' },
 ]
 
 const EditorToolbar = ({ editor }) => {
     const [, forceRender] = useState(0)
-    const [formatPainter, setFormatPainter] = useState(null)
-    const painterTimerRef = useRef(null)
     const [tablePicker, setTablePicker] = useState(false)
     const [tableHover, setTableHover] = useState({ rows: 0, cols: 0 })
     const tablePickerRef = useRef(null)
-
-    const deactivateFormatPainter = () => {
-        setFormatPainter(null)
-        if (editor?.view.dom) editor.view.dom.style.cursor = ''
-    }
-
-    const activateFormatPainter = (persistent) => {
-        if (!editor) return
-        const marks = editor.state.selection.$from.marks()
-        const listType = editor.isActive('orderedList') ? 'ordered'
-            : editor.isActive('bulletList') ? 'bullet' : null
-        if (marks.length === 0 && !listType) return
-        setFormatPainter({ marks, listType, persistent })
-        if (editor.view.dom) editor.view.dom.style.cursor = 'crosshair'
-    }
 
     useEffect(() => {
         if (!editor) return
@@ -60,42 +38,6 @@ const EditorToolbar = ({ editor }) => {
         editor.on('transaction', handler)
         return () => { editor.off('transaction', handler) }
     }, [editor])
-
-    useEffect(() => {
-        if (!editor || !formatPainter) return
-        const handleMouseUp = () => {
-            const { from, to, empty } = editor.state.selection
-            if (empty) return
-            const { marks, listType } = formatPainter
-            if (marks.length > 0) {
-                const { tr } = editor.state
-                tr.removeMark(from, to)
-                for (const mark of marks) {
-                    tr.addMark(from, to, mark.type.create(mark.attrs))
-                }
-                editor.view.dispatch(tr)
-            }
-            if (listType === 'ordered') {
-                editor.chain().focus().toggleOrderedList().run()
-            } else if (listType === 'bullet') {
-                editor.chain().focus().toggleBulletList().run()
-            }
-            if (!formatPainter.persistent) deactivateFormatPainter()
-        }
-        const dom = editor.view.dom
-        dom.addEventListener('mouseup', handleMouseUp)
-        return () => { dom.removeEventListener('mouseup', handleMouseUp) }
-    }, [editor, formatPainter])
-
-    useEffect(() => {
-        if (!editor || !formatPainter?.persistent) return
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') deactivateFormatPainter()
-        }
-        const dom = editor.view.dom
-        dom.addEventListener('keydown', handleKeyDown)
-        return () => { dom.removeEventListener('keydown', handleKeyDown) }
-    }, [editor, formatPainter])
 
     useEffect(() => {
         if (!tablePicker) return
@@ -161,40 +103,6 @@ const EditorToolbar = ({ editor }) => {
             case 'heading3':
                 chain.toggleHeading({ level: 3 }).run()
                 break
-            case 'clearFormat': {
-                const { from, to, empty } = editor.state.selection
-                if (empty) {
-                    const $pos = editor.state.selection.$head
-                    const lineFrom = $pos.start()
-                    const lineTo = $pos.end()
-                    editor.chain().focus()
-                        .setTextSelection({ from: lineFrom, to: lineTo })
-                        .command(({ tr, dispatch }) => {
-                            tr.removeMark(lineFrom, lineTo)
-                            if (dispatch) dispatch(tr)
-                            return true
-                        })
-                        .setTextSelection(from)
-                        .run()
-                } else {
-                    editor.chain().focus()
-                        .command(({ tr, dispatch }) => {
-                            tr.removeMark(from, to)
-                            if (dispatch) dispatch(tr)
-                            return true
-                        })
-                        .run()
-                }
-                return
-            }
-            case 'formatPainter': {
-                if (formatPainter) {
-                    deactivateFormatPainter()
-                } else {
-                    activateFormatPainter(false)
-                }
-                return
-            }
         }
     }
 
@@ -213,7 +121,6 @@ const EditorToolbar = ({ editor }) => {
             case 'heading1': return editor.isActive('heading', { level: 1 })
             case 'heading2': return editor.isActive('heading', { level: 2 })
             case 'heading3': return editor.isActive('heading', { level: 3 })
-            case 'formatPainter': return formatPainter !== null
             default: return false
         }
     }
@@ -226,39 +133,6 @@ const EditorToolbar = ({ editor }) => {
                         return <div key={index} className={style.toolbarDivider} />
                     }
                     const active = isActive(button)
-                    if (button.command === 'formatPainter') {
-                        return (
-                            <Tooltip key={index} title="格式刷">
-                                <Button
-                                    type={active ? 'primary' : 'text'}
-                                    size="small"
-                                    onClick={() => {
-                                        if (painterTimerRef.current) {
-                                            clearTimeout(painterTimerRef.current)
-                                            painterTimerRef.current = null
-                                        }
-                                        painterTimerRef.current = setTimeout(() => {
-                                            painterTimerRef.current = null
-                                            handleClick(button)
-                                        }, 250)
-                                    }}
-                                    onDoubleClick={() => {
-                                        if (painterTimerRef.current) {
-                                            clearTimeout(painterTimerRef.current)
-                                            painterTimerRef.current = null
-                                        }
-                                        if (formatPainter) {
-                                            deactivateFormatPainter()
-                                        }
-                                        activateFormatPainter(true)
-                                    }}
-                                    className={`${style.toolbarButton} ${active ? style.toolbarButtonActive : ''}`}
-                                >
-                                    {button.icon}
-                                </Button>
-                            </Tooltip>
-                        )
-                    }
                     if (button.command === 'table') {
                         return (
                             <Tooltip key={index} title="表格">

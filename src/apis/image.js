@@ -3,7 +3,6 @@ import { request } from "@/utils";
 // 上传 Markdown 图片
 const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
   let data = new FormData()
-  // 只在 id 是有效的数字时添加 id 参数，确保是整数类型
   if (id !== undefined && id !== null && id !== '') {
     const intId = parseInt(id, 10)
     if (!isNaN(intId)) {
@@ -11,7 +10,6 @@ const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
       console.log('Adding id:', intId)
     }
   }
-  // 只在 folderId 是有效的数字时添加 folderId 参数，确保是整数类型
   if (folderId !== undefined && folderId !== null && folderId !== '') {
     const intFolderId = parseInt(folderId, 10)
     if (!isNaN(intFolderId)) {
@@ -19,7 +17,6 @@ const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
       console.log('Adding folderId:', intFolderId)
     }
   }
-  // 确保 file 参数正确
   if (file) {
     data.append('file', file)
   }
