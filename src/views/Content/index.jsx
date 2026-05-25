@@ -1,14 +1,10 @@
 import { memo, useState, useRef, useEffect } from 'react'
-import { theme, Layout, Form, Input, Spin, FloatButton, Tooltip, Modal } from 'antd'
-import { HighlightOutlined, RollbackOutlined, SaveOutlined, WarningOutlined, LoadingOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
+import { theme, Layout, Form, Input, Spin, FloatButton, Tooltip } from 'antd'
+import { HighlightOutlined, RollbackOutlined, SaveOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
-import HtmlContent from '@/components/HtmlContent'
-import { isHtmlContent } from '@/utils/contentType'
-import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown'
-import { migrateBase64Images } from '@/utils/migrateImages'
 import TiptapEditor from '@/components/TiptapEditor'
 import style from './index.module.css'
 
@@ -23,9 +19,6 @@ const Area = () => {
     const [value, setValue] = useState('')
     const [isEdit, setIsEdit] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
-    const [isLegacyHtml, setIsLegacyHtml] = useState(false)
-    const [isMigrating, setIsMigrating] = useState(false)
-    const [showMigrateModal, setShowMigrateModal] = useState(false)
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const title = useRef('')
     const author = useRef('')
@@ -57,7 +50,6 @@ const Area = () => {
             updateTime: formatDate(detail.updateTime)
         }
         setValue(detail.content)
-        setIsLegacyHtml(isHtmlContent(detail.content))
     }
     const back = () => {
         if (param.folder === 'main') navigate('/home')
@@ -88,45 +80,10 @@ const Area = () => {
             }
             setIsEdit(false)
         } else {
-            if (isLegacyHtml) {
-                setShowMigrateModal(true)
-            } else {
-                setIsEdit(true)
-            }
-        }
-    }
-
-    const handleMigrate = async () => {
-        setShowMigrateModal(false)
-        setIsMigrating(true)
-
-        try {
-            const migratedHtml = await migrateBase64Images(
-                value,
-                param.folder,
-                (current, total) => {
-                }
-            )
-
-            const markdown = convertHtmlToMarkdown(migratedHtml)
-            setValue(markdown)
-            setIsLegacyHtml(false)
-
-            await editContent({
-                title: title.current,
-                author: author.current,
-                content: processMarkdown(markdown),
-                id: param.id
-            })
-
-            success({ content: '文档迁移成功！' })
             setIsEdit(true)
-        } catch (e) {
-            error({ content: '文档迁移失败，请稍后重试' })
-        } finally {
-            setIsMigrating(false)
         }
     }
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -168,32 +125,6 @@ const Area = () => {
     return (
         <>
             {contextHolder}
-            <Modal
-                title="文档格式迁移"
-                open={showMigrateModal}
-                onOk={handleMigrate}
-                onCancel={() => setShowMigrateModal(false)}
-                okText="确认迁移"
-                cancelText="取消"
-            >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <WarningOutlined style={{ color: '#faad14', fontSize: 22, marginTop: 2 }} />
-                    <div>
-                        <p style={{ margin: 0 }}>
-                            此文档使用旧版富文本编辑器创建，迁移后将转换为 Markdown 格式。
-                        </p>
-                        <p style={{ margin: '8px 0 0' }}>
-                            文档中的图片将上传至服务器存储，文档格式转换后<strong>不可恢复</strong>。
-                        </p>
-                    </div>
-                </div>
-            </Modal>
-            {isMigrating && (
-                <div className={style.migratingOverlay}>
-                    <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} />} />
-                    <p style={{ marginTop: 16 }}>正在迁移文档格式，请稍候...</p>
-                </div>
-            )}
             <Layout
                 style={{
                     padding: '24px',
@@ -278,19 +209,9 @@ const Area = () => {
                                             <h2>作者：{author.current}</h2>
                                             <h3>创建时间：{time.current.createTime}&nbsp;&nbsp;&nbsp;&nbsp;更新时间：{time.current.updateTime}</h3>
                                         </div>
-                                        {isLegacyHtml ? (
-                                            <>
-                                                <div className={style.legacyBanner}>
-                                                    <WarningOutlined />
-                                                    此文档为旧版格式，点击编辑按钮可迁移为 Markdown 格式
-                                                </div>
-                                                <HtmlContent content={value} className={style.contentPreview} />
-                                            </>
-                                        ) : (
-                                            <div className={style.contentPreview}>
-                                                <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} />
-                                            </div>
-                                        )}
+                                        <div className={style.contentPreview}>
+                                            <TiptapEditor content={value} editable={false} />
+                                        </div>
                                     </div>
 
                             )
