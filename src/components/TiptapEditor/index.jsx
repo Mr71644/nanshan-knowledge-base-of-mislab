@@ -15,7 +15,7 @@ import style from './index.module.css'
 
 const lowlight = createLowlight(common)
 
-const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, fullHeight }) => {
+const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight }) => {
     const lastEditorMd = useRef(content)
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange
@@ -46,7 +46,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
             TableHeader,
             Placeholder.configure({ placeholder: '在这里输入内容...' }),
             Markdown,
-            ImageUpload.configure({ folderId, onError }),
+            ImageUpload.configure({ folderId, onError, onUploading }),
         ],
         content: content || '',
         contentType: 'markdown',
@@ -75,6 +75,16 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, f
             editor.setEditable(editable)
         }
     }, [editable, editor])
+
+    useEffect(() => {
+        if (!editor) return
+        const ext = editor.extensionManager.extensions.find(e => e.name === 'imageUpload')
+        if (ext) {
+            ext.options.folderId = folderId
+            ext.options.onError = onError
+            ext.options.onUploading = onUploading
+        }
+    }, [editor, folderId, onError, onUploading])
 
     useEffect(() => {
         if (!editor) return

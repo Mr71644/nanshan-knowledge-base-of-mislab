@@ -160,6 +160,9 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) =>
         setSelectedFiles([])
     }
 
+    const folderIdValue = getFolderId()
+    const isInRoot = folderIdValue === null
+
     return (
         <>
             {contextHolder}
@@ -172,10 +175,10 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) =>
                     accept="*/*"
                     className={style.box}
                     customRequest={handleCustomRequest}
-                    disabled={loading}
+                    disabled={loading || isInRoot}
                     showUploadList={false}
                 >
-                    <Button type='default' disabled={loading} size="large">
+                    <Button type='default' disabled={loading || isInRoot} size="large">
                         <CloudUploadOutlined className={style.firIcon} />
                         {loading ? '上传中...' : '选择文件'}
                         <SelectOutlined className={style.secIcon} />

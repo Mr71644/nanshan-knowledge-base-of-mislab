@@ -19,7 +19,7 @@ const Area = () => {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
     const param = useParams()
-    const { success, error, contextHolder } = useMessage()
+    const { success, error, loading, contextHolder } = useMessage()
     const [value, setValue] = useState('')
     const [isEdit, setIsEdit] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
@@ -30,7 +30,17 @@ const Area = () => {
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
+    const uploadHideRef = useRef(null)
     const navigate = useNavigate()
+
+    const handleUploading = (uploading) => {
+        if (uploading) {
+            uploadHideRef.current = loading('图片上传中...')
+        } else {
+            uploadHideRef.current?.()
+            uploadHideRef.current = null
+        }
+    }
 
     const processMarkdown = (text) => {
         return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
@@ -250,11 +260,13 @@ const Area = () => {
                                         </div>
                                         <div className={style.editContent}>
                                             <TiptapEditor
+                                                key="edit"
                                                 content={value}
                                                 editable={true}
                                                 onChange={setValue}
                                                 folderId={param.folder}
                                                 onError={(msg) => error({ content: msg, delayTime: 3000 })}
+                                                onUploading={handleUploading}
                                                 fullHeight
                                             />
                                         </div>
@@ -276,7 +288,7 @@ const Area = () => {
                                             </>
                                         ) : (
                                             <div className={style.contentPreview}>
-                                                <TiptapEditor content={value} editable={false} />
+                                                <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} />
                                             </div>
                                         )}
                                     </div>
