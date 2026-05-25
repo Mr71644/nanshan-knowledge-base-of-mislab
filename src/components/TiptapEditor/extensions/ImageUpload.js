@@ -2,31 +2,32 @@ import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { uploadMarkdownImage } from '@/apis/image'
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+function extractFileId(uploadRes) {
+    if (typeof uploadRes === 'string') return uploadRes
+    if (uploadRes.data) {
+        if (uploadRes.data.id) return uploadRes.data.id
+        if (uploadRes.data.fileId) return uploadRes.data.fileId
+        if (uploadRes.data.file_id) return uploadRes.data.file_id
+    }
+    if (uploadRes.id) return uploadRes.id
+    return null
+}
+
 async function uploadFile(file, folderId) {
-    const uploadParams = { file }
     const parsedId = parseInt(folderId, 10)
-    if (!isNaN(parsedId) && parsedId > 0) {
-        uploadParams.id = parsedId
-        uploadParams.folderId = parsedId
+    if (isNaN(parsedId) || parsedId <= 0) {
+        throw new Error('无效的文件夹ID')
     }
 
-    const uploadRes = await uploadMarkdownImage(uploadParams)
+    const uploadRes = await uploadMarkdownImage({ id: parsedId, folderId: parsedId, file })
 
-    let fileId = null
-    if (typeof uploadRes === 'string') {
-        fileId = uploadRes
-    } else if (uploadRes.data) {
-        if (uploadRes.data.id) fileId = uploadRes.data.id
-        else if (uploadRes.data.fileId) fileId = uploadRes.data.fileId
-        else if (uploadRes.data.file_id) fileId = uploadRes.data.file_id
-    } else if (uploadRes.id) {
-        fileId = uploadRes.id
+    const fileId = extractFileId(uploadRes)
+    if (!fileId) {
+        throw new Error('上传响应中无法提取文件ID')
     }
-
-    if (fileId) {
-        return 'minio:' + fileId
-    }
-    return URL.createObjectURL(file)
+    return 'minio:' + fileId
 }
 
 const ImageUpload = Extension.create({
@@ -36,32 +37,42 @@ const ImageUpload = Extension.create({
         return {
             folderId: '',
             onError: null,
+            onUploading: null,
         }
     },
 
     addCommands() {
         return {
             uploadImage: () => ({ editor }) => {
+                const extension = this
+                if (extension.storage.isUploading) return true
+
                 const input = document.createElement('input')
                 input.type = 'file'
                 input.accept = 'image/*'
                 input.onchange = async (e) => {
                     const file = e.target.files?.[0]
+                    input.value = ''
                     if (!file) return
 
+                    if (file.size > MAX_FILE_SIZE) {
+                        extension.options.onError?.(`图片大小不能超过 10MB（当前 ${(file.size / 1024 / 1024).toFixed(1)}MB）`)
+                        return
+                    }
+
+                    extension.storage.isUploading = true
+                    extension.options.onUploading?.(true)
                     try {
-                        const src = await uploadFile(file, this.options.folderId)
+                        const src = await uploadFile(file, extension.options.folderId)
                         editor.chain().focus().insertContent({
                             type: 'image',
                             attrs: { src, alt: '图片描述' },
                         }).run()
                     } catch {
-                        this.options.onError?.('图片上传到服务器失败')
-                        const blobUrl = URL.createObjectURL(file)
-                        editor.chain().focus().insertContent({
-                            type: 'image',
-                            attrs: { src: blobUrl, alt: '图片描述' },
-                        }).run()
+                        extension.options.onError?.('图片上传到服务器失败')
+                    } finally {
+                        extension.storage.isUploading = false
+                        extension.options.onUploading?.(false)
                     }
                 }
                 input.click()
@@ -70,23 +81,38 @@ const ImageUpload = Extension.create({
         }
     },
 
+    addStorage() {
+        return { isUploading: false }
+    },
+
     addProseMirrorPlugins() {
         const editor = this.editor
-        const folderId = this.options.folderId
-        const onError = this.options.onError
+        const extension = this
 
         const handleFile = async (file, pos) => {
+            if (extension.storage.isUploading) {
+                extension.options.onError?.('图片正在上传中，请稍后再试')
+                return
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+                extension.options.onError?.(`图片大小不能超过 10MB（当前 ${(file.size / 1024 / 1024).toFixed(1)}MB）`)
+                return
+            }
+
+            extension.storage.isUploading = true
+            extension.options.onUploading?.(true)
             try {
-                const src = await uploadFile(file, folderId)
+                const src = await uploadFile(file, extension.options.folderId)
                 const node = editor.schema.nodes.image.create({ src, alt: '图片描述' })
-                const tr = editor.state.tr.insert(pos, node)
-                editor.view.dispatch(tr)
+                const docSize = editor.view.state.doc.content.size
+                const safePos = Math.max(0, Math.min(pos, docSize))
+                editor.view.dispatch(editor.view.state.tr.insert(safePos, node))
             } catch {
-                onError?.('图片上传到服务器失败')
-                const blobUrl = URL.createObjectURL(file)
-                const node = editor.schema.nodes.image.create({ src: blobUrl, alt: '图片描述' })
-                const tr = editor.state.tr.insert(pos, node)
-                editor.view.dispatch(tr)
+                extension.options.onError?.('图片上传到服务器失败')
+            } finally {
+                extension.storage.isUploading = false
+                extension.options.onUploading?.(false)
             }
         }
 

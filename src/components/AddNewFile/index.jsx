@@ -72,16 +72,18 @@ const AddNewFile = () => {
         if (e.key === "3") showModal()
     };
     const items = [
-        {
-            label: '新建文档',
-            key: '1',
-            icon: <FileMarkdownOutlined />
-        },
-        {
-            label: '新建Excel',
-            key: '2',
-            icon: <FileExcelOutlined />
-        },
+        ...(param.id !== undefined ? [
+            {
+                label: '新建文档',
+                key: '1',
+                icon: <FileMarkdownOutlined />
+            },
+            {
+                label: '新建Excel',
+                key: '2',
+                icon: <FileExcelOutlined />
+            },
+        ] : []),
         {
             label: '新建文件夹',
             key: '3',
