@@ -1,4 +1,4 @@
-import { memo, useState, useRef } from 'react'
+import { memo, useState, useRef, useEffect } from 'react'
 import { theme, Layout, Form, Input, FloatButton, Spin, Tooltip } from 'antd'
 import { RollbackOutlined, CheckOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -15,12 +15,28 @@ const AddContent = () => {
     } = theme.useToken();
     const navigate = useNavigate()
     const param = useParams()
-    const { error, contextHolder } = useMessage()
+    const { error, loading, contextHolder } = useMessage()
     const [value, setValue] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [pageLoading, setPageLoading] = useState(false)
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const title = useRef('')
     const author = useRef('')
+    const uploadHideRef = useRef(null)
+
+    useEffect(() => {
+        if (param.folder === 'main') {
+            navigate('/home', { replace: true })
+        }
+    }, [param.folder, navigate])
+
+    const handleUploading = (uploading) => {
+        if (uploading) {
+            uploadHideRef.current = loading('图片上传中...')
+        } else {
+            uploadHideRef.current?.()
+            uploadHideRef.current = null
+        }
+    }
 
     const processMarkdown = (text) => {
         return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
@@ -28,7 +44,7 @@ const AddContent = () => {
 
     const add = async () => {
         try {
-            setLoading(true)
+            setPageLoading(true)
             let folder = ''
             if (param.folder !== 'main') folder = param.folder
             const processedContent = processMarkdown(value)
@@ -43,7 +59,7 @@ const AddContent = () => {
         } catch (e) {
             error({
                 content: '添加论文失败',
-                callBack: () => setLoading(false)
+                callBack: () => setPageLoading(false)
             })
         }
     }
@@ -73,7 +89,7 @@ const AddContent = () => {
                     }}
                 >
                     {
-                        !loading ? (
+                        !pageLoading ? (
                             <div className={style.editLayout}>
                                 <div className={style.editHeader}>
                                     <div
@@ -119,6 +135,7 @@ const AddContent = () => {
                                         onChange={setValue}
                                         folderId={param.folder}
                                         onError={(msg) => error({ content: msg, delayTime: 3000 })}
+                                        onUploading={handleUploading}
                                         fullHeight
                                     />
                                 </div>
