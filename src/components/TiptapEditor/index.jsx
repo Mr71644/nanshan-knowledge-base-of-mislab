@@ -33,6 +33,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
                 heading: { levels: [1, 2, 3] },
                 link: false,
                 codeBlock: false,
+                underline: false,
             }),
             CodeBlockWithToolbar.configure({
                 lowlight,
