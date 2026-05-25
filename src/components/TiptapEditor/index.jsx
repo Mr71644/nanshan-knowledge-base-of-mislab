@@ -11,6 +11,7 @@ import MinioImage from './extensions/MinioImage'
 import ImageUpload from './extensions/ImageUpload'
 import CodeBlockWithToolbar from './extensions/CodeBlockWithToolbar'
 import EditorToolbar from './EditorToolbar'
+import { previewMarkdownImage } from '@/apis/image'
 import style from './index.module.css'
 
 const lowlight = createLowlight(common)
@@ -86,6 +87,54 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
             ext.options.onUploading = onUploading
         }
     }, [editor, folderId, onError, onUploading])
+
+    // 处理 data-minio-src 属性的图片（用于只读模式）
+    useEffect(() => {
+        if (!editor) return
+
+        const processMinioImages = async () => {
+            const dom = editor.view.dom
+            const images = dom.querySelectorAll('img[data-minio-src]')
+
+            for (const img of images) {
+                const minioSrc = img.getAttribute('data-minio-src')
+                if (!minioSrc || !minioSrc.startsWith('minio:')) continue
+
+                const fileId = minioSrc.slice(6)
+                img.style.minHeight = '200px'
+                img.style.background = '#f5f5f5'
+
+                try {
+                    const res = await previewMarkdownImage(fileId)
+                    const url = res?.data || res
+                    if (url) {
+                        img.src = url
+                        img.removeAttribute('data-minio-src')
+                    } else {
+                        img.alt = '图片加载失败'
+                        img.style.color = 'red'
+                    }
+                } catch {
+                    img.alt = '图片加载失败'
+                    img.style.color = 'red'
+                } finally {
+                    img.style.minHeight = ''
+                    img.style.background = ''
+                }
+            }
+        }
+
+        processMinioImages()
+
+        const handleUpdate = () => {
+            processMinioImages()
+        }
+
+        editor.on('update', handleUpdate)
+        return () => {
+            editor.off('update', handleUpdate)
+        }
+    }, [editor])
 
     useEffect(() => {
         if (!editor) return
