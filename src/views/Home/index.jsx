@@ -11,6 +11,7 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  * - 全局退出逻辑会清除 token 并重定向到 `/login`
  */
 import { UploadFile } from '@/components/UploadFile';
+import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.css'
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,7 +21,7 @@ import { clearUserInfo } from '@/store/modules/user';
 
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
-import { sortTreeItems } from '@/apis/fileList'
+import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
@@ -111,6 +112,7 @@ const Home = () => {
     const [siderWidth, setSiderWidth] = useState(320);
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [recycleBinOpen, setRecycleBinOpen] = useState(false);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
 
@@ -334,37 +336,131 @@ const Home = () => {
             navigate(key)
         }
     }
+    const isDescendant = (tree, folderId, target) => {
+        const findNode = (data, id) => {
+            for (const item of data) {
+                if (item.id === id && item.status === 2) return item
+                if (item.children) {
+                    const found = findNode(item.children, id)
+                    if (found) return found
+                }
+            }
+            return null
+        }
+        const isInSubtree = (node, t) => {
+            if (!node) return false
+            if (node.id === t.id && node.status === t.status) return true
+            if (node.children) return node.children.some(child => isInSubtree(child, t))
+            return false
+        }
+        const folderNode = findNode(tree, folderId)
+        return isInSubtree(folderNode, target)
+    }
+    const canDragNode = (nodeData) => {
+        if (userInfo.isAdministrator) return true
+        const item = nodeData.rawData
+        return item && item.permissionType === 'EDIT'
+    }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
-        if (dropPosition === 0) return false
-        const dragParentId = dragNode.rawData?.folderId ?? null
-        const dropParentId = dropNode.rawData?.folderId ?? null
-        return dragParentId === dropParentId
+        const dragItem = dragNode.rawData
+        const dropItem = dropNode.rawData
+
+        // 搜索模式下禁止放置
+        if (searchText.trim()) return false
+
+        // 权限检查：非管理员需 EDIT 权限
+        if (!userInfo.isAdministrator) {
+            if (dragItem.permissionType !== 'EDIT') return false
+            if (dropItem.permissionType !== 'EDIT') return false
+        }
+
+        // 放在节点上：仅允许目标是文件夹（移入该文件夹）
+        if (dropPosition === 0) {
+            return dropItem.status === 2
+        }
+
+        // 防循环：拖拽文件夹时，禁止拖入自身子树
+        if (dragItem.status === 2 && isDescendant(folderTree, dragItem.id, dropItem)) {
+            return false
+        }
+
+        return true
     }
     const handleDrop = async (info) => {
         const dragNode = info.dragNode
         const dropNode = info.node
+        const dragItem = dragNode.rawData
+        const dropItem = dropNode.rawData
 
-        const dragParentId = dragNode.rawData?.folderId ?? null
-        const dropParentId = dropNode.rawData?.folderId ?? null
-        if (dragParentId !== dropParentId) return
+        // 第三层防线：权限和搜索状态检查
+        if (searchText.trim()) return
+        if (!userInfo.isAdministrator) {
+            if (dragItem.permissionType !== 'EDIT') return
+            if (dropItem.permissionType !== 'EDIT') return
+        }
 
-        const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition)
-        SetFolderTree(newTreeData)
+        const dragFolderId = dragItem.folderId ?? null
+        const dropFolderId = dropItem.folderId ?? null
 
-        const siblings = findSiblingsByParentId(newTreeData, dropParentId)
-        const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
+        const findFolderName = (tree, targetFolderId) => {
+            if (targetFolderId === null || targetFolderId === undefined) return '根目录'
+            for (const item of tree) {
+                if (String(item.id) === String(targetFolderId) && item.status === 2) return item.name
+                if (item.children) {
+                    const found = findFolderName(item.children, targetFolderId)
+                    if (found) return found
+                }
+            }
+            return null
+        }
 
-        try {
-            await sortTreeItems(dropParentId, orderedIds)
-        } catch (e) {
-            error({ content: '排序保存失败，请重试' })
-            getTree()
+        const doMove = async (targetFolderId) => {
+            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, targetFolderId)
+            SetFolderTree(newTreeData)
+            try {
+                await moveTreeItem(dragItem.id, dragItem.status, targetFolderId)
+            } catch (e) {
+                error({ content: e.response?.status === 403 ? '权限不足，无法移动该文件' : '移动失败，请重试' })
+                getTree()
+            }
+        }
+
+        if (!info.dropToGap && dropItem.status === 2) {
+            // Case A: 拖入文件夹
+            Modal.confirm({
+                title: '确认移动',
+                content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => doMove(dropItem.id)
+            })
+        } else if (String(dragFolderId) === String(dropFolderId)) {
+            // Case B: 同层排序
+            const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
+            SetFolderTree(newTreeData)
+            const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
+            const orderedIds = siblings.map(item => ({ id: item.id, status: item.status }))
+            try {
+                await sortTreeItems(dropFolderId, orderedIds)
+            } catch (e) {
+                error({ content: e.response?.status === 403 ? '权限不足，无法执行排序操作' : '排序保存失败，请重试' })
+                getTree()
+            }
+        } else {
+            // Case C: 跨层 gap drop
+            const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
+            Modal.confirm({
+                title: '确认移动',
+                content: `确定将「${dragItem.name}」移动到「${targetFolderName}」吗？`,
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => doMove(dropFolderId)
+            })
         }
     }
-    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition) => {
+    const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
-        // 通过 key 查找并操作节点
         const dragKey = dragNode.key
         const dropKey = dropNode.key
 
@@ -379,7 +475,6 @@ const Home = () => {
             }
         }
 
-        // 移除拖拽节点
         let dragObj
         loop(newTreeData, dragKey, (item, index, arr) => {
             arr.splice(index, 1)
@@ -387,14 +482,11 @@ const Home = () => {
         })
 
         if (!dropToGap) {
-            // 放在节点内部（不应发生，allowDrop 已阻止）
             loop(newTreeData, dropKey, (item) => {
                 item.children = item.children || []
                 item.children.unshift(dragObj)
             })
         } else {
-            // 放在节点之间的间隙
-            // dropPosition 是绝对位置，需要减去节点在父数组中的索引得到相对位置
             const dropPosArr = dropNode.pos.split('-')
             const dropIndex = Number(dropPosArr[dropPosArr.length - 1])
             const relativePosition = dropPosition - dropIndex
@@ -407,20 +499,20 @@ const Home = () => {
             })
 
             if (relativePosition === -1) {
-                // 放在目标节点前面
                 ar.splice(i, 0, dragObj)
             } else {
-                // 放在目标节点后面
                 ar.splice(i + 1, 0, dragObj)
             }
         }
 
+        dragObj.folderId = newParentFolderId
+
         return newTreeData
     }
     const findSiblingsByParentId = (treeData, parentFolderId) => {
-        if (parentFolderId === null) return treeData
+        if (parentFolderId === null || parentFolderId === undefined) return treeData
         for (const item of treeData) {
-            if (item.id === parentFolderId) return item.children || []
+            if (String(item.id) === String(parentFolderId)) return item.children || []
             if (item.children) {
                 const found = findSiblingsByParentId(item.children, parentFolderId)
                 if (found.length > 0) return found
@@ -604,7 +696,12 @@ const Home = () => {
                     }}
                     titleRender={renderTitle}
                     switcherIcon={renderSwitcherIcon}
-                    draggable
+                    draggable={{
+                        nodeDraggable: (node) => {
+                            if (searchText.trim()) return false
+                            return canDragNode(node)
+                        }
+                    }}
                     allowDrop={handleAllowDrop}
                     onDrop={handleDrop}
                 />
@@ -668,6 +765,14 @@ const Home = () => {
                                         </Button>
                                         : null
                                 }
+                                <Button
+                                    className={style.authority}
+                                    onClick={() => setRecycleBinOpen(true)}>
+                                    <DeleteOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>回收站</span>
+                                </Button>
                             </Space>
                             <Button
                                 danger
@@ -689,6 +794,7 @@ const Home = () => {
                     </div>
                 </Content>
             </Layout>
+            <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
     );
 }
