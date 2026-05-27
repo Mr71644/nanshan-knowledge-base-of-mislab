@@ -180,7 +180,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) =>
                 >
                     <Button type='default' disabled={loading || isInRoot} size="large">
                         <CloudUploadOutlined className={style.firIcon} />
-                        {loading ? '上传中...' : '选择文件'}
+                        {loading ? '上传中...' : '上传文件'}
                         <SelectOutlined className={style.secIcon} />
                     </Button>
                 </Upload>
