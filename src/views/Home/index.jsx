@@ -356,9 +356,23 @@ const Home = () => {
         const folderNode = findNode(tree, folderId)
         return isInSubtree(folderNode, target)
     }
+    const canDragNode = (nodeData) => {
+        if (userInfo.isAdministrator) return true
+        const item = nodeData.rawData
+        return item && item.permissionType === 'EDIT'
+    }
     const handleAllowDrop = ({ dragNode, dropNode, dropPosition }) => {
         const dragItem = dragNode.rawData
         const dropItem = dropNode.rawData
+
+        // 搜索模式下禁止放置
+        if (searchText.trim()) return false
+
+        // 权限检查：非管理员需 EDIT 权限
+        if (!userInfo.isAdministrator) {
+            if (dragItem.permissionType !== 'EDIT') return false
+            if (dropItem.permissionType !== 'EDIT') return false
+        }
 
         // 放在节点上：仅允许目标是文件夹（移入该文件夹）
         if (dropPosition === 0) {
@@ -377,6 +391,13 @@ const Home = () => {
         const dropNode = info.node
         const dragItem = dragNode.rawData
         const dropItem = dropNode.rawData
+
+        // 第三层防线：权限和搜索状态检查
+        if (searchText.trim()) return
+        if (!userInfo.isAdministrator) {
+            if (dragItem.permissionType !== 'EDIT') return
+            if (dropItem.permissionType !== 'EDIT') return
+        }
 
         const dragFolderId = dragItem.folderId ?? null
         const dropFolderId = dropItem.folderId ?? null
@@ -399,7 +420,7 @@ const Home = () => {
             try {
                 await moveTreeItem(dragItem.id, dragItem.status, targetFolderId)
             } catch (e) {
-                error({ content: '移动失败，请重试' })
+                error({ content: e.response?.status === 403 ? '权限不足，无法移动该文件' : '移动失败，请重试' })
                 getTree()
             }
         }
@@ -422,7 +443,7 @@ const Home = () => {
             try {
                 await sortTreeItems(dropFolderId, orderedIds)
             } catch (e) {
-                error({ content: '排序保存失败，请重试' })
+                error({ content: e.response?.status === 403 ? '权限不足，无法执行排序操作' : '排序保存失败，请重试' })
                 getTree()
             }
         } else {
@@ -695,7 +716,12 @@ const Home = () => {
                     }}
                     titleRender={renderTitle}
                     switcherIcon={renderSwitcherIcon}
-                    draggable
+                    draggable={{
+                        nodeDraggable: (node) => {
+                            if (searchText.trim()) return false
+                            return canDragNode(node)
+                        }
+                    }}
                     allowDrop={handleAllowDrop}
                     onDrop={handleDrop}
                 />
