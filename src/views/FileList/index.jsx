@@ -6,6 +6,7 @@ import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
+import { getFileType } from '@/utils/fileType'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
 import style from './index.module.css'
@@ -162,24 +163,33 @@ const FileList = () => {
                         onClick: () => handleMenuClick('delete', record),
                     },
                 ]
-                if (record.status === 4) menuItems = [
-                    {
-                        key: 'download',
-                        label: '下载',
-                        onClick: () => handleMenuClick('download', record),
-                    },
-                    {
-                        key: isPinned ? 'unpin' : 'pin',
-                        label: isPinned ? '取消置顶' : '置顶',
-                        onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
-                    },
-                    {
-                        key: 'delete',
-                        label: '删除',
-                        danger: true,
-                        onClick: () => handleMenuClick('delete', record),
-                    },
-                ]
+                if (record.status === 4) {
+                    const { category } = getFileType(record.name)
+                    const canPreview = category !== 'unsupported'
+                    menuItems = [
+                        ...(canPreview ? [{
+                            key: 'details',
+                            label: '详情',
+                            onClick: () => handleMenuClick('details', record),
+                        }] : []),
+                        {
+                            key: 'download',
+                            label: '下载',
+                            onClick: () => handleMenuClick('download', record),
+                        },
+                        {
+                            key: isPinned ? 'unpin' : 'pin',
+                            label: isPinned ? '取消置顶' : '置顶',
+                            onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
+                        },
+                        {
+                            key: 'delete',
+                            label: '删除',
+                            danger: true,
+                            onClick: () => handleMenuClick('delete', record),
+                        },
+                    ]
+                }
                 const roleName = () => {
                     if (record.permissionType === 'EDIT') return '可编辑'
                     if (record.permissionType === 'VIEW') return '可阅读'
@@ -365,15 +375,19 @@ const FileList = () => {
     };
     const handleClick = (record) => {
         if (record.status === 1) {
-            if (param.id === undefined) navigate(`/content/main/${record.id}`)
-            else navigate(`/content/${param.id}/${record.id}`)
+            const path = param.id === undefined ? `/content/main/${record.id}` : `/content/${param.id}/${record.id}`
+            window.open(`${window.location.origin}${window.location.pathname}#${path}`, '_blank')
         }
         if (record.status === 2) {
             navigate(`/home/list/${record.id}`)
         }
         if (record.status === 3) {
-            if (param.id === undefined) navigate(`/excel/main/${record.id}`)
-            else navigate(`/excel/${param.id}/${record.id}`)
+            const path = param.id === undefined ? `/excel/main/${record.id}` : `/excel/${param.id}/${record.id}`
+            window.open(`${window.location.origin}${window.location.pathname}#${path}`, '_blank')
+        }
+        if (record.status === 4) {
+            const url = `${window.location.origin}${window.location.pathname}#/preview?from=${record.id}&name=${encodeURIComponent(record.name)}`
+            window.open(url, '_blank')
         }
     }
     const handleOk = async () => {
