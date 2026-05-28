@@ -17,3 +17,8 @@
     margin-top: 8px;
     padding: 4px 0;
 }
+:global {
+    .ant-drawer-body {
+        padding-top: 16px;
+    }
+}

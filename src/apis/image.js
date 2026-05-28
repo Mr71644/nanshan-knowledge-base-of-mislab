@@ -1,41 +1,26 @@
 import { request } from "@/utils";
 
-// 上传图片（通用）
-const uploadImage = ({ id = '', file, isEmbedded = true }) => {
-  let data = new FormData()
-  if (id !== undefined && id !== null && id !== '') {
-    data.append('id', id)
-  }
-  if (file) {
-    data.append('file', file)
-  }
-  data.append('isEmbedded', 'true')
-  data.append('embedded', 'true')
-  return request({
-    url: '/minio/upload',
-    method: 'POST',
-    data
-  })
-}
-
-// 上传 Markdown 图片（专门用于 Markdown 文件的图片上传）
+// 上传 Markdown 图片
 const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
   let data = new FormData()
   if (id !== undefined && id !== null && id !== '') {
     const intId = parseInt(id, 10)
     if (!isNaN(intId)) {
       data.append('id', intId)
+      console.log('Adding id:', intId)
     }
   }
   if (folderId !== undefined && folderId !== null && folderId !== '') {
     const intFolderId = parseInt(folderId, 10)
     if (!isNaN(intFolderId)) {
       data.append('folderId', intFolderId)
+      console.log('Adding folderId:', intFolderId)
     }
   }
   if (file) {
     data.append('file', file)
   }
+  console.log('Uploading Markdown image')
   return request({
     url: '/minio/upload/markdown',
     method: 'POST',
@@ -43,26 +28,10 @@ const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
   })
 }
 
-// 获取图片预览 URL
-const previewImage = (id) => {
-  return request({
-    url: `/minio/preview/${id}`,
-    method: 'GET'
-  })
-}
-
 // 获取 Markdown 图片预览 URL
 const previewMarkdownImage = (id) => {
   return request({
     url: `/minio/preview/markdown/${id}`,
-    method: 'GET'
-  })
-}
-
-// 获取图片列表
-const getImageList = () => {
-  return request({
-    url: '/minio/imageList',
     method: 'GET'
   })
 }
@@ -76,10 +45,7 @@ const getMarkdownImageList = () => {
 }
 
 export {
-  uploadImage,
   uploadMarkdownImage,
-  previewImage,
   previewMarkdownImage,
-  getImageList,
   getMarkdownImageList
 }

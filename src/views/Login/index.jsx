@@ -64,7 +64,7 @@ const Login = () => {
             {contextHolder}
             <div className={style.login}>
                 <Card className={style.loginCard}>
-                    <div className={style.logo}>知邮南山 - MISLab</div>
+                    <div className={style.logo}>甘蔗种植中心-ZhangLab</div>
                     <Form onFinish={onFinish} validateTrigger="onBlur">
                         <Form.Item
                             name="username"
