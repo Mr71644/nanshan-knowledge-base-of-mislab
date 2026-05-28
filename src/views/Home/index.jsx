@@ -737,9 +737,8 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <Space size={50} style={{
-                            marginTop: 20
-                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 20 }}>
+                        <Space size={50}>
                             <MemoAddNewFile></MemoAddNewFile>
                             <UploadFile></UploadFile>
                             <Button
@@ -773,6 +772,14 @@ const Home = () => {
                                 </Button>
                             ) : null}
                         </Space>
+                        <Button
+                            danger
+                            onClick={exit}
+                            style={{ marginLeft: 'auto', marginRight: 30 }}
+                        >
+                            <LogoutOutlined />
+                        </Button>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{
