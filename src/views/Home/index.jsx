@@ -737,10 +737,8 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <div style={{
-                            marginTop: 20,
-                            display: 'flex',
-                            alignItems: 'center',
+                        <Space size={50} style={{
+                            marginTop: 20
                         }}>
                             <MemoAddNewFile></MemoAddNewFile>
                             <UploadFile></UploadFile>
@@ -774,7 +772,7 @@ const Home = () => {
                                     }}>回收站</span>
                                 </Button>
                             ) : null}
-                        </div>
+                        </Space>
                     </ConfigProvider>
                     <div
                         style={{
