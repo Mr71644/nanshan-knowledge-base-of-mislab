@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
@@ -573,6 +573,8 @@ const Home = () => {
         setOpenKeys(prev => Array.from(new Set([...prev, ...parentKeys])))
     }, [location.pathname, folderTree])
     return (
+        <Fragment>
+        <style>{`.ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }`}</style>
         <Layout style={{
             height: '100vh',
         }}>
@@ -807,6 +809,7 @@ const Home = () => {
             </Layout>
             <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
+        </Fragment>
     );
 }
 
