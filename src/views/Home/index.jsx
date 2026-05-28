@@ -774,7 +774,7 @@ const Home = () => {
                                     }}>回收站</span>
                                 </Button>
                             ) : null}
-                        </Space>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{
