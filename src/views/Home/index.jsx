@@ -782,14 +782,16 @@ const Home = () => {
                                     </Button>
                                     : null
                             }
-                            <Button
-                                className={style.authority}
-                                onClick={() => setRecycleBinOpen(true)}>
-                                <DeleteOutlined />
-                                <span style={{
-                                    fontSize: '16px'
-                                }}>回收站</span>
-                            </Button>
+                            {userInfo.isAdministrator ? (
+                                <Button
+                                    className={style.authority}
+                                    onClick={() => setRecycleBinOpen(true)}>
+                                    <DeleteOutlined />
+                                    <span style={{
+                                        fontSize: '16px'
+                                    }}>回收站</span>
+                                </Button>
+                            ) : null}
                         </Space>
                     </ConfigProvider>
                     <div
