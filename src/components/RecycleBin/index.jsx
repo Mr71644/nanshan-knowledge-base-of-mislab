@@ -60,11 +60,21 @@ export const RecycleBin = ({ open, onClose }) => {
         try {
             setLoading(true)
             const res = await getRecycleBinList({ current: page, pageSize: size, type: t, keyword: kw || undefined })
+            if (res.code === 403) {
+                error({ content: '只有管理员可以操作回收站' })
+                onClose()
+                return
+            }
             const data = res.data
             setList(data.records || [])
             setTotal(data.total || 0)
         } catch (e) {
-            error({ content: '回收站列表加载失败' })
+            if (e?.response?.status === 403) {
+                error({ content: '只有管理员可以操作回收站' })
+                onClose()
+            } else {
+                error({ content: '回收站列表加载失败' })
+            }
         } finally {
             setLoading(false)
         }

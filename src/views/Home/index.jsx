@@ -742,29 +742,29 @@ const Home = () => {
                             display: 'flex',
                             alignItems: 'center',
                         }}>
-                            <Space size={50}>
-                                <MemoAddNewFile></MemoAddNewFile>
-                                <UploadFile></UploadFile>
-                                <Button
-                                    className={style.authority}
-                                    onClick={handleOpenModal}>
-                                    <IdcardOutlined />
-                                    <span style={{
-                                        fontSize: '16px'
-                                    }}>用户信息修改</span>
-                                </Button>
-                                {
-                                    userInfo.isAdministrator ?
-                                        <Button
-                                            className={style.authority}
-                                            onClick={() => navigate('/administrator')}>
-                                            <UserOutlined />
-                                            <span style={{
-                                                fontSize: '16px'
-                                            }}>权限管理入口</span>
-                                        </Button>
-                                        : null
-                                }
+                            <MemoAddNewFile></MemoAddNewFile>
+                            <UploadFile></UploadFile>
+                            <Button
+                                className={style.authority}
+                                onClick={handleOpenModal}>
+                                <IdcardOutlined />
+                                <span style={{
+                                    fontSize: '16px'
+                                }}>用户信息修改</span>
+                            </Button>
+                            {
+                                userInfo.isAdministrator ?
+                                    <Button
+                                        className={style.authority}
+                                        onClick={() => navigate('/administrator')}>
+                                        <UserOutlined />
+                                        <span style={{
+                                            fontSize: '16px'
+                                        }}>权限管理入口</span>
+                                    </Button>
+                                    : null
+                            }
+                            {userInfo.isAdministrator ? (
                                 <Button
                                     className={style.authority}
                                     onClick={() => setRecycleBinOpen(true)}>
@@ -773,15 +773,8 @@ const Home = () => {
                                         fontSize: '16px'
                                     }}>回收站</span>
                                 </Button>
-                            </Space>
-                            <Button
-                                danger
-                                onClick={exit}
-                                style={{ marginLeft: 'auto' }}
-                            >
-                                <LogoutOutlined />
-                            </Button>
-                        </div>
+                            ) : null}
+                        </Space>
                     </ConfigProvider>
                     <div
                         style={{
