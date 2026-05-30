@@ -223,3 +223,56 @@
     bottom: 90px;
   }
 }
+
+/* 来源引用区域 */
+.sourcesContainer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.sourcesTitle {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.sourceItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #666;
+  padding: 2px 0;
+}
+
+.sourceName {
+  color: #1677ff;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceType {
+  color: #999;
+}
+
+.sourceScore {
+  color: #bbb;
+  font-size: 10px;
+}
+
+/* 流式输出闪烁光标 */
+.streamingCursor {
+  display: inline-block;
+  animation: blink 0.8s infinite;
+  color: #1677ff;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

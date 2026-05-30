@@ -21,6 +21,11 @@ export default defineConfig({
                 target: 'http://101.43.146.27/new-app/api',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, '')
+            },
+            '/rag-api': {
+                target: 'http://localhost:8001',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/rag-api/, '')
             }
         }
     }

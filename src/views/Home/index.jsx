@@ -12,6 +12,7 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  */
 import { UploadFile } from '@/components/UploadFile';
 import { RecycleBin } from '@/components/RecycleBin';
+import { ChatInput } from '@/components/ChatInput';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.css'
 import { useSelector, useDispatch } from 'react-redux';
@@ -808,6 +809,7 @@ const Home = () => {
                 </Content>
             </Layout>
             <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
+            <ChatInput userInfo={userInfo} />
         </Layout >
         </Fragment>
     );
