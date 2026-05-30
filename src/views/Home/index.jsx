@@ -809,7 +809,7 @@ const Home = () => {
                 </Content>
             </Layout>
             <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
-            <ChatInput userInfo={userInfo} />
+            <ChatInput />
         </Layout >
         </Fragment>
     );

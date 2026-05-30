@@ -9,6 +9,7 @@ import { MemoAddContent } from '@/views/AddContent'
 import { MemoAddExcel } from '@/views/AddExcel'
 import { MemoAdministrator } from '@/views/Administrator'
 import { MemoPreview } from '@/views/Preview'
+import { MemoAiAssistant } from '@/views/AiAssistant'
 import AdminRoute from './AdminRoute'
 
 // 路由约定说明：
@@ -56,6 +57,10 @@ const router = createHashRouter([
     {
         path: 'preview',
         element: <MemoPreview />
+    },
+    {
+        path: 'ai-assistant',
+        element: <MemoAiAssistant />
     },
     {
         path: 'administrator',
