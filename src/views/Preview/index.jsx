@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Empty, Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
@@ -16,6 +16,8 @@ const Preview = () => {
     const [textContent, setTextContent] = useState('')
     const [fileName, setFileName] = useState('')
     const fileId = (searchParams.get('from') || '').trim()
+    const highlight = searchParams.get('highlight') || ''
+    const contentRef = useRef(null)
 
     useEffect(() => {
         let cancelled = false
@@ -69,6 +71,33 @@ const Preview = () => {
         }
     }, [fileId])
 
+    // Highlight text after content renders
+    useEffect(() => {
+        if (!highlight || !contentRef.current || loading) return
+
+        const container = contentRef.current
+        const search = highlight.slice(0, 60)
+        if (!search) return
+
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
+        const textNodes = []
+        while (walker.nextNode()) textNodes.push(walker.currentNode)
+
+        for (const node of textNodes) {
+            const idx = node.textContent.indexOf(search)
+            if (idx === -1) continue
+
+            const range = document.createRange()
+            range.setStart(node, idx)
+            range.setEnd(node, idx + search.length)
+            const mark = document.createElement('mark')
+            mark.className = 'rag-highlight'
+            range.surroundContents(mark)
+            mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            break
+        }
+    }, [highlight, loading, textContent, previewUrl])
+
     const renderPreview = () => {
         if (loading) {
             return (
@@ -115,12 +144,12 @@ const Preview = () => {
                 )
             case 'markdown':
                 return (
-                    <div className={style.textWrapper}>
+                    <div className={style.textWrapper} ref={contentRef}>
                         <ReactMarkdown>{textContent}</ReactMarkdown>
                     </div>
                 )
             case 'text':
-                return <pre className={style.textWrapper}>{textContent}</pre>
+                return <pre className={style.textWrapper} ref={contentRef}>{textContent}</pre>
             default:
                 return (
                     <div className={style.wrapper}>

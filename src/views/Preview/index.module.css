@@ -83,3 +83,9 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+:global(.rag-highlight) {
+  background-color: #ffe58f;
+  padding: 2px 0;
+  border-radius: 2px;
+}
