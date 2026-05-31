@@ -1,13 +1,11 @@
-import { useNavigate } from 'react-router-dom';
 import styles from './index.module.css';
 
 export const ChatInput = () => {
-  const navigate = useNavigate();
   return (
     <div className={styles.container}>
       <button
         className={styles.messageButton}
-        onClick={() => navigate('/ai-assistant')}
+        onClick={() => window.open(`${window.location.origin}${window.location.pathname}#/ai-assistant`, '_blank')}
         title="智能助手"
       >
         💬

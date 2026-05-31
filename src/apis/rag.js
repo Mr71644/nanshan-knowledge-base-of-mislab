@@ -41,3 +41,28 @@ export const getIndexedDocuments = () => ragFetch('/api/v1/rag/index/documents')
 
 // 获取索引状态和进度
 export const getIndexStatus = () => ragFetch('/api/v1/rag/status');
+
+// --- 会话管理 ---
+
+export const createConversation = (title = '新对话') =>
+  ragFetch('/api/v1/rag/conversations', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });
+
+export const getConversations = () =>
+  ragFetch('/api/v1/rag/conversations');
+
+export const getConversationMessages = (convId) =>
+  ragFetch(`/api/v1/rag/conversations/${convId}/messages`);
+
+export const updateConversation = (convId, title) =>
+  ragFetch(`/api/v1/rag/conversations/${convId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title }),
+  });
+
+export const deleteConversation = (convId) =>
+  ragFetch(`/api/v1/rag/conversations/${convId}`, {
+    method: 'DELETE',
+  });

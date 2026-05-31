@@ -1,5 +1,4 @@
 import React, { useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
 import styles from './ChatArea.module.css';
 
@@ -10,7 +9,6 @@ const extractFileId = (docId) => {
 
 const ChatArea = ({ messages, inputValue, onInputChange, onSend }) => {
   const messageListRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (messageListRef.current) {
@@ -21,9 +19,8 @@ const ChatArea = ({ messages, inputValue, onInputChange, onSend }) => {
   const handleSourceClick = (src) => {
     const fileId = extractFileId(src.doc_id);
     const snippet = src.snippet ? src.snippet.slice(0, 80) : '';
-    navigate(
-      `/preview?from=${fileId}&name=${encodeURIComponent(src.title)}&highlight=${encodeURIComponent(snippet)}`
-    );
+    const url = `${window.location.origin}${window.location.pathname}#/preview?from=${fileId}&name=${encodeURIComponent(src.title)}&highlight=${encodeURIComponent(snippet)}&docType=${encodeURIComponent(src.doc_type || '')}`;
+    window.open(url, '_blank');
   };
 
   return (

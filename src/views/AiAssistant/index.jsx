@@ -10,6 +10,11 @@ import {
   removeIndexedDocs,
   getIndexedDocuments,
   getIndexStatus,
+  createConversation,
+  getConversations,
+  getConversationMessages,
+  updateConversation,
+  deleteConversation,
 } from '@/apis/rag';
 import { buildTreeDataAndIndexedKeys, findNode } from './utils.jsx';
 import AssistantSidebar from './AssistantSidebar';
@@ -29,6 +34,10 @@ const AiAssistant = () => {
     },
   ]);
   const [inputValue, setInputValue] = useState('');
+
+  // --- Conversation state ---
+  const [conversations, setConversations] = useState([]);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
 
   // --- Sidebar state ---
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -82,6 +91,20 @@ const AiAssistant = () => {
   useEffect(() => {
     loadKnowledgeBase();
   }, [loadKnowledgeBase]);
+
+  // Load conversation list on mount
+  const loadConversations = useCallback(async () => {
+    try {
+      const res = await getConversations();
+      setConversations(res.conversations || []);
+    } catch (err) {
+      message.error('加载会话列表失败');
+    }
+  }, []);
+
+  useEffect(() => {
+    loadConversations();
+  }, [loadConversations]);
 
   // Poll indexing progress
   const startPolling = () => {
@@ -183,18 +206,25 @@ const AiAssistant = () => {
     }
   };
 
-  // New conversation (frontend only)
-  const handleNewConversation = () => {
-    setMessages([
-      {
-        type: 'A',
-        content: '你好！我是知识库智能助手，有什么可以帮你的吗？',
-        sources: [],
-        isStreaming: false,
-        id: Date.now(),
-      },
-    ]);
-    setInputValue('');
+  // New conversation
+  const handleNewConversation = async () => {
+    try {
+      const conv = await createConversation();
+      setCurrentConversationId(conv.id);
+      setConversations((prev) => [conv, ...prev]);
+      setMessages([
+        {
+          type: 'A',
+          content: '你好！我是知识库智能助手，有什么可以帮你的吗？',
+          sources: [],
+          isStreaming: false,
+          id: Date.now(),
+        },
+      ]);
+      setInputValue('');
+    } catch (err) {
+      message.error('创建对话失败');
+    }
   };
 
   // SSE streaming query
@@ -212,6 +242,8 @@ const AiAssistant = () => {
       { type: 'A', content: '', sources: [], isStreaming: true, id: answerId },
     ]);
 
+    let resolvedConvId = currentConversationId;
+
     try {
       const token = getToken();
       const ragUrl = import.meta.env.VITE_RAG_API_URL;
@@ -221,7 +253,12 @@ const AiAssistant = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ question, stream: true, top_k: 5 }),
+        body: JSON.stringify({
+          question,
+          stream: true,
+          top_k: 5,
+          ...(currentConversationId ? { conversation_id: currentConversationId } : {}),
+        }),
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -240,7 +277,14 @@ const AiAssistant = () => {
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            if (data.type === 'source') {
+            if (data.type === 'conversation') {
+              resolvedConvId = data.conversation_id;
+              setCurrentConversationId(data.conversation_id);
+              setConversations((prev) => {
+                if (prev.some((c) => c.id === data.conversation_id)) return prev;
+                return [{ id: data.conversation_id, title: data.title || '新对话', message_count: 0 }, ...prev];
+              });
+            } else if (data.type === 'source') {
               setMessages((prev) =>
                 prev.map((m) => (m.id === answerId ? { ...m, sources: data.documents } : m))
               );
@@ -258,6 +302,22 @@ const AiAssistant = () => {
           }
         }
       }
+
+      // Auto-rename conversation if still has default title
+      if (resolvedConvId) {
+        try {
+          const existing = conversations.find((c) => c.id === resolvedConvId);
+          if (existing && existing.title === '新对话') {
+            const autoTitle = question.length > 20 ? question.slice(0, 20) + '...' : question;
+            await updateConversation(resolvedConvId, autoTitle);
+            setConversations((prev) =>
+              prev.map((c) => (c.id === resolvedConvId ? { ...c, title: autoTitle } : c))
+            );
+          }
+        } catch {
+          // Non-critical, ignore rename failures
+        }
+      }
     } catch {
       setMessages((prev) =>
         prev.map((m) =>
@@ -266,6 +326,77 @@ const AiAssistant = () => {
             : m
         )
       );
+    }
+  };
+
+  // Switch to a different conversation
+  const handleSwitchConversation = async (convId) => {
+    if (convId === currentConversationId) return;
+    try {
+      const res = await getConversationMessages(convId);
+      setCurrentConversationId(convId);
+      const loaded = res.messages.flatMap((msg) => {
+        if (msg.role === 'user') {
+          return { type: 'Q', content: msg.content, sources: [], isStreaming: false, id: msg.id * 2 };
+        }
+        return {
+          type: 'A',
+          content: msg.content,
+          sources: msg.sources || [],
+          isStreaming: false,
+          id: msg.id * 2 + 1,
+        };
+      });
+      setMessages(
+        loaded.length > 0
+          ? loaded
+          : [
+              {
+                type: 'A',
+                content: '你好！我是知识库智能助手，有什么可以帮你的吗？',
+                sources: [],
+                isStreaming: false,
+                id: Date.now(),
+              },
+            ]
+      );
+      setInputValue('');
+    } catch (err) {
+      message.error('加载会话消息失败');
+    }
+  };
+
+  // Delete a conversation
+  const handleDeleteConversation = async (convId) => {
+    try {
+      await deleteConversation(convId);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (convId === currentConversationId) {
+        setCurrentConversationId(null);
+        setMessages([
+          {
+            type: 'A',
+            content: '你好！我是知识库智能助手，有什么可以帮你的吗？',
+            sources: [],
+            isStreaming: false,
+            id: Date.now(),
+          },
+        ]);
+      }
+    } catch (err) {
+      message.error('删除对话失败');
+    }
+  };
+
+  // Rename a conversation
+  const handleRenameConversation = async (convId, newTitle) => {
+    try {
+      await updateConversation(convId, newTitle);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === convId ? { ...c, title: newTitle } : c))
+      );
+    } catch (err) {
+      message.error('重命名失败');
     }
   };
 
@@ -284,6 +415,11 @@ const AiAssistant = () => {
           activeTab={sidebarTab}
           onTabChange={setSidebarTab}
           onNewConversation={handleNewConversation}
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSwitchConversation={handleSwitchConversation}
+          onDeleteConversation={handleDeleteConversation}
+          onRenameConversation={handleRenameConversation}
           knowledgeTabProps={{
             indexedDocs,
             treeData,

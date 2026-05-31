@@ -137,3 +137,49 @@
   color: #1677ff;
   font-weight: 500;
 }
+
+.conversationTitle {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.conversationActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.conversationItem:hover .conversationActions,
+.conversationItem.active .conversationActions {
+  opacity: 1;
+}
+
+.actionBtn {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+}
+
+.conversationInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px !important;
+  padding: 1px 4px !important;
+}
+
+.emptyConversations {
+  text-align: center;
+  color: #bbb;
+  font-size: 13px;
+  padding: 24px 0;
+}

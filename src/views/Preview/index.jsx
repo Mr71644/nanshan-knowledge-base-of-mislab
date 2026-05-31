@@ -3,6 +3,7 @@ import { Empty, Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { previewFile } from '@/apis/file'
+import { getContentDetail } from '@/apis/content'
 import { getFileType } from '@/utils/fileType'
 import { useMessage } from '@/hooks/useMessage'
 import style from './index.module.css'
@@ -17,6 +18,7 @@ const Preview = () => {
     const [fileName, setFileName] = useState('')
     const fileId = (searchParams.get('from') || '').trim()
     const highlight = searchParams.get('highlight') || ''
+    const docType = searchParams.get('docType') || ''
     const contentRef = useRef(null)
 
     useEffect(() => {
@@ -30,26 +32,38 @@ const Preview = () => {
 
             const name = decodeURIComponent(searchParams.get('name') || '')
             const { category } = getFileType(name)
-            setFileCategory(category)
             setFileName(name)
 
             try {
                 setLoading(true)
-                const res = await previewFile(fileId)
-                const url = res?.data || ''
 
-                if (!url) {
-                    throw new Error('empty preview url')
-                }
+                // RAG source: markdown/rich text content stored in main DB, not minio
+                if (docType === 'markdown') {
+                    const res = await getContentDetail(fileId)
+                    const html = res?.data?.content || ''
+                    if (!cancelled) {
+                        setTextContent(html)
+                        setFileCategory('markdown')
+                    }
+                } else {
+                    // Regular file: use minio preview
+                    setFileCategory(category)
+                    const res = await previewFile(fileId)
+                    const url = res?.data || ''
 
-                if (category === 'text' || category === 'markdown') {
-                    const textRes = await fetch(url)
-                    const text = await textRes.text()
-                    if (!cancelled) setTextContent(text)
-                }
+                    if (!url) {
+                        throw new Error('empty preview url')
+                    }
 
-                if (!cancelled) {
-                    setPreviewUrl(url)
+                    if (category === 'text' || category === 'markdown') {
+                        const textRes = await fetch(url)
+                        const text = await textRes.text()
+                        if (!cancelled) setTextContent(text)
+                    }
+
+                    if (!cancelled) {
+                        setPreviewUrl(url)
+                    }
                 }
             } catch (e) {
                 if (!cancelled) {
@@ -115,7 +129,9 @@ const Preview = () => {
             )
         }
 
-        if (!previewUrl) {
+        // For markdown content from RAG source, textContent is set instead of previewUrl
+        const isRagContent = docType === 'markdown' && textContent;
+        if (!previewUrl && !isRagContent) {
             return (
                 <div className={style.center}>
                     <Empty description='未获取到预览地址，请稍后重试' />
@@ -143,6 +159,16 @@ const Preview = () => {
                     </div>
                 )
             case 'markdown':
+                // RAG source: render HTML content directly; file preview: render as markdown
+                if (docType === 'markdown') {
+                    return (
+                        <div
+                            className={style.textWrapper}
+                            ref={contentRef}
+                            dangerouslySetInnerHTML={{ __html: textContent }}
+                        />
+                    )
+                }
                 return (
                     <div className={style.textWrapper} ref={contentRef}>
                         <ReactMarkdown>{textContent}</ReactMarkdown>

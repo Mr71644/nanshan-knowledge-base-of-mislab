@@ -1,14 +1,90 @@
-import React from 'react';
-import { Tabs, Button, Tooltip } from 'antd';
+import React, { useState } from 'react';
+import { Tabs, Button, Tooltip, Input, Popconfirm } from 'antd';
 import {
   MessageOutlined,
   DatabaseOutlined,
   LeftOutlined,
   RightOutlined,
   PlusOutlined,
+  DeleteOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import KnowledgeTab from './KnowledgeTab';
 import styles from './AssistantSidebar.module.css';
+
+const ConversationItem = React.memo(({ conversation, isActive, onSwitch, onDelete, onRename }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(conversation.title);
+
+  const handleSaveTitle = () => {
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== conversation.title) {
+      onRename(trimmed);
+    } else {
+      setEditTitle(conversation.title);
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div
+      className={`${styles.conversationItem} ${isActive ? styles.active : ''}`}
+      onClick={isEditing ? undefined : onSwitch}
+    >
+      <MessageOutlined style={{ fontSize: 12, flexShrink: 0, color: isActive ? '#1677ff' : '#999' }} />
+      {isEditing ? (
+        <Input
+          size="small"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onPressEnter={handleSaveTitle}
+          onBlur={handleSaveTitle}
+          onClick={(e) => e.stopPropagation()}
+          className={styles.conversationInput}
+          autoFocus
+        />
+      ) : (
+        <span className={styles.conversationTitle} title={conversation.title}>
+          {conversation.title}
+        </span>
+      )}
+      <div className={styles.conversationActions}>
+        <Tooltip title="重命名">
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            className={styles.actionBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditTitle(conversation.title);
+              setIsEditing(true);
+            }}
+          />
+        </Tooltip>
+        <Popconfirm
+          title="确定删除此对话？"
+          onConfirm={(e) => {
+            e?.stopPropagation();
+            onDelete();
+          }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="删除"
+          cancelText="取消"
+        >
+          <Button
+            type="text"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            className={styles.actionBtn}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </Popconfirm>
+      </div>
+    </div>
+  );
+});
 
 const AssistantSidebar = ({
   collapsed,
@@ -16,6 +92,11 @@ const AssistantSidebar = ({
   activeTab,
   onTabChange,
   onNewConversation,
+  conversations,
+  currentConversationId,
+  onSwitchConversation,
+  onDeleteConversation,
+  onRenameConversation,
   knowledgeTabProps,
 }) => {
   if (collapsed) {
@@ -85,10 +166,20 @@ const AssistantSidebar = ({
                   </Button>
                 </div>
                 <div className={styles.conversationList}>
-                  <div className={`${styles.conversationItem} ${styles.active}`}>
-                    <MessageOutlined style={{ fontSize: 12, color: '#1677ff' }} />
-                    <span>当前对话</span>
-                  </div>
+                  {(!conversations || conversations.length === 0) ? (
+                    <div className={styles.emptyConversations}>暂无对话</div>
+                  ) : (
+                    conversations.map((conv) => (
+                      <ConversationItem
+                        key={conv.id}
+                        conversation={conv}
+                        isActive={conv.id === currentConversationId}
+                        onSwitch={() => onSwitchConversation(conv.id)}
+                        onDelete={() => onDeleteConversation(conv.id)}
+                        onRename={(newTitle) => onRenameConversation(conv.id, newTitle)}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             ),
