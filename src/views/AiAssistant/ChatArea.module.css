@@ -196,3 +196,8 @@
   background-color: #4096ff;
   box-shadow: 0 2px 8px rgba(22, 119, 255, 0.35);
 }
+
+.modeSelect {
+  flex-shrink: 0;
+  min-width: 90px;
+}

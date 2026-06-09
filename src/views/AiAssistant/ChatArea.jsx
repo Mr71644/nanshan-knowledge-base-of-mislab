@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { Select } from 'antd';
 import { FileTextOutlined, LinkOutlined } from '@ant-design/icons';
 import styles from './ChatArea.module.css';
 
@@ -7,7 +8,7 @@ const extractFileId = (docId) => {
   return parts[parts.length - 1];
 };
 
-const ChatArea = ({ messages, inputValue, onInputChange, onSend }) => {
+const ChatArea = ({ messages, inputValue, onInputChange, onSend, retrievalMode, onRetrievalModeChange }) => {
   const messageListRef = useRef(null);
 
   useEffect(() => {
@@ -72,6 +73,18 @@ const ChatArea = ({ messages, inputValue, onInputChange, onSend }) => {
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSend()}
             className={styles.input}
+          />
+          <Select
+            size="small"
+            value={retrievalMode}
+            onChange={onRetrievalModeChange}
+            className={styles.modeSelect}
+            popupMatchSelectWidth={false}
+            options={[
+              { label: '智能混合', value: 'hybrid' },
+              { label: '精准重排', value: 'hybrid_rerank' },
+              { label: '纯向量', value: 'vector' },
+            ]}
           />
           <button className={styles.sendButton} onClick={onSend}>
             发送

@@ -34,6 +34,7 @@ const AiAssistant = () => {
     },
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [retrievalMode, setRetrievalMode] = useState('hybrid');
 
   // --- Conversation state ---
   const [conversations, setConversations] = useState([]);
@@ -257,6 +258,7 @@ const AiAssistant = () => {
           question,
           stream: true,
           top_k: 5,
+          retrieval_mode: retrievalMode,
           ...(currentConversationId ? { conversation_id: currentConversationId } : {}),
         }),
       });
@@ -438,6 +440,8 @@ const AiAssistant = () => {
           inputValue={inputValue}
           onInputChange={setInputValue}
           onSend={handleSend}
+          retrievalMode={retrievalMode}
+          onRetrievalModeChange={setRetrievalMode}
         />
       </div>
     </div>
