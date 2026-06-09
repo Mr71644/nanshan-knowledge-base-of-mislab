@@ -127,15 +127,15 @@ const Area = () => {
             {contextHolder}
             <Layout
                 style={{
-                    padding: '24px',
+                    padding: 'var(--layout-padding)',
                     height: '100vh'
                 }}
             >
                 <Content
                     style={{
-                        paddingLeft: 24,
-                        paddingRight: 24,
-                        paddingBottom: 24,
+                        paddingLeft: 'var(--layout-padding)',
+                        paddingRight: 'var(--layout-padding)',
+                        paddingBottom: 'var(--layout-padding)',
                         paddingTop: 6,
                         margin: 0,
                         minHeight: 280,

@@ -1,10 +1,10 @@
 .box {
-  width: 200px;
-  height: 64px;
+  width: var(--action-btn-width);
+  height: var(--action-btn-height);
 }
 .box span:nth-child(2) {
-  width: 100px;
-  font-size: 16px;
+  width: auto;
+  font-size: var(--action-btn-font-size);
   display: flex;
 }
 .box .firIcon svg {
