@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -426,7 +426,7 @@ const Home = () => {
         }
 
         if (!info.dropToGap && dropItem.status === 2) {
-            // 情况 A：拖入文件夹（移入目标文件夹）
+            // Case A: 拖入文件夹
             Modal.confirm({
                 title: '确认移动',
                 content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
@@ -435,7 +435,7 @@ const Home = () => {
                 onOk: () => doMove(dropItem.id)
             })
         } else if (String(dragFolderId) === String(dropFolderId)) {
-            // 情况 B：同层排序（无需确认）
+            // Case B: 同层排序
             const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
             SetFolderTree(newTreeData)
             const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
@@ -447,7 +447,7 @@ const Home = () => {
                 getTree()
             }
         } else {
-            // 情况 C：跨层 gap drop（移到目标节点所在层级）
+            // Case C: 跨层 gap drop
             const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
             Modal.confirm({
                 title: '确认移动',
@@ -461,7 +461,6 @@ const Home = () => {
     const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
-        // 通过 key 查找并操作节点
         const dragKey = dragNode.key
         const dropKey = dropNode.key
 
@@ -476,7 +475,6 @@ const Home = () => {
             }
         }
 
-        // 移除拖拽节点
         let dragObj
         loop(newTreeData, dragKey, (item, index, arr) => {
             arr.splice(index, 1)
@@ -484,14 +482,11 @@ const Home = () => {
         })
 
         if (!dropToGap) {
-            // 放在节点内部（不应发生，allowDrop 已阻止）
             loop(newTreeData, dropKey, (item) => {
                 item.children = item.children || []
                 item.children.unshift(dragObj)
             })
         } else {
-            // 放在节点之间的间隙
-            // dropPosition 是绝对位置，需要减去节点在父数组中的索引得到相对位置
             const dropPosArr = dropNode.pos.split('-')
             const dropIndex = Number(dropPosArr[dropPosArr.length - 1])
             const relativePosition = dropPosition - dropIndex
@@ -504,15 +499,12 @@ const Home = () => {
             })
 
             if (relativePosition === -1) {
-                // 放在目标节点前面
                 ar.splice(i, 0, dragObj)
             } else {
-                // 放在目标节点后面
                 ar.splice(i + 1, 0, dragObj)
             }
         }
 
-        // 更新移动节点的 folderId，确保后续拖拽时 case 判断正确
         dragObj.folderId = newParentFolderId
 
         return newTreeData
@@ -648,18 +640,6 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-            <Tooltip title="退出登录" placement="left">
-                <FloatButton
-                    icon={<LogoutOutlined />}
-                    type='primary'
-                    onClick={exit}
-                    danger
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                    }}
-                />
-            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -679,7 +659,7 @@ const Home = () => {
                         color: '#1677ff'
                     }} /> : (
                         <>
-                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                            <span className={style.logoTitle}>甘蔗育种中心-ZhangLab</span>
                             <Space size={4} className={style.logoActions}>
                                 <Tooltip title="展开全部">
                                     <Button type="text" size="small" onClick={handleExpandAll}
@@ -759,9 +739,8 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <Space size={50} style={{
-                            marginTop: 20
-                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 20 }}>
+                        <Space size={50}>
                             <MemoAddNewFile></MemoAddNewFile>
                             <UploadFile></UploadFile>
                             <Button
@@ -795,6 +774,14 @@ const Home = () => {
                                 </Button>
                             ) : null}
                         </Space>
+                        <Button
+                            danger
+                            onClick={exit}
+                            style={{ marginLeft: 'auto', marginRight: 30 }}
+                        >
+                            <LogoutOutlined />
+                        </Button>
+                        </div>
                     </ConfigProvider>
                     <div
                         style={{
