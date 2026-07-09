@@ -733,12 +733,21 @@ const Home = () => {
                         borderRadius: borderRadiusLG,
                     }}
                 >
-                    <Breadcrumb separator=">" items={folderLayer}
-                        style={{
-                            fontSize: 'var(--breadcrumb-font-size)',
-                        }}
-                        className={style.breadcrumb}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Breadcrumb separator=">" items={folderLayer}
+                            style={{
+                                fontSize: 'var(--breadcrumb-font-size)',
+                            }}
+                            className={style.breadcrumb}
+                        />
+                        <Button
+                            danger
+                            onClick={exit}
+                        >
+                            <LogoutOutlined />
+                            退出
+                        </Button>
+                    </div>
                     <ConfigProvider
                         wave={{
                             disabled: true, // 全局禁用波纹效果
@@ -777,13 +786,6 @@ const Home = () => {
                                     }}>回收站</span>
                                 </Button>
                             ) : null}
-                            <Button
-                                danger
-                                onClick={exit}
-                                style={{ marginLeft: 'auto' }}
-                            >
-                                <LogoutOutlined />
-                            </Button>
                         </div>
                     </ConfigProvider>
                     <div
