@@ -7,17 +7,20 @@ const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
     const intId = parseInt(id, 10)
     if (!isNaN(intId)) {
       data.append('id', intId)
+      console.log('Adding id:', intId)
     }
   }
   if (folderId !== undefined && folderId !== null && folderId !== '') {
     const intFolderId = parseInt(folderId, 10)
     if (!isNaN(intFolderId)) {
       data.append('folderId', intFolderId)
+      console.log('Adding folderId:', intFolderId)
     }
   }
   if (file) {
     data.append('file', file)
   }
+  console.log('Uploading Markdown image')
   return request({
     url: '/minio/upload/markdown',
     method: 'POST',

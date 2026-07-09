@@ -236,9 +236,6 @@ export const RecycleBin = ({ open, onClose }) => {
         }
         try {
             setRestoreLoading(true)
-            // null/undefined 不传 targetFolderId = 恢复到原目录
-            // 0 = 恢复到根目录
-            // 数字 = 恢复到指定文件夹
             const payload = {
                 items: pendingRestoreItems,
                 renameOnConflict: true

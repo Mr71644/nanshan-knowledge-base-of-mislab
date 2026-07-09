@@ -62,6 +62,23 @@ const MinioImage = Image.extend({
         }
     },
 
+    renderHTML({ node }) {
+        const src = node.attrs.src || ''
+        const alt = node.attrs.alt || '图片'
+        const width = node.attrs.width
+        const height = node.attrs.height
+
+        if (src.startsWith('minio:')) {
+            return ['img', {
+                'data-minio-src': src,
+                alt,
+                ...(width ? { width } : {}),
+                ...(height ? { height } : {}),
+            }]
+        }
+        return ['img', { src, alt, ...(width ? { width } : {}), ...(height ? { height } : {}) }]
+    },
+
     renderMarkdown(node) {
         const src = node.attrs?.src ?? ''
         const alt = node.attrs?.alt ?? '图片'
