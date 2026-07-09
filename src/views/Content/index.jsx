@@ -210,7 +210,7 @@ const Area = () => {
                                             <h3>创建时间：{time.current.createTime}&nbsp;&nbsp;&nbsp;&nbsp;更新时间：{time.current.updateTime}</h3>
                                         </div>
                                         <div className={style.contentPreview}>
-                                            <TiptapEditor content={value} editable={false} />
+                                            <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} />
                                         </div>
                                     </div>
 
