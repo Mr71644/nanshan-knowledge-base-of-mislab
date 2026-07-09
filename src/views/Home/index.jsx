@@ -778,7 +778,6 @@ const Home = () => {
                                 </Button>
                             ) : null}
                         </div>
-                        </div>
                     </ConfigProvider>
                     <div
                         style={{
