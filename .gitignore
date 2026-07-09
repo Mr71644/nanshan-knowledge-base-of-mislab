@@ -12,6 +12,7 @@ dist
 dist-ssr
 dist.zip
 TODO.md
+docs/
 *.local
 
 # Editor directories and files
