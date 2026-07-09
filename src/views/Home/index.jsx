@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, FloatButton } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -645,6 +645,18 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            <Tooltip title="退出登录" placement="left">
+                <FloatButton
+                    icon={<LogoutOutlined />}
+                    type='primary'
+                    onClick={exit}
+                    danger
+                    style={{
+                        insetInlineEnd: 24,
+                        bottom: 24,
+                    }}
+                />
+            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
