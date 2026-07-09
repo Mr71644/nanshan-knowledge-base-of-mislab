@@ -1,0 +1,33 @@
+:root {
+  --layout-padding: 24px;
+  --breadcrumb-font-size: 24px;
+  --action-btn-width: 200px;
+  --action-btn-height: 64px;
+  --action-btn-font-size: 16px;
+  --action-space-gap: 50px;
+  --file-list-min-height: 180px;
+}
+
+@media (max-width: 1279px) {
+  :root {
+    --layout-padding: 16px;
+    --breadcrumb-font-size: 18px;
+    --action-btn-width: 140px;
+    --action-btn-height: 48px;
+    --action-btn-font-size: 13px;
+    --action-space-gap: 24px;
+    --file-list-min-height: 120px;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  :root {
+    --layout-padding: 20px;
+    --breadcrumb-font-size: 20px;
+    --action-btn-width: 170px;
+    --action-btn-height: 56px;
+    --action-btn-font-size: 14px;
+    --action-space-gap: 32px;
+    --file-list-min-height: 150px;
+  }
+}

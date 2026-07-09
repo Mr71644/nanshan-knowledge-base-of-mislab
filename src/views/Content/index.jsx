@@ -127,15 +127,15 @@ const Area = () => {
             {contextHolder}
             <Layout
                 style={{
-                    padding: '24px',
+                    padding: 'var(--layout-padding)',
                     height: '100vh'
                 }}
             >
                 <Content
                     style={{
-                        paddingLeft: 24,
-                        paddingRight: 24,
-                        paddingBottom: 24,
+                        paddingLeft: 'var(--layout-padding)',
+                        paddingRight: 'var(--layout-padding)',
+                        paddingBottom: 'var(--layout-padding)',
                         paddingTop: 6,
                         margin: 0,
                         minHeight: 280,
@@ -210,7 +210,7 @@ const Area = () => {
                                             <h3>创建时间：{time.current.createTime}&nbsp;&nbsp;&nbsp;&nbsp;更新时间：{time.current.updateTime}</h3>
                                         </div>
                                         <div className={style.contentPreview}>
-                                            <TiptapEditor content={value} editable={false} />
+                                            <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} />
                                         </div>
                                     </div>
 

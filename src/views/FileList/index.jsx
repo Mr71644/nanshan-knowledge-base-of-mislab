@@ -443,7 +443,7 @@ const FileList = () => {
                             columns={columns}
                             dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
-                            scroll={{ y: 'calc(100vh - 260px)' }}
+                            scroll={{ y: 'calc(100vh - 260px)', x: 700 }}
                             onRow={(record) => ({
                                 onClick: () => {
                                     if (batchType) {

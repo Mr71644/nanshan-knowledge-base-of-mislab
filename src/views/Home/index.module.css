@@ -26,13 +26,12 @@
 }
 .fileList {
   margin-top: 24px;
-  min-height: 180px;
+  min-height: var(--file-list-min-height);
   max-height: 70vh;
 }
 :global #root,
 :global body,
 :global html {
-  min-width: 1400px;
   height: 100%;
 }
 :global .ant-layout {
@@ -122,8 +121,14 @@
 .authority {
   position: relative;
   overflow: hidden;
-  width: 200px;
-  height: 64px;
+  width: var(--action-btn-width);
+  height: var(--action-btn-height);
+}
+.actionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--action-space-gap);
+  margin-top: 20px;
 }
 .authority svg {
   width: 24px;

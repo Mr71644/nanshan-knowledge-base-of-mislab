@@ -458,7 +458,7 @@ const Excel = () => {
                 mask={false}
                 onClose={() => setFileDrawerOpen(false)}
                 open={fileDrawerOpen}
-                width={420}
+                width={window.innerWidth < 1280 ? 340 : 420}
             >
                 {
                     fileLoading

@@ -1055,7 +1055,7 @@ const Administrator = () => {
                         rowKey="id"
                         loading={userLoading || userSearchLoading}
                         tableLayout="fixed"
-                        scroll={{ y: 'calc(100vh - 340px)', x: false }}
+                        scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
                         rowClassName={(record) => selectedUserIds.includes(record.id) ? style.selectedRow : ''}
                         pagination={{
                             current: userPagination.current,
@@ -1113,7 +1113,7 @@ const Administrator = () => {
                         rowKey="id"
                         loading={roleLoading || roleSearchLoading}
                         tableLayout="fixed"
-                        scroll={{ y: 'calc(100vh - 340px)', x: false }}
+                        scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
                         pagination={{
                             current: rolePagination.current,
                             pageSize: rolePagination.pageSize,
@@ -1144,13 +1144,13 @@ const Administrator = () => {
     return (
         <>
             {contextHolder}
-            <Layout style={{ padding: '24px', height: '100vh' }}>
+            <Layout style={{ padding: 'var(--layout-padding)', height: '100vh' }}>
                 <Content
                     className={style.adminContent}
                     style={{
-                        paddingLeft: 24,
-                        paddingRight: 24,
-                        paddingBottom: 24,
+                        paddingLeft: 'var(--layout-padding)',
+                        paddingRight: 'var(--layout-padding)',
+                        paddingBottom: 'var(--layout-padding)',
                         paddingTop: 6,
                         margin: 0,
                         minHeight: 280,

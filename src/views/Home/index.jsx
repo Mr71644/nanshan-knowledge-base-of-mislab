@@ -109,7 +109,12 @@ const Home = () => {
     const [openKeys, setOpenKeys] = useState([])
     const [selectedKeys, setSelectedKeys] = useState([])
     const [collapsed, setCollapsed] = useState(false);
-    const [siderWidth, setSiderWidth] = useState(320);
+    const [siderWidth, setSiderWidth] = useState(() => {
+        const w = window.innerWidth
+        if (w < 1280) return 240
+        if (w < 1440) return 280
+        return 320
+    });
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [recycleBinOpen, setRecycleBinOpen] = useState(false);
@@ -716,12 +721,12 @@ const Home = () => {
             </Sider>
             <Layout
                 style={{
-                    padding: '0 24px 0',
+                    padding: '0 var(--layout-padding) 0',
                 }}
             >
                 <Content
                     style={{
-                        padding: 24,
+                        padding: 'var(--layout-padding)',
                         margin: 0,
                         minHeight: 280,
                         background: colorBgContainer,
@@ -730,7 +735,7 @@ const Home = () => {
                 >
                     <Breadcrumb separator=">" items={folderLayer}
                         style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--breadcrumb-font-size)',
                         }}
                         className={style.breadcrumb}
                     />
@@ -739,8 +744,7 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 20 }}>
-                        <Space size={50}>
+                        <div className={style.actionButtons}>
                             <MemoAddNewFile></MemoAddNewFile>
                             <UploadFile></UploadFile>
                             <Button
@@ -748,7 +752,7 @@ const Home = () => {
                                 onClick={handleOpenModal}>
                                 <IdcardOutlined />
                                 <span style={{
-                                    fontSize: '16px'
+                                    fontSize: 'var(--action-btn-font-size)'
                                 }}>用户信息修改</span>
                             </Button>
                             {
@@ -758,7 +762,7 @@ const Home = () => {
                                         onClick={() => navigate('/administrator')}>
                                         <UserOutlined />
                                         <span style={{
-                                            fontSize: '16px'
+                                            fontSize: 'var(--action-btn-font-size)'
                                         }}>权限管理入口</span>
                                     </Button>
                                     : null
@@ -769,18 +773,11 @@ const Home = () => {
                                     onClick={() => setRecycleBinOpen(true)}>
                                     <DeleteOutlined />
                                     <span style={{
-                                        fontSize: '16px'
+                                        fontSize: 'var(--action-btn-font-size)'
                                     }}>回收站</span>
                                 </Button>
                             ) : null}
-                        </Space>
-                        <Button
-                            danger
-                            onClick={exit}
-                            style={{ marginLeft: 'auto', marginRight: 30 }}
-                        >
-                            <LogoutOutlined />
-                        </Button>
+                        </div>
                         </div>
                     </ConfigProvider>
                     <div
