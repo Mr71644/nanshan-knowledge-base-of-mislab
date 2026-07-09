@@ -40,6 +40,11 @@ React 18 + Vite 5 + Redux Toolkit application. Uses **Hash Router** (`createHash
 | `/addExcel/:folder` | MemoAddExcel | New Excel |
 | `/administrator` | MemoAdministrator | User/role management (wrapped in `AdminRoute`) |
 | `/login` | MemoLogin | Login page |
+| `/preview` | MemoPreview | File preview page |
+| `/` | Navigate → `/home` | Root redirect |
+| `*` | MemoNotFound | 404 catch-all |
+
+**Note:** `AuthRoute` (`src/router/AuthRoute.jsx`) exists but is **not currently used** in the router — all routes render without authentication guards.
 
 All view components are exported as `Memo[ComponentName]` (wrapped in `memo()`). Import the `Memo` prefixed version in the router.
 
@@ -54,8 +59,11 @@ All view components are exported as `Memo[ComponentName]` (wrapped in `memo()`).
 
 - Axios instance with base URL from environment variable `import.meta.env.VITE_API_BASE_URL`
 - Environment configuration:
-  - `.env.development` → `http://101.43.146.27/new-app/api`（测试环境，`pnpm dev` 时使用）
-  - `.env.production` → `http://119.27.181.240:4529`（生产环境，`pnpm build` 时使用）
+  - `.env.development` → `VITE_API_BASE_URL=/api` — uses Vite proxy (see below)
+  - `.env.production` → `VITE_API_BASE_URL=http://101.43.146.27/new-app/api`
+  - `.env` → `VITE_APP_TITLE=MISLab知识库` (shared across all environments)
+
+**Vite proxy (dev only):** `/api` requests are proxied to `http://101.43.146.27/new-app/api` with the `/api` prefix stripped. Configured in `vite.config.js` → `server.proxy`.
 - Request interceptor: auto-attaches `Authorization: Bearer ${token}`
 - Response interceptor: unwraps to `response.data`; on 401 → clears token, shows warning, redirects to `#/login`
 - API modules in `src/apis/` split by domain (`content.js`, `excel.js`, `folder.js`, `file.js`, etc.)
@@ -73,6 +81,8 @@ ComponentName/
 
 Styles use CSS Modules: `import style from './index.module.css'`, then `style.className`.
 
+**Exceptions:** `ChatInput` and `TiptapEditor` lack `.less` source files (CSS was written directly).
+
 ### Univer Excel integration (`src/components/UniverSheet/`)
 
 Uses **preset mode** (v0.15.x) — do NOT mix with plugin-mode APIs:
@@ -82,6 +92,10 @@ Uses **preset mode** (v0.15.x) — do NOT mix with plugin-mode APIs:
 - Data must conform to Univer's `IWorkbookData` interface
 - Presets: `@univerjs/preset-sheets-core` + `@univerjs/preset-sheets-advanced`
 - All `@univerjs/*` packages must stay at the same version (currently 0.15.0)
+
+### ChatInput component (`src/components/ChatInput/`)
+
+AI chat assistant (floating button). **Note:** uses a hardcoded API URL (`http://10.92.191.37:8000/api/v1/ask`) directly — does NOT use the shared `request` axios instance from `src/utils/request.js`.
 
 ### File type status codes
 
@@ -94,54 +108,6 @@ Token lifecycle: login → stored in `localStorage` → attached via request int
 ### Custom hooks
 
 - `useMessage` (`src/hooks/useMessage.jsx`): wraps Ant Design Message with `{ content, callBack, delayTime, show }` config
-
-## Git workflow
-
-### Branch structure
-
-```
-main（生产分支，始终保持可发布状态）
-  └── develop（开发主分支，所有人代码汇总）
-        ├── feature/xxx    新功能开发
-        ├── fix/xxx        bug 修复
-        └── optimize/xxx   优化改进
-```
-
-### Workflow
-
-- **开始新任务前**: `git checkout develop` → `git pull` → `git checkout -b feature/xxx`
-- **开发完成后**: push feature 分支 → 在 GitHub 创建 PR 到 develop
-- **测试通过后**: 在 GitHub 创建 PR 从 develop 到 main，合并后部署生产
-- **直接在 develop 上的小改动**: 直接提交推送，不需要 PR
-
-### Version tags
-
-每次打包部署到生产环境时，在 main 分支打 tag：
-
-```bash
-git checkout main
-git pull
-git tag -a v1.0.0 -m "部署说明：简要描述本次部署内容"
-git push origin v1.0.0
-```
-
-版本号规则：`v主版本.次版本.修订号`
-- 主版本：重大改版（v1 → v2）
-- 次版本：新功能（v1.0 → v1.1）
-- 修订号：bug 修复（v1.0.0 → v1.0.1）
-
-测试环境部署不打 tag（在 develop 分支直接打包即可）。
-
-### Guidance for user
-
-The user is a beginner — keep git instructions simple. **IMPORTANT: Do NOT execute git commands directly.** Instead, guide the user step by step: tell them what command to run, explain why, and let them execute it themselves. This helps the user learn the git workflow.
-
-Proactively remind the user about git operations:
-- Before starting a new feature or fix: create a branch from develop
-- After completing a logical unit of work: commit
-- Before starting work each session: pull latest changes
-- After a feature is complete and tested: create PR
-- Before building for production deployment: remind to merge develop → main and tag
 
 ## Known issues
 
