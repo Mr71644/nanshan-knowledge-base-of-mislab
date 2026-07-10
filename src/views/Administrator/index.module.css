@@ -47,3 +47,182 @@
 .selectedRow {
   background-color: #f9f9f9 !important;
 }
+
+/* ========== 角色用户查看模态框 ========== */
+.roleUsersModal :global .ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.roleUsersModal :global .ant-modal-body {
+  padding: 0;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 32px 24px;
+  background: linear-gradient(135deg, #f8fafd 0%, #eef2f7 100%);
+  border-bottom: 1px solid #e8ecf1;
+}
+
+.modalHeaderIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.25);
+  flex-shrink: 0;
+}
+
+.modalHeaderInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.modalHeaderTitle {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.modalHeaderDesc {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modalHeaderCount {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.countNumber {
+  display: block;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1677ff;
+  line-height: 1;
+}
+
+.countLabel {
+  display: block;
+  font-size: 12px;
+  color: #8b95a5;
+  margin-top: 4px;
+}
+
+.userList {
+  padding: 20px 32px 28px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  background: #fafbfc;
+  border: 1px solid transparent;
+  animation: roleUsersFadeInUp 0.35s ease both;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.userCard:last-child {
+  margin-bottom: 0;
+}
+
+.userCard:hover {
+  background: #fff;
+  border-color: #e0e5ec;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.statusDot.active {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+
+.statusDot.inactive {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+.statusText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+@keyframes roleUsersFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
