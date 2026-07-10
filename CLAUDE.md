@@ -109,6 +109,17 @@ Token lifecycle: login → stored in `localStorage` → attached via request int
 
 - `useMessage` (`src/hooks/useMessage.jsx`): wraps Ant Design Message with `{ content, callBack, delayTime, show }` config
 
+### Document storage directories
+
+Project root contains two document storage directories for the migration to file-based storage:
+
+| Directory | Purpose | Git tracking |
+|---|---|---|
+| `docs/personal/` | 个人文档存储 | 文件夹跟踪，内容被 git 忽略 |
+| `docs/shared/` | 团队共享文档存储 | 正常提交到 git |
+
+Gitignore 规则：`docs/personal/` 中的文档文件不会被 git 跟踪；`docs/shared/` 中的团队共享文档正常提交。
+
 ## Known issues
 
 - (none currently)
