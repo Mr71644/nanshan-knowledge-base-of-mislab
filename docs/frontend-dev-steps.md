@@ -1,6 +1,5 @@
 # 前端开发步骤
-
-**分支：** `test/migration-feasibility`  
+ 
 **目标：** Markdown → ProseMirror JSON 存储格式迁移 + 字体/颜色/高亮功能  
 **预计总文件：** 6 个新文件 + 9 个修改文件
 
@@ -10,7 +9,8 @@
 
 - [ ] 后端已完成数据库 `content_type` 列添加
 - [ ] 后端 `GET /text/get/{id}` 响应已包含 `contentType` 字段（缺失时默认 markdown，不阻塞）
-- [ ] 当前分支已基于最新 main 分支创建
+- [ ] 从测试分支 cherry-pick 依赖变更：`git checkout test/migration-feasibility -- package.json pnpm-lock.yaml`
+- [ ] `pnpm install` 确认依赖安装成功
 
 ---
 
@@ -414,43 +414,6 @@ pnpm build
 
 ---
 
-## Step 17：清理测试文件
-
-**操作：** 删除开发过程中创建的临时文件：
-
-```bash
-# 测试页面
-rm src/pages/MigrationTest.jsx
-rm src/pages/ImageMigrationTest.jsx
-rm src/pages/FullExtensionTest.jsx
-rm src/pages/RenderMarkdownTest.jsx
-
-# 独立测试页面
-rm test-migration.html
-rm test-migration-2.html
-rm test-migration-3.html
-rm test-migration-4.html
-rm test-migration-5.html
-rm test-migration-5.js
-
-# Playwright 脚本和截图
-rm screenshot.cjs
-rm fetch-docs.cjs
-rm migration-test-result.png
-rm migration-test-viewport.png
-rm migration-test-2-result.png
-rm migration-test-3-result.png
-rm migration-test-4-result.png
-rm migration-test-5-result.png
-rm migration-test-6-result.png
-rm migration-test-image-result.png
-rm migration-test-image-final.png
-rm migration-test-retest-result.png
-```
-
-**恢复路由：** `src/router/index.jsx` 中删除 4 个测试路由（migration-test、migration-test-image、migration-test-full、migration-test-render）。
-
----
 
 ## Step 18：提交
 
@@ -494,20 +457,3 @@ Step 10 完成后 ──→ Step 13 (测试面板，测试阶段专用)         
 ```
 
 ---
-
-## 工时估算
-
-| 步骤 | 预估时间 |
-|------|----------|
-| Step 1-2 | 15 分钟 |
-| Step 3 | 1 小时 |
-| Step 4-5 | 1 小时 |
-| Step 6-7 | 45 分钟 |
-| Step 8 | 10 分钟 |
-| Step 9-11 | 1.5 小时 |
-| Step 12 | 30 分钟 |
-| Step 13 (测试面板) | 1 小时 |
-| Step 14 | 20 分钟 |
-| Step 15 | 2 小时 |
-| Step 16-18 | 30 分钟 |
-| **合计** | **约 8.5 小时** |

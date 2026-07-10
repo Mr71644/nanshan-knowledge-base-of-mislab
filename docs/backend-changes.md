@@ -2,7 +2,7 @@
 
 **日期：** 2026-07-10  
 **目标读者：** 后端开发  
-**前端分支：** `test/migration-feasibility`
+**前端分支：** 测试 `test/migration-feasibility` / 开发 `feat/storage-json-migration`
 
 ---
 
