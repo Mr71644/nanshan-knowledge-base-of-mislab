@@ -193,7 +193,10 @@ const Login = () => {
             {contextHolder}
             <div className={style.login}>
                 <Card className={style.loginCard}>
-                    <div className={style.logo}>知邮南山 - MISLab</div>
+                    <div className={style.logo}>
+                        <div className={style.logoTitle}>知邮南山</div>
+                        <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
+                    </div>
 
                     {/* ========== 登录模式 ========== */}
                     {mode === 'login' && (

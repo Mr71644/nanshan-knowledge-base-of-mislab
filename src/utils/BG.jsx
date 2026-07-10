@@ -88,13 +88,13 @@ export default function BG() {
                 this._scroll = 0;
                 this._ribbons = [];
                 this._options = {
-                    colorSaturation: "80%",
-                    colorBrightness: "60%",
-                    colorAlpha: 0.65,
-                    colorCycleSpeed: 6,
+                    colorSaturation: "55%",
+                    colorBrightness: "52%",
+                    colorAlpha: 0.30,
+                    colorCycleSpeed: 0,
                     verticalPosition: "center",
-                    horizontalSpeed: 200,
-                    ribbonCount: 4,
+                    horizontalSpeed: 150,
+                    ribbonCount: 3,
                     strokeSize: 0,
                     parallaxAmount: -0.5,
                     animateSections: true
@@ -128,7 +128,7 @@ export default function BG() {
                         this._canvas.style["width"] = "100%";
                         this._canvas.style["height"] = "100%";
                         this._canvas.style["z-index"] = "-1";
-                        this._canvas.style["background-color"] = "white";
+                        this._canvas.style["background-color"] = "#faf7f2";
                         this._canvas.id = "bgCanvas";
                         this._onResize();
                         this._context = this._canvas.getContext("2d");
@@ -157,7 +157,10 @@ export default function BG() {
                         starty = this._height - hide;
                     }
                     var ribbon = [], point1 = new Point(startx, starty), point2 = new Point(startx, starty), point3 = null,
-                        color = Math.round(random(0, 360)), delay = 0;
+                        // 铜金 & 青蓝 融合色盘：经管温度 + 技术理性
+                        huePalette = [32, 38, 42, 48, 185, 195, 200, 210],
+                        color = huePalette[Math.floor(random(0, huePalette.length - 1))],
+                        delay = 0;
                     let T = true
                     while (T) {
                         if (stop <= 0) break;
