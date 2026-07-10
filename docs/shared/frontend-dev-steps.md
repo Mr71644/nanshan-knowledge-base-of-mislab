@@ -1,7 +1,7 @@
 # 前端开发步骤
-
+ 
 **目标：** Markdown → ProseMirror JSON 存储格式迁移 + 字体/颜色/高亮功能  
-**预计总文件：** 5 个新文件 + 9 个修改文件
+**预计总文件：** 6 个新文件 + 9 个修改文件
 
 ---
 
@@ -9,6 +9,8 @@
 
 - [ ] 后端已完成数据库 `content_type` 列添加
 - [ ] 后端 `GET /text/get/{id}` 响应已包含 `contentType` 字段（缺失时默认 markdown，不阻塞）
+- [ ] 从测试分支 cherry-pick 依赖变更：`git checkout test/migration-feasibility -- package.json pnpm-lock.yaml`
+- [ ] `pnpm install` 确认依赖安装成功
 
 ---
 
@@ -297,7 +299,50 @@ pnpm add @tiptap/extension-highlight@3.23.4
 
 ---
 
-## Step 13：创建文本提取工具
+## Step 13：创建迁移测试面板（测试阶段专用）
+
+**文件（新建）：** `src/components/MigrationTestPanel/index.jsx` + `index.module.css`
+
+**用途：** 开发完成后的用户验收测试阶段，在页面右下角显示迁移进度浮窗。正式上线时通过环境变量关闭即为完全静默。
+
+**操作：**
+
+1. 创建浮窗组件，包含：
+   - 进度条和计数（X/总数）
+   - 实时滚动的文档列表（最新 10 条）：绿色 ✅ 成功、红色 ❌ 失败
+   - 成功行显示文档 ID、标题、体积比
+   - 失败行可点击展开：显示错误原因和原始 MD 前 200 字符
+   - "收起面板"按钮 → 折叠为一行进度条
+   - 迁移全部完成后 5 秒自动淡出
+
+2. 通过 `import.meta.env.VITE_MIGRATION_TEST === 'true'` 控制显示。正式上线时删除此变量或设为 false。
+
+3. 在 Home 页中条件渲染：
+   ```jsx
+   {import.meta.env.VITE_MIGRATION_TEST === 'true' && (
+       <MigrationTestPanel scheduler={migrationRef} />
+   )}
+   ```
+
+4. `migrationScheduler.js` 已有 `onProgress` 回调，补充回调数据即可对接面板：
+   - `onDocumentSuccess({ id, title, mdLen, jsonLen, ratio })`
+   - `onDocumentFailed({ id, title, reason, mdSnippet })`
+
+**验证：**
+- 设置 `VITE_MIGRATION_TEST=true` → 登录后右下角出现面板
+- 进度条实时更新
+- 成功/失败文档正确显示
+- 失败行点击展开详情
+- 迁移完成后面板自动消失
+- 设置 `VITE_MIGRATION_TEST=false` → 迁移完全静默
+
+**回滚：** 删除组件文件 + Home 页中的条件渲染 + 环境变量。
+
+详见：`docs/migration-test-panel.md`
+
+---
+
+## Step 14：创建文本提取工具
 
 **文件（新建）：** `src/utils/proseMirrorUtils.js`
 
@@ -309,7 +354,7 @@ pnpm add @tiptap/extension-highlight@3.23.4
 
 ---
 
-## Step 14：端到端验证
+## Step 15：端到端验证
 
 按以下测试矩阵逐项手动验证，每项通过后打勾。
 
@@ -358,7 +403,7 @@ pnpm add @tiptap/extension-highlight@3.23.4
 
 ---
 
-## Step 15：生产构建
+## Step 16：生产构建
 
 ```bash
 pnpm build
@@ -369,45 +414,8 @@ pnpm build
 
 ---
 
-## Step 16：清理测试文件
 
-**操作：** 删除开发过程中创建的临时文件：
-
-```bash
-# 测试页面
-rm src/pages/MigrationTest.jsx
-rm src/pages/ImageMigrationTest.jsx
-rm src/pages/FullExtensionTest.jsx
-rm src/pages/RenderMarkdownTest.jsx
-
-# 独立测试页面
-rm test-migration.html
-rm test-migration-2.html
-rm test-migration-3.html
-rm test-migration-4.html
-rm test-migration-5.html
-rm test-migration-5.js
-
-# Playwright 脚本和截图
-rm screenshot.cjs
-rm fetch-docs.cjs
-rm migration-test-result.png
-rm migration-test-viewport.png
-rm migration-test-2-result.png
-rm migration-test-3-result.png
-rm migration-test-4-result.png
-rm migration-test-5-result.png
-rm migration-test-6-result.png
-rm migration-test-image-result.png
-rm migration-test-image-final.png
-rm migration-test-retest-result.png
-```
-
-**恢复路由：** `src/router/index.jsx` 中删除 4 个测试路由（migration-test、migration-test-image、migration-test-full、migration-test-render）。
-
----
-
-## Step 17：提交
+## Step 18：提交
 
 ```bash
 git add .
@@ -440,26 +448,12 @@ Step 3 + Step 8 ──→ Step 6 (Content) ── 可与 Step 7 并行
               ──→ Step 7 (AddContent)
                            │
 Step 3 完成后 ──→ Step 9 (引擎) ──→ Step 10 (调度器) ──→ Step 11 (迁移API) ──→ Step 12 (Home触发)
+                                                                    │
+Step 10 完成后 ──→ Step 13 (测试面板，测试阶段专用)                │
                            │
-任意顺序 ──→ Step 13 (文本工具)
+任意顺序 ──→ Step 14 (文本工具)
                            │
-全部完成 ──→ Step 14 (验证) ──→ Step 15 (构建) ──→ Step 16 (清理) ──→ Step 17 (提交)
+全部完成 ──→ Step 15 (验证) ──→ Step 16 (构建) ──→ Step 17 (清理) ──→ Step 18 (提交)
 ```
 
 ---
-
-## 工时估算
-
-| 步骤 | 预估时间 |
-|------|----------|
-| Step 1-2 | 15 分钟 |
-| Step 3 | 1 小时 |
-| Step 4-5 | 1 小时 |
-| Step 6-7 | 45 分钟 |
-| Step 8 | 10 分钟 |
-| Step 9-11 | 1.5 小时 |
-| Step 12 | 30 分钟 |
-| Step 13 | 20 分钟 |
-| Step 14 | 2 小时 |
-| Step 15-17 | 30 分钟 |
-| **合计** | **约 7.5 小时** |
