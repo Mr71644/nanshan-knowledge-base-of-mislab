@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from 'react'
-import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin } from 'antd'
+import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar } from 'antd'
 import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
@@ -47,6 +47,12 @@ const Administrator = () => {
     const [roleSearchKeyword, setRoleSearchKeyword] = useState('')
     const [allRoles, setAllRoles] = useState([])
     const [roleSearchLoading, setRoleSearchLoading] = useState(false) // 角色搜索加载状态
+
+    // 角色用户查看状态
+    const [roleUsersModalVisible, setRoleUsersModalVisible] = useState(false)
+    const [selectedRoleForUsers, setSelectedRoleForUsers] = useState(null)
+    const [roleUsers, setRoleUsers] = useState([])
+    const [roleUsersLoading, setRoleUsersLoading] = useState(false)
 
     // 权限分配状态
     const [permissionModalVisible, setPermissionModalVisible] = useState(false)
@@ -475,6 +481,42 @@ const Administrator = () => {
             })
         } finally {
             setPermissionLoading(false)
+        }
+    }
+
+    // 角色用户查看相关方法
+    const avatarColors = ['#1677ff', '#52c41a', '#fa8c16', '#eb2f96', '#722ed1', '#13c2c2', '#f5222d', '#2f54eb']
+    const getAvatarColor = (username) => {
+        let hash = 0
+        for (let i = 0; i < username.length; i++) {
+            hash = username.charCodeAt(i) + ((hash << 5) - hash)
+        }
+        return avatarColors[Math.abs(hash) % avatarColors.length]
+    }
+
+    const handleViewRoleUsers = async (record) => {
+        setSelectedRoleForUsers(record)
+        setRoleUsersModalVisible(true)
+        setRoleUsersLoading(true)
+        try {
+            const res = await getUserList({ current: 1, pageSize: 1000 })
+            const allUsers = res.data.records.map(item => ({
+                id: item.id,
+                username: item.username,
+                email: item.email,
+                roles: item.roles || [],
+                status: item.status,
+                updateTime: item.updateTime
+            }))
+            const filtered = allUsers.filter(user =>
+                user.roles && user.roles.some(role => role.roleId === record.id)
+            )
+            setRoleUsers(filtered)
+        } catch (e) {
+            error({ content: '加载角色用户失败' })
+            setRoleUsersModalVisible(false)
+        } finally {
+            setRoleUsersLoading(false)
         }
     }
 
@@ -974,7 +1016,17 @@ const Administrator = () => {
             align: 'center',
             dataIndex: 'userCount',
             key: 'userCount',
-            width: 80,
+            width: 100,
+            render: (text, record) => (
+                <Button
+                    type="link"
+                    size="small"
+                    onClick={() => handleViewRoleUsers(record)}
+                    style={{ fontWeight: 700, fontSize: 15, minWidth: 40 }}
+                >
+                    {text || 0}
+                </Button>
+            )
         },
         {
             title: '文件夹权限',
@@ -1570,6 +1622,71 @@ const Administrator = () => {
                             </div>
                         </div>
                     </div>
+                </Modal>
+
+                {/* 角色用户查看模态框 */}
+                <Modal
+                    title={null}
+                    open={roleUsersModalVisible}
+                    onCancel={() => setRoleUsersModalVisible(false)}
+                    footer={null}
+                    width={620}
+                    destroyOnClose
+                    className={style.roleUsersModal}
+                >
+                    <div className={style.modalHeader}>
+                        <div className={style.modalHeaderIcon}>
+                            <TeamOutlined />
+                        </div>
+                        <div className={style.modalHeaderInfo}>
+                            <h3 className={style.modalHeaderTitle}>{selectedRoleForUsers?.name}</h3>
+                            {selectedRoleForUsers?.description && (
+                                <p className={style.modalHeaderDesc}>{selectedRoleForUsers?.description}</p>
+                            )}
+                        </div>
+                        <div className={style.modalHeaderCount}>
+                            <span className={style.countNumber}>{roleUsers.length}</span>
+                            <span className={style.countLabel}>位用户</span>
+                        </div>
+                    </div>
+                    <Spin spinning={roleUsersLoading}>
+                        <div className={`${style.userList} ${style.scrollbar}`}>
+                            {roleUsers.length === 0 && !roleUsersLoading ? (
+                                <div className={style.emptyState}>
+                                    <TeamOutlined style={{ fontSize: 48, color: '#d1d5db', marginBottom: 12, display: 'block' }} />
+                                    该角色下暂无用户
+                                </div>
+                            ) : (
+                                roleUsers.map((user, index) => (
+                                    <div
+                                        key={user.id}
+                                        className={style.userCard}
+                                        style={{ animationDelay: `${index * 60}ms` }}
+                                    >
+                                        <Avatar
+                                            size={44}
+                                            style={{
+                                                backgroundColor: getAvatarColor(user.username),
+                                                flexShrink: 0,
+                                                fontWeight: 600,
+                                                fontSize: 17,
+                                            }}
+                                        >
+                                            {user.username.charAt(0).toUpperCase()}
+                                        </Avatar>
+                                        <div className={style.userInfo}>
+                                            <span className={style.userName}>{user.username}</span>
+                                            <span className={style.userEmail}>{user.email}</span>
+                                        </div>
+                                        <div className={style.userMeta}>
+                                            <span className={`${style.statusDot} ${user.status === 1 ? style.active : style.inactive}`} />
+                                            <span className={style.statusText}>{user.status === 1 ? '启用' : '禁用'}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </Spin>
                 </Modal>
 
                 <Tooltip title="返回主页" placement="left">
