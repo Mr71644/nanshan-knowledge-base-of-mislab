@@ -3,18 +3,42 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-}
-.login .img {
-  width: 80px;
-  height: 30px;
+  position: relative;
 }
 .loginCard {
-  /* 卡片样式 */
-  background-color: rgba(247, 247, 247);
-  width: min(400px, 90vw);
-  border-radius: 10px;
-  padding: 20px;
+  background: rgba(250, 248, 245, 0.78);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  width: min(420px, 92vw);
+  border-radius: 18px;
+  padding: 28px 32px 24px;
   z-index: 99;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 8px 32px rgba(61, 50, 38, 0.10);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+}
+.loginCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, transparent, #c8963e, transparent);
+  opacity: 0.7;
+  transition: width 0.5s ease, opacity 0.5s ease;
+}
+.loginCard:hover {
+  box-shadow: 0 16px 48px rgba(61, 50, 38, 0.14);
+  border-color: rgba(200, 150, 62, 0.18);
+}
+.loginCard:hover::before {
+  width: 100px;
+  opacity: 1;
 }
 .logo {
   width: 100%;
@@ -24,6 +48,258 @@
   align-self: center;
   font-size: 22px;
   z-index: 99;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: #3d3226;
+  margin-bottom: 4px;
+  user-select: none;
+}
+.formWrapper {
+  animation: fadeSlideIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.resetHeader {
+  text-align: center;
+  margin-bottom: 22px;
+}
+.resetTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3d3226;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+.resetSubtitle {
+  font-size: 13px;
+  color: #7a6e5e;
+  letter-spacing: 0.02em;
+}
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  gap: 0;
+}
+.stepDot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+.stepCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  position: relative;
+  z-index: 1;
+  background: rgba(200, 150, 62, 0.06);
+  color: #a89880;
+  border: 1.5px solid rgba(200, 150, 62, 0.15);
+}
+.stepCircle svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.stepLabel {
+  font-size: 12px;
+  color: #a89880;
+  white-space: nowrap;
+  transition: color 0.35s ease;
+}
+.stepLine {
+  width: 48px;
+  height: 1.5px;
+  background: rgba(200, 150, 62, 0.12);
+  margin: 0 4px;
+  position: relative;
+  top: -8px;
+  transition: background 0.45s ease;
+}
+.stepLine::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #c8963e, #daa84e);
+  transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+  border-radius: 1px;
+}
+.stepCircleDone {
+  background: #c8963e !important;
+  border-color: #c8963e !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(200, 150, 62, 0.25);
+}
+.stepCircleDone svg {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+.stepLabelDone {
+  color: #c8963e;
+  font-weight: 500;
+}
+.stepCircleActive {
+  background: rgba(200, 150, 62, 0.12) !important;
+  border-color: #c8963e !important;
+  color: #c8963e !important;
+  box-shadow: 0 0 0 4px rgba(200, 150, 62, 0.08);
+}
+.stepLabelActive {
+  color: #3d3226;
+  font-weight: 500;
+}
+.stepLineConnected::after {
+  width: 100%;
+}
+.loginCard :global(.ant-input),
+.loginCard :global(.ant-input-password) {
+  border-radius: 10px !important;
+  border-color: rgba(200, 150, 62, 0.12);
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.55);
+}
+.loginCard :global(.ant-input):hover,
+.loginCard :global(.ant-input-password):hover {
+  border-color: rgba(200, 150, 62, 0.28);
+}
+.loginCard :global(.ant-input):focus,
+.loginCard :global(.ant-input):focus-within,
+.loginCard :global(.ant-input-password):focus,
+.loginCard :global(.ant-input-password):focus-within {
+  border-color: #c8963e;
+  box-shadow: 0 0 0 3px rgba(200, 150, 62, 0.08);
+}
+.loginCard :global(.ant-input-affix-wrapper) {
+  border-radius: 10px !important;
+  border-color: rgba(200, 150, 62, 0.12);
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.55);
+}
+.loginCard :global(.ant-input-affix-wrapper):hover {
+  border-color: rgba(200, 150, 62, 0.28);
+}
+.loginCard :global(.ant-input-affix-wrapper):focus-within {
+  border-color: #c8963e;
+  box-shadow: 0 0 0 3px rgba(200, 150, 62, 0.08);
+}
+.loginCard :global(.ant-btn-primary) {
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #c8963e, #b8842e) !important;
+  border: none !important;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  height: 42px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(200, 150, 62, 0.2);
+}
+.loginCard :global(.ant-btn-primary):hover {
+  background: linear-gradient(135deg, #daa84e, #c89436) !important;
+  box-shadow: 0 4px 16px rgba(200, 150, 62, 0.3);
+  transform: translateY(-1px);
+}
+.loginCard :global(.ant-btn-primary):active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(200, 150, 62, 0.15);
+}
+.loginCard :global(.ant-form-item) {
+  margin-bottom: 18px;
+}
+.loginCard :global(.ant-form-item-explain-error) {
+  font-size: 12px;
+}
+.captchaSuffix {
+  display: inline-block;
+  height: 34px;
+  width: auto;
+  max-width: 80px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(200, 150, 62, 0.12);
+  vertical-align: middle;
+}
+.captchaSuffix:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(200, 150, 62, 0.18);
+}
+.captchaSuffix:active {
+  transform: scale(0.96);
+}
+.sendCodeSuffix {
+  height: 32px;
+  font-size: 13px;
+  padding: 0 10px;
+  color: #c8963e !important;
+  white-space: nowrap;
+  border-radius: 6px;
+}
+.sendCodeSuffix:hover {
+  color: #daa84e !important;
+  background: rgba(200, 150, 62, 0.06);
+}
+.sendCodeSuffix:disabled {
+  color: #a89880 !important;
+  cursor: not-allowed;
+}
+.switchLink {
+  text-align: center;
+  margin-top: 6px;
+}
+.switchLink span {
+  color: #c8963e;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+  transition: color 0.25s ease, letter-spacing 0.3s ease;
+  position: relative;
+}
+.switchLink span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 0;
+  height: 1px;
+  background: #c8963e;
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+.switchLink span:hover {
+  color: #daa84e;
+}
+.switchLink span:hover::after {
+  width: 100%;
+}
+@keyframes successPulse {
+  0% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(200, 150, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0); }
+}
+.successState :global(.ant-btn-primary) {
+  animation: successPulse 1.2s ease;
+  background: linear-gradient(135deg, #6bae6b, #5a9a5a) !important;
 }
 .logoAfter {
   width: 75px;

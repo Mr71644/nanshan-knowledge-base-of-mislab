@@ -110,6 +110,24 @@ const userProfileUpdate = ({ username, email, newPassword }) => {
     })
 }
 
+// 发送重置密码验证码
+const sendResetCode = (email) => {
+    return request({
+        url: '/user/password/reset-code',
+        method: 'POST',
+        data: { email }
+    })
+}
+
+// 重置密码
+const resetPassword = ({ email, code, newPassword, confirmPassword }) => {
+    return request({
+        url: '/user/password/reset',
+        method: 'POST',
+        data: { email, code, newPassword, confirmPassword }
+    })
+}
+
 export {
     getUserList,
     createUser,
@@ -120,5 +138,7 @@ export {
     getUserRoles,
     getUnassignedRoles,
     getUserInfo,
-    userProfileUpdate
+    userProfileUpdate,
+    sendResetCode,
+    resetPassword
 }

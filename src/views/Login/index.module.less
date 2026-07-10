@@ -1,23 +1,81 @@
+// ============================================================
+// 知邮南山 - MISLab 登录/重置密码  |  Scholarly Glass 主题
+// ============================================================
+
+// -- 调色板：暖金学术风 ---
+@accent:       #c8963e;
+@accent-hover: #daa84e;
+@accent-light: #f5e6cc;
+@text-primary: #3d3226;
+@text-secondary: #7a6e5e;
+@text-muted:    #a89880;
+@surface-glass: rgba(255, 255, 255, 0.62);
+@surface-card:  rgba(250, 248, 245, 0.78);
+@border-glass:  rgba(255, 255, 255, 0.55);
+@shadow-sm:     0 1px 3px rgba(61, 50, 38, 0.06);
+@shadow-md:     0 8px 32px rgba(61, 50, 38, 0.10);
+@shadow-lg:     0 16px 48px rgba(61, 50, 38, 0.14);
+@radius-lg:     18px;
+@radius-md:     10px;
+@radius-sm:     6px;
+
+// ============================================================
+//  页面容器
+// ============================================================
 .login {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    .img {
-        width: 80px;
-        height: 30px;
+    position: relative;
+}
+
+// ============================================================
+//  玻璃卡片
+// ============================================================
+.loginCard {
+    background: @surface-card;
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    width: min(420px, 92vw);
+    border-radius: @radius-lg;
+    padding: 28px 32px 24px;
+    z-index: 99;
+    border: 1px solid @border-glass;
+    box-shadow: @shadow-md;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.4s ease, border-color 0.4s ease;
+
+    // 顶部暖金装饰条
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        border-radius: 0 0 3px 3px;
+        background: linear-gradient(90deg, transparent, @accent, transparent);
+        opacity: 0.7;
+        transition: width 0.5s ease, opacity 0.5s ease;
+    }
+
+    &:hover {
+        box-shadow: @shadow-lg;
+        border-color: rgba(200, 150, 62, 0.18);
+
+        &::before {
+            width: 100px;
+            opacity: 1;
+        }
     }
 }
 
-.loginCard {
-    /* 卡片样式 */
-    background-color: rgba(247, 247, 247);
-    width: 400px;
-    border-radius: 10px;
-    padding: 20px;
-    z-index: 99;
-}
-
+// ============================================================
+//  Logo
+// ============================================================
 .logo {
     width: 100%;
     height: 55px;
@@ -26,9 +84,343 @@
     align-self: center;
     font-size: 22px;
     z-index: 99;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: @text-primary;
+    margin-bottom: 4px;
+    user-select: none;
 }
 
+// ============================================================
+//  模式切换容器 — 淡入上浮动效
+// ============================================================
+.formWrapper {
+    animation: fadeSlideIn 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes fadeSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// ============================================================
+//  重置标题区
+// ============================================================
+.resetHeader {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.resetTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: @text-primary;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+}
+
+.resetSubtitle {
+    font-size: 13px;
+    color: @text-secondary;
+    letter-spacing: 0.02em;
+}
+
+// ============================================================
+//  步骤指示器
+// ============================================================
+.stepIndicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    gap: 0;
+}
+
+.stepDot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+}
+
+.stepCircle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    position: relative;
+    z-index: 1;
+
+    // 默认（未激活）
+    background: rgba(200, 150, 62, 0.06);
+    color: @text-muted;
+    border: 1.5px solid rgba(200, 150, 62, 0.15);
+
+    svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+}
+
+.stepLabel {
+    font-size: 12px;
+    color: @text-muted;
+    white-space: nowrap;
+    transition: color 0.35s ease;
+}
+
+// 步骤连接线
+.stepLine {
+    width: 48px;
+    height: 1.5px;
+    background: rgba(200, 150, 62, 0.12);
+    margin: 0 4px;
+    position: relative;
+    top: -8px;
+    transition: background 0.45s ease;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, @accent, @accent-hover);
+        transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+        border-radius: 1px;
+    }
+}
+
+// 连接线已连通
+.stepLineConnected::after {
+    width: 100%;
+}
+
+// --- 已完成状态 ---
+.stepCircleDone {
+    background: @accent !important;
+    border-color: @accent !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(200, 150, 62, 0.25);
+
+    svg {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+    }
+}
+
+.stepLabelDone {
+    color: @accent;
+    font-weight: 500;
+}
+
+// --- 当前激活状态 ---
+.stepCircleActive {
+    background: rgba(200, 150, 62, 0.12) !important;
+    border-color: @accent !important;
+    color: @accent !important;
+    box-shadow: 0 0 0 4px rgba(200, 150, 62, 0.08);
+}
+
+.stepLabelActive {
+    color: @text-primary;
+    font-weight: 500;
+}
+
+// ============================================================
+//  表单项覆写
+// ============================================================
+.loginCard {
+    // Ant Design Input 统一覆写
+    :global(.ant-input),
+    :global(.ant-input-password) {
+        border-radius: @radius-md !important;
+        border-color: rgba(200, 150, 62, 0.12);
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.55);
+
+        &:hover {
+            border-color: rgba(200, 150, 62, 0.28);
+        }
+
+        &:focus,
+        &:focus-within {
+            border-color: @accent;
+            box-shadow: 0 0 0 3px rgba(200, 150, 62, 0.08);
+        }
+    }
+
+    :global(.ant-input-affix-wrapper) {
+        border-radius: @radius-md !important;
+        border-color: rgba(200, 150, 62, 0.12);
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.55);
+
+        &:hover {
+            border-color: rgba(200, 150, 62, 0.28);
+        }
+
+        &:focus-within {
+            border-color: @accent;
+            box-shadow: 0 0 0 3px rgba(200, 150, 62, 0.08);
+        }
+    }
+
+    // 主按钮
+    :global(.ant-btn-primary) {
+        border-radius: @radius-md !important;
+        background: linear-gradient(135deg, @accent, #b8842e) !important;
+        border: none !important;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        height: 42px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(200, 150, 62, 0.2);
+
+        &:hover {
+            background: linear-gradient(135deg, @accent-hover, #c89436) !important;
+            box-shadow: 0 4px 16px rgba(200, 150, 62, 0.3);
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(200, 150, 62, 0.15);
+        }
+    }
+
+    // 表单项间距
+    :global(.ant-form-item) {
+        margin-bottom: 18px;
+    }
+
+    // label
+    :global(.ant-form-item-explain-error) {
+        font-size: 12px;
+    }
+}
+
+// ============================================================
+//  输入框后缀挂件
+// ============================================================
+
+// 验证码图片 — 嵌在输入框末尾
+.captchaSuffix {
+    display: inline-block;
+    height: 34px;
+    width: auto;
+    max-width: 80px;
+    border-radius: @radius-sm;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border: 1px solid rgba(200, 150, 62, 0.12);
+    vertical-align: middle;
+
+    &:hover {
+        transform: scale(1.06);
+        box-shadow: 0 4px 14px rgba(200, 150, 62, 0.18);
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+}
+
+// 发送验证码 — 嵌在输入框末尾
+.sendCodeSuffix {
+    height: 32px;
+    font-size: 13px;
+    padding: 0 10px;
+    color: @accent !important;
+    white-space: nowrap;
+    border-radius: @radius-sm;
+
+    &:hover {
+        color: @accent-hover !important;
+        background: rgba(200, 150, 62, 0.06);
+    }
+
+    &:disabled {
+        color: @text-muted !important;
+        cursor: not-allowed;
+    }
+}
+
+// ============================================================
+//  模式切换链接
+// ============================================================
+.switchLink {
+    text-align: center;
+    margin-top: 6px;
+
+    span {
+        color: @accent;
+        cursor: pointer;
+        font-size: 13px;
+        user-select: none;
+        transition: color 0.25s ease, letter-spacing 0.3s ease;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -2px;
+            width: 0;
+            height: 1px;
+            background: @accent;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        &:hover {
+            color: @accent-hover;
+
+            &::after {
+                width: 100%;
+            }
+        }
+    }
+}
+
+// ============================================================
+//  成功动画
+// ============================================================
+@keyframes successPulse {
+    0% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(200, 150, 62, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(200, 150, 62, 0); }
+}
+
+.successState :global(.ant-btn-primary) {
+    animation: successPulse 1.2s ease;
+    background: linear-gradient(135deg, #6bae6b, #5a9a5a) !important;
+}
+
+// ============================================================
+//  废弃样式 (保留兼容)
+// ============================================================
 .logoAfter {
     width: 75px;
     height: 75px;
+}
+
+.logoInput {
+    // 占位 — 保留类名兼容
 }
