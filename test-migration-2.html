@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>测试 2：真实文档往返无损验证</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; max-width: 1500px; margin: 0 auto; }
+h1 { border-bottom: 2px solid #1890ff; padding-bottom: 12px; margin-bottom: 16px; }
+h2 { margin: 24px 0 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 16px; }
+th { background: #f0f0f0; padding: 6px 8px; border: 1px solid #ddd; text-align: left; }
+td { padding: 4px 8px; border: 1px solid #ddd; vertical-align: top; }
+.ok { background: #f6ffed; }
+.fail { background: #fff2f0; }
+.warn { background: #fffbe6; }
+.banner { padding: 16px; margin: 16px 0; border-radius: 8px; font-size: 16px; }
+.banner-pass { background: #f6ffed; border: 2px solid #52c41a; }
+.banner-fail { background: #fff2f0; border: 2px solid #ff4d4f; }
+button { padding: 10px 24px; font-size: 14px; cursor: pointer; background: #1890ff; color: #fff; border: none; border-radius: 6px; margin: 8px 4px; }
+button:hover { background: #40a9ff; }
+.info { padding: 12px; background: #e6f7ff; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+.step { padding: 12px; background: #fafafa; border-radius: 6px; margin: 8px 0; border-left: 3px solid #1890ff; }
+.loading { color: #faad14; }
+.error { color: #ff4d4f; }
+pre { font-size: 11px; white-space: pre-wrap; background: #fff; padding: 8px; border: 1px solid #ddd; max-height: 250px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>测试 2：真实文档 Markdown→JSON 往返无损验证</h1>
+
+<div class="info" id="env"></div>
+
+<div class="step">
+    <strong>Step 1:</strong> 获取真实文档列表
+    <button id="btnFetch">拉取真实文档</button>
+    <span id="fetchStatus"></span>
+</div>
+
+<div id="phase1"></div>
+
+<div class="step" style="margin-top:16px">
+    <strong>Step 2:</strong> 对每个真实文档执行 Headless 转换，逐项检查
+    <button id="btnConvert" disabled>开始转换验证</button>
+    <span id="convertStatus"></span>
+</div>
+
+<div id="phase2"></div>
+
+<script type="module">
+// ============================================================
+// 加载 Tiptap 模块
+// ============================================================
+const [{ Editor }, { StarterKit }, { Markdown }, linkMod, tableMod, { Underline },
+    { FontFamily }, { TextStyle }, { Color }, { Highlight }] =
+    await Promise.all([
+        import('/node_modules/.vite/deps/@tiptap_core.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_starter-kit.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_markdown.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-link.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-table.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-underline.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-font-family.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-text-style.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-color.js?v=8c628478'),
+        import('/node_modules/.vite/deps/@tiptap_extension-highlight.js?v=8c628478'),
+    ])
+
+const { Link: LinkExt } = linkMod
+const { Table, TableRow, TableCell, TableHeader } = tableMod
+
+const ALL_EXTENSIONS = [
+    StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, codeBlock: false, underline: false }),
+    Underline,
+    LinkExt.configure({ openOnClick: false }),
+    Table.configure({ resizable: true }), TableRow, TableCell, TableHeader,
+    Markdown,
+    FontFamily.configure({ types: ['textStyle'] }), TextStyle,
+    Color.configure({ types: ['textStyle'] }), Highlight.configure({ multicolor: true }),
+]
+
+document.getElementById('env').innerHTML = `
+    @tiptap/core 3.23.4 | @tiptap/markdown 3.23.4 | @tiptap/starter-kit 3.23.4
+
+    <br><em>注: 独立测试页未加载 MinioImage 和 CodeBlockWithToolbar 自定义扩展。
+    测试中代码块和图片节点将回退为标准 Tiptap 行为而非自定义扩展行为。</em>
+`
+
+// ============================================================
+// 辅助函数
+// ============================================================
+function extractTexts(node) {
+    const texts = []
+    function walk(n) { if (n.text !== undefined) texts.push(n.text); if (n.content) n.content.forEach(walk) }
+    walk(node)
+    return texts
+}
+function countNodes(node, type) {
+    let count = 0
+    function walk(n) { if (n.type === type) count++; if (n.content) n.content.forEach(walk) }
+    walk(node)
+    return count
+}
+function nodeStats(json) {
+    return {
+        paragraphs: countNodes(json, 'paragraph'),
+        headings: countNodes(json, 'heading'),
+        tables: countNodes(json, 'table'),
+        images: countNodes(json, 'image'),
+        codeBlocks: countNodes(json, 'codeBlock'),
+        listItems: countNodes(json, 'listItem'),
+        bulletLists: countNodes(json, 'bulletList'),
+        orderedLists: countNodes(json, 'orderedList'),
+        blockquotes: countNodes(json, 'blockquote'),
+    }
+}
+function extractImageSrcs(json) {
+    const srcs = []
+    function walk(n) { if (n.type === 'image' && n.attrs?.src) srcs.push(n.attrs.src); if (n.content) n.content.forEach(walk) }
+    walk(json)
+    return srcs
+}
+function extractLinks(json) {
+    const links = []
+    function walk(n) { if (n.marks) n.marks.forEach(m => { if (m.type === 'link') links.push(m.attrs.href) }); if (n.content) n.content.forEach(walk) }
+    walk(json)
+    return links
+}
+function stripMarkdown(md) {
+    return md
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/`(.+?)`/g, '$1')
+        .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\|/g, ' ')
+        .replace(/-{2,}/g, '')
+        .replace(/^>\s*/gm, '')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/^[-*]\s+/gm, '')
+        .replace(/^\d+\.\s+/gm, '')
+        .replace(/\n{2,}/g, '\n')
+        .replace(/\s+/g, '')
+}
+
+// Headless 转换（与测试1相同方案）
+function convertHeadless(markdown) {
+    const el = document.createElement('div')
+    const editor = new Editor({
+        element: el,
+        extensions: ALL_EXTENSIONS,
+        content: markdown || '',
+        contentType: 'markdown',
+    })
+    const json = editor.getJSON()
+    editor.destroy()
+    return json
+}
+
+// ============================================================
+// 已保存的真实文档样本（可在 console 设置）
+// ============================================================
+window.__realDocs = []
+
+// ============================================================
+// Step 1: 拉取真实文档
+// ============================================================
+document.getElementById('btnFetch').addEventListener('click', async () => {
+    const status = document.getElementById('fetchStatus')
+    const phase1 = document.getElementById('phase1')
+    status.textContent = '⏳ 拉取中...'
+    status.className = 'loading'
+
+    const token = localStorage.getItem('token_key') || ''
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+
+    // 使用 Vite proxy: /api → 后端
+    const API = '/api'
+
+    try {
+        // 1. 先获取根目录下的文件列表，拿到所有 status=1 的文档 ID
+        const listResp = await fetch(`${API}/home/get`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...headers },
+            body: JSON.stringify({ folderId: '' }),
+        })
+        if (!listResp.ok) throw new Error(`列表API返回 ${listResp.status}`)
+        const listData = await listResp.json()
+        const items = listData.data?.list || listData.data || []
+        const textDocs = items.filter(it => it.status === 1)
+
+        if (textDocs.length === 0) {
+            phase1.innerHTML = '<p style="color:#faad14">根目录没有找到 status=1 的文档，尝试直接使用已知 ID...</p>'
+            status.textContent = '未找到文档'
+            status.className = 'warn'
+
+            // fallback: 尝试若干可能存在的 ID
+            const fallbackIds = [1, 2, 3, 4, 5]
+            let docs = []
+            for (const id of fallbackIds) {
+                try {
+                    const dResp = await fetch(`${API}/text/get/${id}`, { headers })
+                    if (dResp.ok) {
+                        const dData = await dResp.json()
+                        if (dData.data?.content) docs.push({ id, title: dData.data.title, content: dData.data.content })
+                    }
+                } catch {}
+            }
+            if (docs.length === 0) {
+                phase1.innerHTML = '<p class="error">无法获取任何文档。请确认已登录知识库应用（token 存在于 localStorage）。</p>'
+                status.textContent = '失败'
+                status.className = 'error'
+                return
+            }
+            textDocs.push(...docs.map(d => ({ id: d.id, name: d.title, status: 1 })))
+        }
+
+        // 2. 拉取每个文档的完整内容（最多 15 个）
+        const toFetch = textDocs.slice(0, 15)
+        const documents = []
+        for (const doc of toFetch) {
+            try {
+                const dResp = await fetch(`${API}/text/get/${doc.id}`, { headers })
+                if (!dResp.ok) { console.warn(`文档 ${doc.id} 获取失败: ${dResp.status}`); continue }
+                const dData = await dResp.json()
+                const content = dData.data?.content
+                if (!content || content.trim().length === 0) continue
+                documents.push({ id: doc.id, title: dData.data.title || doc.name, content })
+            } catch (e) {
+                console.warn(`文档 ${doc.id} 请求异常:`, e.message)
+            }
+        }
+
+        window.__realDocs = documents
+        status.textContent = `✅ 获取到 ${documents.length} 个文档`
+        status.className = 'ok'
+
+        let html = `<table><thead><tr>
+            <th>#</th><th>ID</th><th>标题</th><th>MD 长度</th><th>是否有图片</th><th>是否有表格</th><th>是否有代码块</th>
+        </tr></thead><tbody>`
+        documents.forEach((d, i) => {
+            const hasImg = d.content.includes('minio:') || d.content.includes('![')
+            const hasTable = d.content.includes('|')
+            const hasCode = d.content.includes('```')
+            html += `<tr>
+                <td>${i + 1}</td><td>${d.id}</td><td>${d.title || '(无标题)'}</td>
+                <td>${d.content.length.toLocaleString()}</td>
+                <td>${hasImg ? '✅' : '-'}</td>
+                <td>${hasTable ? '✅' : '-'}</td>
+                <td>${hasCode ? '✅' : '-'}</td>
+            </tr>`
+        })
+        html += '</tbody></table>'
+        phase1.innerHTML = html
+        document.getElementById('btnConvert').disabled = false
+    } catch (e) {
+        status.textContent = `❌ ${e.message}`
+        status.className = 'error'
+        phase1.innerHTML = `<p class="error">请求失败: ${e.message}<br>请确认已登录应用（http://localhost:5174/#/login）</p>`
+    }
+})
+
+// ============================================================
+// Step 2: 转换验证
+// ============================================================
+document.getElementById('btnConvert').addEventListener('click', () => {
+    const docs = window.__realDocs
+    if (!docs || docs.length === 0) return
+
+    const status = document.getElementById('convertStatus')
+    const phase2 = document.getElementById('phase2')
+    status.textContent = '⏳ 转换中...'
+    status.className = 'loading'
+
+    const results = docs.map((doc, i) => {
+        try {
+            const json = convertHeadless(doc.content)
+            const jsonStr = JSON.stringify(json)
+            const texts = extractTexts(json)
+            const stats = nodeStats(json)
+            const imgs = extractImageSrcs(json)
+            const links = extractLinks(json)
+
+            // 纯文本对比：markdown 剥离语法后的纯文本 vs JSON 提取的纯文本
+            const mdText = stripMarkdown(doc.content)
+            const jsonText = texts.join('').replace(/\s+/g, '')
+
+            // 计算文本覆盖率（粗略）
+            const match = mdText === jsonText
+
+            return {
+                ok: true, index: i, doc,
+                jsonLen: jsonStr.length,
+                mdLen: doc.content.length,
+                ratio: (jsonStr.length / doc.content.length).toFixed(1),
+                texts,
+                textLen: texts.join('').length,
+                mdTextLen: mdText.length,
+                jsonTextLen: jsonText.length,
+                textMatch: match,
+                stats, imgs, links,
+            }
+        } catch (e) {
+            return { ok: false, index: i, doc, error: e.message }
+        }
+    })
+
+    // 排查问题
+    const issues = []
+    results.forEach(r => {
+        if (!r.ok) { issues.push({ doc: r.doc, problem: '转换异常: ' + r.error }); return }
+        // 检查 minio: 图片引用
+        const mdHasMinio = r.doc.content.includes('minio:')
+        const jsonHasMinio = r.imgs.some(s => s.startsWith('minio:'))
+        if (mdHasMinio && !jsonHasMinio) {
+            issues.push({ doc: r.doc, problem: `Markdown 中有 minio: 图片但 JSON 中未找到 (提取到 ${r.imgs.length} 张图片: ${r.imgs.join(', ')})` })
+        }
+        // 检查表格
+        const mdTableCount = (r.doc.content.match(/^\|.*\|$/gm) || []).length
+        if (mdTableCount > 0 && r.stats.tables === 0) {
+            issues.push({ doc: r.doc, problem: `Markdown 中有表格行但 JSON 中 tables=0` })
+        }
+    })
+
+    const passCount = results.filter(r => r.ok).length - issues.length
+    const failCount = results.filter(r => !r.ok).length
+
+    status.textContent = `✅ 完成 — ${passCount}/${results.length} 通过 ${failCount} 异常 ${issues.length} 需关注`
+    status.className = passCount === results.length ? 'ok' : 'warn'
+
+    // 渲染汇总
+    let html = `<div class="banner ${failCount === 0 && issues.length === 0 ? 'banner-pass' : 'banner-fail'}">
+        <strong>${failCount === 0 && issues.length === 0 ? '✅ 全部通过' :
+          failCount > 0 ? `❌ ${failCount} 个转换异常` :
+          `⚠️ ${issues.length} 个需关注`}</strong>
+        &nbsp;${results.length} 个文档，${passCount} 通过
+    </div>`
+
+    // 汇总表
+    html += `<table><thead><tr>
+        <th>#</th><th>ID</th><th>标题</th><th>MD→JSON</th><th>体积比</th><th>文本匹配</th><th>节点统计</th><th>图片</th><th>风险</th>
+    </tr></thead><tbody>`
+    results.forEach(r => {
+        if (!r.ok) {
+            html += `<tr class="fail"><td>💥</td><td>${r.doc.id}</td><td>${r.doc.title}</td>
+                <td colspan="6" class="error">${r.error}</td></tr>`
+            return
+        }
+        const docIssues = issues.filter(iss => iss.doc.id === r.doc.id)
+        const statStr = Object.entries(r.stats).filter(([,v]) => v > 0)
+            .map(([k,v]) => `${k}:${v}`).join(', ') || '纯文本'
+        const imgInfo = r.imgs.length > 0 ? `${r.imgs.length} 张` : '-'
+        const risk = docIssues.length > 0
+            ? `<span class="error">${docIssues.map(i => i.problem).join('; ')}</span>`
+            : '<span style="color:#52c41a">无</span>'
+        html += `<tr class="${docIssues.length > 0 ? 'warn' : 'ok'}">
+            <td>${r.textMatch ? '✅' : '⚠️'}</td>
+            <td>${r.doc.id}</td>
+            <td>${r.doc.title || '(无)'}</td>
+            <td>${r.mdLen.toLocaleString()} → ${r.jsonLen.toLocaleString()}</td>
+            <td>${r.ratio}x</td>
+            <td>${r.textMatch ? '✅' : `⚠️ ${r.mdTextLen}→${r.jsonTextLen}`}</td>
+            <td style="font-size:11px">${statStr}</td>
+            <td>${imgInfo}</td>
+            <td>${risk}</td>
+        </tr>`
+    })
+    html += '</tbody></table>'
+
+    // 问题详情
+    if (issues.length > 0) {
+        html += `<h3>需关注的问题 (${issues.length})</h3>`
+        issues.forEach((iss, i) => {
+            html += `<div class="warn" style="padding:8px;margin:8px 0"><strong>#${i + 1}</strong> 文档 ${iss.doc.id} (${iss.doc.title}): ${iss.problem}</div>`
+        })
+    }
+
+    // 抽样详情（前3个文档的完整 JSON 片段）
+    html += `<h3>抽样 JSON 预览（前 3 个文档，各前 500 字符）</h3>`
+    results.filter(r => r.ok).slice(0, 3).forEach((r, i) => {
+        html += `<details style="margin:4px 0"><summary>文档 ${r.doc.id}: ${r.doc.title}</summary><pre>${JSON.stringify(convertHeadless(r.doc.content)).slice(0, 500)}</pre></details>`
+    })
+
+    phase2.innerHTML = html
+
+    // console 输出
+    console.log(`=== TEST 2 COMPLETE ===`)
+    console.log(`Documents: ${results.length}, Pass: ${passCount}, Fail: ${failCount}, Issues: ${issues.length}`)
+    console.log(`Avg size ratio: ${(results.filter(r=>r.ok).reduce((s,r)=>s+parseFloat(r.ratio),0)/results.filter(r=>r.ok).length).toFixed(1)}x`)
+})
+</script>
+</body>
+</html>

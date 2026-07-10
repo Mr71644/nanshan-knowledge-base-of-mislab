@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>测试 3：字体/颜色/高亮扩展端到端验证</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; max-width: 1500px; margin: 0 auto; }
+h1 { border-bottom: 2px solid #1890ff; padding-bottom: 12px; margin-bottom: 16px; }
+h2 { margin: 20px 0 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 16px; }
+th { background: #f0f0f0; padding: 6px 8px; border: 1px solid #ddd; text-align: left; }
+td { padding: 4px 8px; border: 1px solid #ddd; vertical-align: top; }
+.ok { background: #f6ffed; }
+.fail { background: #fff2f0; }
+.banner { padding: 16px; margin: 16px 0; border-radius: 8px; font-size: 16px; }
+.pass { background: #f6ffed; border: 2px solid #52c41a; }
+.nopass { background: #fff2f0; border: 2px solid #ff4d4f; }
+.info { padding: 12px; background: #e6f7ff; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+pre { font-size: 11px; white-space: pre-wrap; background: #fff; padding: 8px; border: 1px solid #ddd; max-height: 200px; overflow: auto; }
+summary { cursor: pointer; padding: 2px 0; }
+</style>
+</head>
+<body>
+<h1>测试 3：字体/颜色/高亮扩展端到端验证</h1>
+
+<div class="info" id="env"></div>
+
+<h2>阶段 A：Editor.create 能否设置字体/颜色/高亮</h2>
+<p style="color:#666;margin-bottom:8px">创建编辑器 → 插入文本 → 通过 chain API 设置样式 → getJSON → 检查 marks。不依赖任何 React 组件。</p>
+<div id="phaseA"></div>
+
+<h2>阶段 B：JSON 重新加载后样式是否保留</h2>
+<p style="color:#666;margin-bottom:8px">取阶段 A 的 JSON → 新建第二个 Editor 实例加载该 JSON → getJSON → 对比 marks 是否一致。</p>
+<div id="phaseB"></div>
+
+<h2>阶段 C：与 Markdown 序列化对比（损失验证）</h2>
+<p style="color:#666;margin-bottom:8px">同样内容：Editor.create JSON 输出 vs Markdown 序列化。验证 JSON 保留了 Markdown 会丢失的样式信息。</p>
+<div id="phaseC"></div>
+
+<script type="module">
+const [{ Editor }, { StarterKit }, { Markdown: MarkdownExt },
+    linkMod, tableMod, { Underline },
+    { FontFamily }, { TextStyle }, { Color }, { Highlight }] =
+await Promise.all([
+    import('/node_modules/.vite/deps/@tiptap_core.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_starter-kit.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_markdown.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-link.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-table.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-underline.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-font-family.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-text-style.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-color.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-highlight.js?v=8c628478'),
+])
+
+const { Link: LinkExt } = linkMod
+const { Table, TableRow, TableCell, TableHeader } = tableMod
+
+const EXT = [
+    StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, codeBlock: false, underline: false }),
+    Underline, LinkExt.configure({ openOnClick: false }),
+    Table.configure({ resizable: true }), TableRow, TableCell, TableHeader,
+    MarkdownExt,
+    FontFamily.configure({ types: ['textStyle'] }), TextStyle,
+    Color.configure({ types: ['textStyle'] }), Highlight.configure({ multicolor: true }),
+]
+
+document.getElementById('env').innerHTML = `
+    扩展: StarterKit, Link, Underline, Table, Markdown, <strong>FontFamily</strong>, <strong>TextStyle</strong>,
+    <strong>Color</strong>, <strong>Highlight</strong> (multicolor)
+    <br><em>注: 通过 chain API (setFontFamily/setColor/toggleHighlight) 设置样式，而非 UI 交互</em>
+`
+
+// ============================================================
+// 阶段 A: 设置样式 → getJSON → 检查 marks
+// ============================================================
+console.log('=== Phase A: Set styles and check JSON ===')
+
+const testCases = [
+    {
+        name: '单一样式：字体=宋体',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '测试文字' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 5 })
+            ed.chain().focus().setFontFamily('SimSun').run()
+        },
+        checks: (json) => {
+            const marks = json.content[0].content[0].marks || []
+            return { hasTextStyle: marks.some(m => m.type === 'textStyle'), fontFamily: marks.find(m => m.type === 'textStyle')?.attrs?.fontFamily }
+        },
+        expect: { hasTextStyle: true, fontFamily: 'SimSun' },
+    },
+    {
+        name: '单一样式：颜色=红色',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '红色文字' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 5 })
+            ed.chain().focus().setColor('#FF0000').run()
+        },
+        checks: (json) => {
+            const marks = json.content[0].content[0].marks || []
+            return { hasTextStyle: marks.some(m => m.type === 'textStyle'), color: marks.find(m => m.type === 'textStyle')?.attrs?.color }
+        },
+        expect: { hasTextStyle: true, color: '#FF0000' },
+    },
+    {
+        name: '单一样式：高亮=黄色',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '高亮文字' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 5 })
+            ed.chain().focus().toggleHighlight({ color: '#FFFF00' }).run()
+        },
+        checks: (json) => {
+            const marks = json.content[0].content[0].marks || []
+            return { hasHighlight: marks.some(m => m.type === 'highlight'), hlColor: marks.find(m => m.type === 'highlight')?.attrs?.color }
+        },
+        expect: { hasHighlight: true, hlColor: '#FFFF00' },
+    },
+    {
+        name: '叠加样式：宋体+红色+高亮',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '叠加样式文字' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 7 })
+            ed.chain().focus().setFontFamily('SimSun').setColor('#FF0000').toggleHighlight({ color: '#FFFF00' }).run()
+        },
+        checks: (json) => {
+            const marks = json.content[0].content[0].marks || []
+            const ts = marks.find(m => m.type === 'textStyle')
+            const hl = marks.find(m => m.type === 'highlight')
+            return { textStyleExists: !!ts, fontFamily: ts?.attrs?.fontFamily, color: ts?.attrs?.color, highlightExists: !!hl, hlColor: hl?.attrs?.color }
+        },
+        expect: { textStyleExists: true, fontFamily: 'SimSun', color: '#FF0000', highlightExists: true, hlColor: '#FFFF00' },
+    },
+    {
+        name: '部分文字样式：前3字红色后3字蓝色',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '红字蓝字' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 3 })
+            ed.chain().focus().setColor('#FF0000').run()
+            ed.commands.setTextSelection({ from: 3, to: 5 })
+            ed.chain().focus().setColor('#0000FF').run()
+        },
+        checks: (json) => {
+            const children = json.content[0].content
+            const marks0 = children[0]?.marks || []
+            const marks1 = children[1]?.marks || []
+            return { childCount: children.length, firstColor: marks0.find(m => m.type === 'textStyle')?.attrs?.color, secondColor: marks1.find(m => m.type === 'textStyle')?.attrs?.color }
+        },
+        expect: { childCount: 2, firstColor: '#FF0000', secondColor: '#0000FF' },
+    },
+    {
+        name: '取消样式：设字体后再取消',
+        setup: (ed) => {
+            ed.commands.setContent({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '先设后取消' }] }] })
+            ed.commands.setTextSelection({ from: 1, to: 5 })
+            ed.chain().focus().setFontFamily('SimSun').run()
+            ed.commands.setTextSelection({ from: 1, to: 5 })
+            ed.chain().focus().unsetFontFamily().run()
+        },
+        checks: (json) => {
+            const marks = json.content[0].content[0].marks || []
+            return { hasTextStyle: marks.some(m => m.type === 'textStyle'), marksCount: marks.length }
+        },
+        expect: { hasTextStyle: false, marksCount: 0 },
+    },
+]
+
+const phaseAResults = []
+testCases.forEach((tc, i) => {
+    try {
+        const el = document.createElement('div')
+        const ed = new Editor({ element: el, extensions: EXT, content: '' })
+        tc.setup(ed)
+        const json = ed.getJSON()
+        const checks = tc.checks(json)
+        const allPass = Object.entries(tc.expect).every(([k, v]) => checks[k] === v)
+        phaseAResults.push({ index: i, name: tc.name, ok: true, allPass, checks, expect: tc.expect, jsonPreview: JSON.stringify(json).slice(0, 300) })
+        ed.destroy()
+    } catch (e) {
+        phaseAResults.push({ index: i, name: tc.name, ok: false, error: e.message })
+    }
+})
+
+let html = `<table><thead><tr><th>#</th><th>场景</th><th>检查项</th><th>期望</th><th>实际</th><th>结果</th></tr></thead><tbody>`
+phaseAResults.forEach(r => {
+    if (!r.ok) {
+        html += `<tr class="fail"><td>💥</td><td>${r.name}</td><td colspan="4" style="color:red">${r.error}</td></tr>`
+        return
+    }
+    const cells = Object.keys(r.expect).map(k => {
+        const exp = r.expect[k], act = r.checks[k]
+        const match = exp === act
+        return `<td style="${match ? 'color:#52c41a' : 'color:#ff4d4f'}">${JSON.stringify(exp)}</td><td style="${match ? 'color:#52c41a' : 'color:#ff4d4f'}">${act === undefined ? '(undefined)' : JSON.stringify(act)}</td>`
+    }).join('')
+    html += `<tr class="${r.allPass ? 'ok' : 'fail'}">
+        <td>${r.index + 1}</td><td>${r.name}</td>
+        ${cells}
+        <td style="font-weight:bold;color:${r.allPass ? '#52c41a' : '#ff4d4f'}">${r.allPass ? '✅' : '❌'}</td>
+    </tr>`
+})
+html += '</tbody></table>'
+
+const passA = phaseAResults.filter(r => r.ok && r.allPass).length
+html += `<div class="banner ${passA === testCases.length ? 'pass' : 'nopass'}"><strong>阶段 A:</strong> ${passA}/${testCases.length} 通过</div>`
+document.getElementById('phaseA').innerHTML = html
+
+// ============================================================
+// 阶段 B: JSON 重新加载 → 样式是否保留
+// ============================================================
+console.log('=== Phase B: Reload JSON and check style preservation ===')
+
+const phaseBResults = []
+phaseAResults.filter(r => r.ok).forEach((r, i) => {
+    try {
+        // 重建原始编辑器的 JSON（需要重跑 setup）
+        const el1 = document.createElement('div')
+        const ed1 = new Editor({ element: el1, extensions: EXT, content: '' })
+        testCases[r.index].setup(ed1)
+        const json1 = ed1.getJSON()
+        const jsonStr1 = JSON.stringify(json1)
+        ed1.destroy()
+
+        // 第二个编辑器：从 JSON 加载
+        const el2 = document.createElement('div')
+        const ed2 = new Editor({ element: el2, extensions: EXT, content: json1 })
+        const json2 = ed2.getJSON()
+        const jsonStr2 = JSON.stringify(json2)
+        ed2.destroy()
+
+        const match = jsonStr1 === jsonStr2
+        phaseBResults.push({ index: i, name: r.name, match, len1: jsonStr1.length, len2: jsonStr2.length })
+    } catch (e) {
+        phaseBResults.push({ index: i, name: r.name, match: false, error: e.message })
+    }
+})
+
+html = `<table><thead><tr><th>#</th><th>场景</th><th>JSON1长度</th><th>JSON2长度</th><th>结果</th><th>详情</th></tr></thead><tbody>`
+phaseBResults.forEach(r => {
+    html += `<tr class="${r.match ? 'ok' : 'fail'}">
+        <td>${r.index + 1}</td><td>${r.name}</td>
+        <td>${r.len1 || '-'}</td><td>${r.len2 || '-'}</td>
+        <td style="font-weight:bold;color:${r.match ? '#52c41a' : '#ff4d4f'}">${r.match ? '✅ 保留' : '❌ 丢失'}</td>
+        <td>${r.error || (r.match ? '完全一致' : `差异 ${Math.abs((r.len1||0)-(r.len2||0))} 字符`)}</td>
+    </tr>`
+})
+html += '</tbody></table>'
+
+const passB = phaseBResults.filter(r => r.match).length
+html += `<div class="banner ${passB === phaseBResults.length ? 'pass' : 'nopass'}"><strong>阶段 B:</strong> ${passB}/${phaseBResults.length} JSON 重载后样式保留</div>`
+document.getElementById('phaseB').innerHTML = html
+
+// ============================================================
+// 阶段 C: 与 Markdown 序列化对比
+// ============================================================
+console.log('=== Phase C: Compare with Markdown ===')
+
+const phaseCResults = []
+const mdTestCases = [
+    { name: '字体=宋体', setup: (ed) => {
+        ed.commands.setContent('<p>宋体文字</p>')
+        ed.commands.setTextSelection({ from: 1, to: 5 })
+        ed.chain().focus().setFontFamily('SimSun').run()
+    }},
+    { name: '颜色=红色', setup: (ed) => {
+        ed.commands.setContent('<p>红色文字</p>')
+        ed.commands.setTextSelection({ from: 1, to: 5 })
+        ed.chain().focus().setColor('#FF0000').run()
+    }},
+    { name: '高亮=黄色', setup: (ed) => {
+        ed.commands.setContent('<p>高亮文字</p>')
+        ed.commands.setTextSelection({ from: 1, to: 5 })
+        ed.chain().focus().toggleHighlight({ color: '#FFFF00' }).run()
+    }},
+    { name: '宋体+红色+高亮叠加', setup: (ed) => {
+        ed.commands.setContent('<p>叠加样式</p>')
+        ed.commands.setTextSelection({ from: 1, to: 5 })
+        ed.chain().focus().setFontFamily('SimSun').setColor('#FF0000').toggleHighlight({ color: '#FFFF00' }).run()
+    }},
+]
+
+mdTestCases.forEach((tc, i) => {
+    try {
+        const el = document.createElement('div')
+        const ed = new Editor({ element: el, extensions: EXT, content: '' })
+        tc.setup(ed)
+        const json = ed.getJSON()
+        const md = ed.storage?.markdown?.getMarkdown?.() || '(无法获取markdown)'
+        ed.destroy()
+
+        // 检查 JSON 中的 marks
+        let hasStyleInJson = false
+        const marks = json.content?.[0]?.content?.[0]?.marks || []
+        hasStyleInJson = marks.some(m => m.type === 'textStyle' || m.type === 'highlight')
+
+        // 检查 Markdown 中是否有样式信息
+        const hasStyleInMd = md.includes('font') || md.includes('color') || md.includes('style') || md.includes('highlight') || md.includes('textStyle')
+
+        phaseCResults.push({
+            index: i, name: tc.name,
+            jsonHasStyle: hasStyleInJson,
+            mdHasStyle: hasStyleInMd,
+            jsonMarks: marks.map(m => `${m.type}(${Object.entries(m.attrs||{}).map(([k,v])=>`${k}:${v}`).join(',')})`).join('; ') || '无',
+            mdPreview: md.slice(0, 200),
+        })
+    } catch (e) {
+        phaseCResults.push({ index: i, name: tc.name, error: e.message })
+    }
+})
+
+html = `<table><thead><tr><th>#</th><th>场景</th><th>JSON 中的样式</th><th>Markdown 中的样式</th><th>JSON marks</th><th>MD 输出片段</th><th>对比结论</th></tr></thead><tbody>`
+phaseCResults.forEach(r => {
+    if (r.error) {
+        html += `<tr class="fail"><td>💥</td><td>${r.name}</td><td colspan="5" style="color:red">${r.error}</td></tr>`
+        return
+    }
+    const mdPreserved = r.jsonHasStyle && r.mdHasStyle
+    const mdLost = r.jsonHasStyle && !r.mdHasStyle
+    const verdict = mdPreserved ? '⚠️ MD也保留了(意外)' : mdLost ? '✅ JSON保留,MD丢失(预期)' : '⚠️ JSON也未保留'
+    html += `<tr class="${mdLost ? 'ok' : 'warn'}">
+        <td>${r.index + 1}</td><td>${r.name}</td>
+        <td style="color:${r.jsonHasStyle ? '#52c41a' : '#ff4d4f'}">${r.jsonHasStyle ? '✅ 保留' : '❌ 丢失'}</td>
+        <td style="color:${r.mdHasStyle ? '#ff4d4f' : '#52c41a'}">${r.mdHasStyle ? '有(意外)' : '✅ 丢失(预期)'}</td>
+        <td style="font-size:11px">${r.jsonMarks}</td>
+        <td style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.mdPreview}">${r.mdPreview}</td>
+        <td style="font-weight:bold;color:${mdLost ? '#52c41a' : '#faad14'}">${verdict}</td>
+    </tr>`
+})
+html += '</tbody></table>'
+
+const jsonPass = phaseCResults.filter(r => r.jsonHasStyle).length
+const mdLostOk = phaseCResults.filter(r => r.jsonHasStyle && !r.mdHasStyle).length
+html += `<div class="banner ${jsonPass === phaseCResults.length ? 'pass' : 'nopass'}">
+    <strong>阶段 C:</strong> JSON 保留了 ${jsonPass}/${phaseCResults.length} 个场景的样式；Markdown 丢失了 ${mdLostOk} 个场景的样式（符合预期——这是迁移到 JSON 的核心理由）
+</div>`
+document.getElementById('phaseC').innerHTML = html
+
+// 汇总
+const totalA = phaseAResults.filter(r => r.ok && r.allPass).length
+const totalB = phaseBResults.filter(r => r.match).length
+const totalC = jsonPass
+console.log(`\n=== TEST 3 COMPLETE ===`)
+console.log(`Phase A (样式设置): ${totalA}/${testCases.length}`)
+console.log(`Phase B (JSON重载保留): ${totalB}/${phaseBResults.length}`)
+console.log(`Phase C (vs Markdown): JSON保留${totalC}/${phaseCResults.length}, MD丢失${mdLostOk}`)
+</script>
+</body>
+</html>

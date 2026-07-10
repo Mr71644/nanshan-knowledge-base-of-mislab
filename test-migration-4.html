@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>测试 4：批量迁移性能</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; max-width: 1600px; margin: 0 auto; }
+h1 { border-bottom: 2px solid #1890ff; padding-bottom: 12px; margin-bottom: 16px; }
+h2 { margin: 20px 0 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 16px; }
+th { background: #f0f0f0; padding: 6px 8px; border: 1px solid #ddd; text-align: left; }
+td { padding: 4px 8px; border: 1px solid #ddd; }
+.ok { background: #f6ffed; } .fail { background: #fff2f0; } .warn { background: #fffbe6; }
+.banner { padding: 16px; margin: 16px 0; border-radius: 8px; font-size: 16px; }
+.pass { background: #f6ffed; border: 2px solid #52c41a; }
+.nopass { background: #fff2f0; border: 2px solid #ff4d4f; }
+.info { padding: 12px; background: #e6f7ff; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+button { padding: 10px 24px; font-size: 14px; cursor: pointer; background: #1890ff; color: #fff; border: none; border-radius: 6px; }
+button:hover { background: #40a9ff; }
+pre { font-size: 11px; white-space: pre-wrap; background: #fff; padding: 8px; border: 1px solid #ddd; max-height: 200px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>测试 4：批量迁移性能与内存</h1>
+<div class="info" id="env"></div>
+<p style="color:#666;margin-bottom:16px">使用真实文档构造 N 个副本，模拟批量迁移的转换性能、体积膨胀、调度行为。</p>
+<button id="btnRun">开始测试</button>
+<div id="results"></div>
+
+<script type="module">
+const [{ Editor }, { StarterKit }, { Markdown: MarkdownExt },
+    linkMod, tableMod, { Underline },
+    { FontFamily }, { TextStyle }, { Color }, { Highlight }] =
+await Promise.all([
+    import('/node_modules/.vite/deps/@tiptap_core.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_starter-kit.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_markdown.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-link.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-table.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-underline.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-font-family.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-text-style.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-color.js?v=8c628478'),
+    import('/node_modules/.vite/deps/@tiptap_extension-highlight.js?v=8c628478'),
+])
+
+const { Link: LinkExt } = linkMod
+const { Table, TableRow, TableCell, TableHeader } = tableMod
+const EXT = [
+    StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, codeBlock: false, underline: false }),
+    Underline, LinkExt.configure({ openOnClick: false }),
+    Table.configure({ resizable: true }), TableRow, TableCell, TableHeader,
+    MarkdownExt,
+    FontFamily.configure({ types: ['textStyle'] }), TextStyle,
+    Color.configure({ types: ['textStyle'] }), Highlight.configure({ multicolor: true }),
+]
+
+// 用真实文档作为模板（测试2的 id=75 表格文档 + id=40 图文文档）
+const REAL_TEMPLATES = {
+    table: `# 数据库设计
+
+## 用户表 (users)
+
+| 字段名 | 类型 | 说明 | 约束 |
+|--------|------|------|------|
+| id | BIGINT | 主键 | PRIMARY KEY |
+| username | VARCHAR(50) | 用户名 | UNIQUE, NOT NULL |
+| password | VARCHAR(255) | 密码哈希 | NOT NULL |
+| email | VARCHAR(100) | 邮箱 | UNIQUE |
+| role_id | BIGINT | 角色ID | FOREIGN KEY |
+| status | TINYINT | 状态 | DEFAULT 1 |
+| create_time | DATETIME | 创建时间 | NOT NULL |
+| update_time | DATETIME | 更新时间 | NOT NULL |
+
+## 角色表 (roles)
+
+| 字段名 | 类型 | 说明 | 约束 |
+|--------|------|------|------|
+| id | BIGINT | 主键 | PRIMARY KEY |
+| name | VARCHAR(50) | 角色名 | UNIQUE, NOT NULL |
+| description | VARCHAR(255) | 描述 | |
+| permissions | TEXT | 权限JSON | |
+
+## 文档表 (documents)
+
+| 字段名 | 类型 | 说明 | 约束 |
+|--------|------|------|------|
+| id | BIGINT | 主键 | PRIMARY KEY |
+| title | VARCHAR(200) | 标题 | NOT NULL |
+| author | VARCHAR(50) | 作者 | |
+| content | LONGTEXT | 内容 | |
+| content_type | VARCHAR(20) | 格式 | DEFAULT 'markdown' |
+| folder_id | BIGINT | 文件夹ID | FOREIGN KEY |
+| status | TINYINT | 类型 1=文本 3=Excel | NOT NULL |
+| create_time | DATETIME | 创建时间 | |
+| update_time | DATETIME | 更新时间 | |
+
+## API 接口设计
+
+### 认证模块
+- \`POST /user/login\` — 登录
+- \`GET /captcha\` — 验证码
+- \`GET /user/is-admin\` — 权限检查
+
+### 文档模块
+- \`GET /text/get/{id}\` — 获取文档
+- \`PUT /text/update\` — 更新文档
+- \`POST /text/add\` — 新建文档
+- \`DELETE /text/delete/{id}\` — 删除文档
+
+### 文件模块
+- \`POST /minio/upload/markdown\` — 上传图片
+- \`GET /minio/preview/markdown/{id}\` — 预览图片
+- \`POST /home/get\` — 获取文件列表`,
+
+    mixed: `# 老版本兼容相关
+
+## 非作者不得修改此文档
+
+## 优化
+
+以下是需要优化的内容：
+
+- 图片加载性能优化
+  - 使用懒加载
+  - 缓存预览 URL
+- 编辑器响应速度
+  - 减少不必要的重渲染
+  - 大文档分片加载
+
+![示例图片](minio:compat_test_001)
+
+## 兼容性说明
+
+> 此文档用于测试不同版本间的兼容性
+
+\`\`\`javascript
+function checkCompatibility(version) {
+    if (version < "2.0") {
+        return migrateToNewFormat();
+    }
+    return true;
+}
+\`\`\`
+
+| 版本 | 支持状态 | 备注 |
+|------|----------|------|
+| 1.0 | 已废弃 | 需迁移 |
+| 2.0 | 当前 | JSON格式 |
+| 2.1 | 计划中 | RAG支持 |`,
+}
+
+document.getElementById('env').innerHTML = `
+    使用 2 种真实文档模板 × N 份副本模拟批量迁移。<br>
+    模板1 (table): ${REAL_TEMPLATES.table.length} 字符，含 4 个表格、多个标题<br>
+    模板2 (mixed): ${REAL_TEMPLATES.mixed.length} 字符，含图片/代码块/表格/列表/引用
+`
+
+document.getElementById('btnRun').addEventListener('click', async () => {
+    const out = document.getElementById('results')
+    out.innerHTML = '<p>⏳ 运行中...</p>'
+
+    const BATCH_SIZES = [1, 10, 50, 100]
+    const allResults = []
+
+    for (const batchSize of BATCH_SIZES) {
+        // 构造文档：交替使用两种模板
+        const docs = []
+        for (let i = 0; i < batchSize; i++) {
+            const tmpl = i % 2 === 0 ? REAL_TEMPLATES.table : REAL_TEMPLATES.mixed
+            docs.push({
+                id: i + 1,
+                content: tmpl.replace('老版本兼容相关', `文档 ${i + 1}`).replace('数据库设计', `数据设计 ${i + 1}`),
+            })
+        }
+
+        // 测量纯转换时间
+        const t0 = performance.now()
+        const converted = []
+        for (const doc of docs) {
+            const el = document.createElement('div')
+            const ed = new Editor({ element: el, extensions: EXT, content: doc.content, contentType: 'markdown' })
+            converted.push({ id: doc.id, content: JSON.stringify(ed.getJSON()) })
+            ed.destroy()
+        }
+        const t1 = performance.now()
+        const convertMs = t1 - t0
+
+        // 统计体积
+        let mdTotal = 0, jsonTotal = 0
+        docs.forEach((d, i) => { mdTotal += d.content.length; jsonTotal += converted[i].content.length })
+
+        // 模拟分批写回
+        const BATCH = 10
+        const queue = [...converted]
+        let batchCount = 0
+        const simStart = performance.now()
+        while (queue.length > 0) {
+            queue.splice(0, BATCH)
+            batchCount++
+            // 模拟网络延迟 100-300ms
+            await new Promise(r => setTimeout(r, 100 + Math.random() * 200))
+        }
+        const simMs = performance.now() - simStart
+
+        allResults.push({
+            count: batchSize,
+            convertMs: convertMs.toFixed(0),
+            perDocMs: (convertMs / batchSize).toFixed(1),
+            mdKb: (mdTotal / 1024).toFixed(1),
+            jsonKb: (jsonTotal / 1024).toFixed(1),
+            ratio: (jsonTotal / mdTotal).toFixed(1),
+            batches: batchCount,
+            simMs: simMs.toFixed(0),
+        })
+
+        // 释放主线程
+        await new Promise(r => setTimeout(r, 100))
+    }
+
+    // 额外：测试 requestIdleCallback 行为
+    let idleRuns = 0
+    const idleStart = performance.now()
+    const idlePromise = new Promise(resolve => {
+        function idleTask() {
+            idleRuns++
+            if (idleRuns < 3) {
+                requestIdleCallback(idleTask)
+            } else {
+                resolve(performance.now() - idleStart)
+            }
+        }
+        requestIdleCallback(idleTask)
+    })
+    const idleMs = await idlePromise
+
+    // 渲染结果
+    let html = ''
+    html += `<h2>转换性能</h2>
+    <table><thead><tr><th>文档数</th><th>总耗时</th><th>每文档</th><th>MD总大小</th><th>JSON总大小</th><th>体积比</th><th>批次</th><th>模拟写回</th></tr></thead><tbody>`
+    allResults.forEach(r => {
+        const perOk = parseFloat(r.perDocMs) < 50
+        html += `<tr class="${perOk ? 'ok' : 'warn'}">
+            <td>${r.count}</td>
+            <td style="color:${r.convertMs < 3000 ? '#52c41a' : '#faad14'}">${r.convertMs}ms</td>
+            <td style="color:${perOk ? '#52c41a' : '#faad14'}">${r.perDocMs}ms</td>
+            <td>${r.mdKb}KB</td><td>${r.jsonKb}KB</td><td>${r.ratio}x</td>
+            <td>${r.batches}</td><td>${r.simMs}ms</td>
+        </tr>`
+    })
+    html += '</tbody></table>'
+
+    const r100 = allResults.find(r => r.count === 100)
+    const check100 = r100 && parseFloat(r100.perDocMs) < 50
+    const checkRatio = r100 && parseFloat(r100.ratio) < 8
+
+    html += `<h2>诊断</h2>
+    <table><thead><tr><th>指标</th><th>阈值</th><th>实测</th><th>结果</th></tr></thead><tbody>
+    <tr class="${check100 ? 'ok' : 'fail'}"><td>100文档总耗时</td><td>&lt;5s</td><td>${r100?.convertMs || '-'}ms</td><td>${check100 ? '✅' : '⚠️'}</td></tr>
+    <tr class="${check100 ? 'ok' : 'fail'}"><td>单文档耗时</td><td>&lt;50ms</td><td>${r100?.perDocMs || '-'}ms</td><td>${check100 ? '✅' : '⚠️'}</td></tr>
+    <tr class="${checkRatio ? 'ok' : 'fail'}"><td>体积比</td><td>&lt;8x</td><td>${r100?.ratio || '-'}x</td><td>${checkRatio ? '✅' : '⚠️'}</td></tr>
+    <tr class="ok"><td>requestIdleCallback</td><td>正常触发</td><td>${idleRuns}次 / ${idleMs.toFixed(0)}ms</td><td>✅</td></tr>
+    </tbody></table>`
+
+    const allOk = check100 && checkRatio
+    html += `<div class="banner ${allOk ? 'pass' : 'nopass'}">
+        <strong>${allOk ? '✅ 性能测试通过' : '⚠️ 部分指标需关注'}</strong>
+    </div>`
+
+    out.innerHTML = html
+    console.log('=== TEST 4 COMPLETE ===')
+    console.log('100 docs:', r100?.convertMs, 'ms,', r100?.ratio, 'x, per doc:', r100?.perDocMs, 'ms')
+    console.log('All ok:', allOk)
+})
+</script>
+</body>
+</html>

@@ -9,6 +9,10 @@ import { MemoAddContent } from '@/views/AddContent'
 import { MemoAddExcel } from '@/views/AddExcel'
 import { MemoAdministrator } from '@/views/Administrator'
 import { MemoPreview } from '@/views/Preview'
+import MigrationTest from '@/pages/MigrationTest'
+import ImageMigrationTest from '@/pages/ImageMigrationTest'
+import FullExtensionTest from '@/pages/FullExtensionTest'
+import RenderMarkdownTest from '@/pages/RenderMarkdownTest'
 import AdminRoute from './AdminRoute'
 
 // 路由约定说明：
@@ -68,6 +72,22 @@ const router = createHashRouter([
     {
         path: '*',
         element: <MemoNotFound />
+    },
+    {
+        path: 'migration-test',
+        element: <MigrationTest />
+    },
+    {
+        path: 'migration-test-image',
+        element: <ImageMigrationTest />
+    },
+    {
+        path: 'migration-test-full',
+        element: <FullExtensionTest />
+    },
+    {
+        path: 'migration-test-render',
+        element: <RenderMarkdownTest />
     }
 ])
 export default router
