@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover, Checkbox } from 'antd';
-import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, EyeOutlined } from '@ant-design/icons';
+import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
@@ -81,6 +81,17 @@ const FileList = () => {
             title: '修改时间',
             dataIndex: 'updateTime',
             key: 'updateTime',
+        },
+        {
+            title: '权限',
+            key: 'permission',
+            width: 100,
+            render: (text, record) => {
+                if (record.status === 1 || record.status === 3) {
+                    return <span style={{ color: '#1890ff' }}>可编辑</span>;
+                }
+                return <span style={{ color: '#8c8c8c' }}>可阅读</span>;
+            }
         },
         {
             title: (
@@ -214,9 +225,6 @@ const FileList = () => {
                                 />
                             </span>
                         )}
-                        <Popover content={roleName()} className={style.eyeIcon}>
-                            <span><EyeOutlined /></span>
-                        </Popover>
                         <div onClick={(e) => e.stopPropagation()}>
                             <Dropdown
                                 menu={{ items: menuItems }}
@@ -457,16 +465,16 @@ const FileList = () => {
                                             setSelectedRows(prev => [...prev, record])
                                         }
                                         return
-                                            }
-                                            handleClick(record)
-                                        }
-                                    })}
-                                    rowClassName={(record) => {
-                                        const isPinned = record.pinned === true || record.pinned === 'true';
-                                        return isPinned ? style.pinnedRow : '';
-                                    }}
-                                    className={style.fileList}
-                                />
+                                    }
+                                    handleClick(record)
+                                }
+                            })}
+                            rowClassName={(record) => {
+                                const isPinned = record.pinned === true || record.pinned === 'true';
+                                return isPinned ? style.pinnedRow : '';
+                            }}
+                            className={style.fileList}
+                        />
                     </div>
             }
             <Modal title={'更改文件夹名称'}
