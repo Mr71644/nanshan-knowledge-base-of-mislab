@@ -40,6 +40,11 @@ React 18 + Vite 5 + Redux Toolkit application. Uses **Hash Router** (`createHash
 | `/addExcel/:folder` | MemoAddExcel | New Excel |
 | `/administrator` | MemoAdministrator | User/role management (wrapped in `AdminRoute`) |
 | `/login` | MemoLogin | Login page |
+| `/preview` | MemoPreview | File preview page |
+| `/` | Navigate → `/home` | Root redirect |
+| `*` | MemoNotFound | 404 catch-all |
+
+**Note:** `AuthRoute` (`src/router/AuthRoute.jsx`) exists but is **not currently used** in the router — all routes render without authentication guards.
 
 All view components are exported as `Memo[ComponentName]` (wrapped in `memo()`). Import the `Memo` prefixed version in the router.
 
@@ -54,8 +59,11 @@ All view components are exported as `Memo[ComponentName]` (wrapped in `memo()`).
 
 - Axios instance with base URL from environment variable `import.meta.env.VITE_API_BASE_URL`
 - Environment configuration:
-  - `.env.development` → `http://101.43.146.27/new-app/api`（测试环境，`pnpm dev` 时使用）
-  - `.env.production` → `http://119.27.181.240:4529`（生产环境，`pnpm build` 时使用）
+  - `.env.development` → `VITE_API_BASE_URL=/api` — uses Vite proxy (see below)
+  - `.env.production` → `VITE_API_BASE_URL=http://101.43.146.27/new-app/api`
+  - `.env` → `VITE_APP_TITLE=MISLab知识库` (shared across all environments)
+
+**Vite proxy (dev only):** `/api` requests are proxied to `http://101.43.146.27/new-app/api` with the `/api` prefix stripped. Configured in `vite.config.js` → `server.proxy`.
 - Request interceptor: auto-attaches `Authorization: Bearer ${token}`
 - Response interceptor: unwraps to `response.data`; on 401 → clears token, shows warning, redirects to `#/login`
 - API modules in `src/apis/` split by domain (`content.js`, `excel.js`, `folder.js`, `file.js`, etc.)
@@ -73,6 +81,8 @@ ComponentName/
 
 Styles use CSS Modules: `import style from './index.module.css'`, then `style.className`.
 
+**Exceptions:** `ChatInput` and `TiptapEditor` lack `.less` source files (CSS was written directly).
+
 ### Univer Excel integration (`src/components/UniverSheet/`)
 
 Uses **preset mode** (v0.15.x) — do NOT mix with plugin-mode APIs:
@@ -82,6 +92,10 @@ Uses **preset mode** (v0.15.x) — do NOT mix with plugin-mode APIs:
 - Data must conform to Univer's `IWorkbookData` interface
 - Presets: `@univerjs/preset-sheets-core` + `@univerjs/preset-sheets-advanced`
 - All `@univerjs/*` packages must stay at the same version (currently 0.15.0)
+
+### ChatInput component (`src/components/ChatInput/`)
+
+AI chat assistant (floating button). **Note:** uses a hardcoded API URL (`http://10.92.191.37:8000/api/v1/ask`) directly — does NOT use the shared `request` axios instance from `src/utils/request.js`.
 
 ### File type status codes
 

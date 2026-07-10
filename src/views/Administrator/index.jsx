@@ -1356,21 +1356,26 @@ const Administrator = () => {
                     okText="确定"
                     cancelText="取消"
                     confirmLoading={permissionLoading}
-                    width={600}
+                    width={1000}
                     destroyOnClose
                 >
                     <Transfer
                         dataSource={availableRoles.map(r => ({
                             key: r.id,
-                            title: r.roleName
+                            title: r.roleName,
+                            description: r.description || ''
                         }))}
                         titles={['可选角色', '已分配角色']}
                         targetKeys={targetKeys}
                         onChange={setTargetKeys}
-                        render={item => item.title}
+                        render={item => (
+                            <Tooltip title={item.description || item.title} placement="topLeft">
+                                <span>{item.title}</span>
+                            </Tooltip>
+                        )}
                         listStyle={{
-                            width: 300,
-                            height: 320,
+                            width: 440,
+                            height: 500,
                         }}
                     />
                 </Modal>
@@ -1384,23 +1389,28 @@ const Administrator = () => {
                     okText="确定"
                     cancelText="取消"
                     confirmLoading={batchPermissionLoading}
-                    width={600}
+                    width={1000}
                     destroyOnClose
                 >
                     <Transfer
                         dataSource={batchAvailableRoles.map(r => ({
                             key: r.id.toString(),
-                            title: r.roleName
+                            title: r.roleName,
+                            description: r.description || ''
                         }))}
                         titles={['可选角色', '已分配角色']}
                         targetKeys={batchTargetKeys}
                         onChange={(targetKeys) => {
                             setBatchTargetKeys(targetKeys)
                         }}
-                        render={item => item.title}
+                        render={item => (
+                            <Tooltip title={item.description || item.title} placement="topLeft">
+                                <span>{item.title}</span>
+                            </Tooltip>
+                        )}
                         listStyle={{
-                            width: 300,
-                            height: 320,
+                            width: 440,
+                            height: 500,
                         }}
                     />
                 </Modal>
