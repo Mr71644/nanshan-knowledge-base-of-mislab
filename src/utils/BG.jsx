@@ -88,13 +88,13 @@ export default function BG() {
                 this._scroll = 0;
                 this._ribbons = [];
                 this._options = {
-                    colorSaturation: "80%",
-                    colorBrightness: "60%",
-                    colorAlpha: 0.65,
-                    colorCycleSpeed: 6,
+                    colorSaturation: "60%",
+                    colorBrightness: "55%",
+                    colorAlpha: 0.30,
+                    colorCycleSpeed: 0,
                     verticalPosition: "center",
-                    horizontalSpeed: 200,
-                    ribbonCount: 4,
+                    horizontalSpeed: 150,
+                    ribbonCount: 3,
                     strokeSize: 0,
                     parallaxAmount: -0.5,
                     animateSections: true
@@ -128,16 +128,14 @@ export default function BG() {
                         this._canvas.style["width"] = "100%";
                         this._canvas.style["height"] = "100%";
                         this._canvas.style["z-index"] = "-1";
-                        this._canvas.style["background-color"] = "white";
+                        this._canvas.style["background-color"] = "#f0f3ed";
                         this._canvas.id = "bgCanvas";
                         this._onResize();
                         this._context = this._canvas.getContext("2d");
                         this._context.clearRect(0, 0, this._width, this._height);
                         this._context.globalAlpha = this._options.colorAlpha;
-                        // 这里可以设置是否随着窗口的滚动而滚动
                         window.addEventListener("resize", this._onResize);
                         window.addEventListener("scroll", this._onScroll);
-                        // 这里设置添加的位置
                         var body_ = document.getElementsByTagName('body')[0];
                         body_.appendChild(this._canvas);
                     } catch (e) {
@@ -157,7 +155,10 @@ export default function BG() {
                         starty = this._height - hide;
                     }
                     var ribbon = [], point1 = new Point(startx, starty), point2 = new Point(startx, starty), point3 = null,
-                        color = Math.round(random(0, 360)), delay = 0;
+                        // 绿色调色盘：从嫩绿到深绿 + 点缀金色
+                        greenHues = [75, 85, 95, 105, 115, 125, 38, 42],
+                        color = greenHues[Math.floor(random(0, greenHues.length - 1))],
+                        delay = 0;
                     let T = true
                     while (T) {
                         if (stop <= 0) break;
