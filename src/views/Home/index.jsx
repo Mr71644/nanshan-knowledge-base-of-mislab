@@ -761,15 +761,18 @@ const Home = () => {
                 style={{
                     padding: '0 var(--layout-padding) 0',
                     background: '#faf7f2',
+                    height: '100vh',
+                    overflow: 'hidden',
                 }}
             >
                 <Content
                     style={{
                         padding: 'var(--layout-padding)',
                         margin: 0,
-                        minHeight: 280,
                         background: '#ffffff',
                         borderRadius: '12px',
+                        overflow: 'hidden',
+                        minHeight: 0,
                     }}
                 >
                     <div className={style.topBar}>
@@ -820,7 +823,16 @@ const Home = () => {
                     </div>
                     <ConfigProvider
                         wave={{
-                            disabled: true, // 全局禁用波纹效果
+                            disabled: true,
+                        }}
+                        theme={{
+                            components: {
+                                Checkbox: {
+                                    colorPrimary: '#d4a84c',
+                                    colorPrimaryHover: '#c49a3e',
+                                    colorBorder: '#c5c0b5',
+                                },
+                            },
                         }}
                     >
                         <div data-impeccable-variants="59ef42c8" data-impeccable-variant-count="3" style={{ display: "contents" }}>
