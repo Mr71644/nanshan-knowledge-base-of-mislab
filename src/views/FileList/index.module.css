@@ -1,80 +1,367 @@
-.fileList {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
+/* ============================================================
+   知邮南山-MISLab  文件列表
+   重庆邮电大学经济管理学院  |  铜金精炼风
+   ============================================================ */
 
-.fileList :global .ant-table-body {
-  scrollbar-width: auto;
-  scrollbar-color: auto;
-}
-
-.fileList :global .ant-table-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.fileList :global .ant-table-body::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 5px;
-}
-
-.spin {
-  position: absolute;
-  top: 50%;
-  left: 55%;
-  transform: translateX(-50%) translateY(-50%);
-}
-
-.eyeIcon span {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pinnedRow {
-  background-color: #faf8f8 !important;
-}
-
-.pinnedRow :global .ant-btn {
-  background-color: #faf8f8 !important;
-  border-color: #f0f0f0 !important;
-  color: #666 !important;
-}
-
-.pinnedRow :global .ant-btn:hover {
-  background-color: #f0f0f0 !important;
-  border-color: #d9d9d9 !important;
-  color: #333 !important;
-}
-
-.pinnedRow .eyeIcon span {
-  color: #666 !important;
-}
-
+/* === 表格整体 — 圆角卡片 === */
 .tableWrapper {
-  max-width: 1900px;
-  margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    border: 1px solid #f0ebe0;
+    overflow: hidden;
 }
 
+/* === 列拖拽手柄 === */
+:global .react-resizable {
+    position: relative;
+}
+:global .react-resizable-handle {
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 60%;
+    cursor: col-resize;
+    z-index: 1;
+    border-radius: 2px;
+    transition: background 0.2s;
+}
+:global .react-resizable-handle:hover {
+    background: rgba(212, 168, 76, 0.3);
+}
+:global .react-resizable-handle:active {
+    background: rgba(212, 168, 76, 0.5);
+}
+
+/* === 表格 === */
+.fileList {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* 表头 */
+.fileList .ant-table-thead > tr > th {
+    background: linear-gradient(180deg, #fdfaf5, transparent);
+    border-bottom: 1.5px solid #ede7db;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #8c8c8c;
+    padding: 16px 20px;
+}
+.fileList .ant-table-thead > tr > th::before { display: none !important; }
+
+/* 单元格 */
+.fileList .ant-table-tbody > tr > td {
+    border-bottom: 1px solid #ede7db;
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #555;
+    transition: all 0.2s ease;
+}
+
+/* 行 hover — 铜金暖光 */
+.fileList .ant-table-tbody > tr.ant-table-row:hover > td {
+    background: linear-gradient(90deg, rgba(212, 168, 76, 0.06), rgba(212, 168, 76, 0.02)) !important;
+}
+
+/* 首尾列边距 */
+.fileList .ant-table-tbody > tr > td:first-child,
+.fileList .ant-table-thead > tr > th:first-child { padding-left: 24px; }
+.fileList .ant-table-tbody > tr > td:last-child,
+.fileList .ant-table-thead > tr > th:last-child { padding-right: 16px; }
+
+/* 名称列加粗 */
+.fileList .ant-table-cell:first-child { font-weight: 500; color: #1a1a1a; }
+
+/* 滚动条 */
+.fileList .ant-table-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 168, 76, 0.18) transparent;
+}
+.fileList .ant-table-body::-webkit-scrollbar { width: 5px; height: 5px; }
+.fileList .ant-table-body::-webkit-scrollbar-thumb {
+    background: rgba(212, 168, 76, 0.18);
+    border-radius: 5px;
+}
+.fileList .ant-table-body::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 76, 0.3); }
+.fileList .ant-table-body::-webkit-scrollbar-track { background: transparent; }
+.fileList .ant-empty-description { color: #8c8c8c; }
+.fileList .ant-empty-img-simple-path { fill: rgba(212, 168, 76, 0.2); }
+.fileList .ant-empty-img-simple-ellipse { fill: rgba(212, 168, 76, 0.03); }
+
+/* === 加载 === */
+.spin {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 360px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #f0ebe0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+/* === 批量操作栏 === */
 .batchBar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px 20px;
+    background: linear-gradient(90deg, rgba(212, 168, 76, 0.1), rgba(212, 168, 76, 0.03) 80%);
+    border-bottom: 1px solid #f0ebe0;
+    animation: batchSlideIn 0.25s ease;
+}
+
+@keyframes batchSlideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .batchText {
-  font-size: 14px;
-  color: #666;
-  margin-right: auto;
+    font-size: 13px;
+    color: #6b6660;
+    margin-right: auto;
+    font-weight: 500;
+}
+.batchText strong {
+    color: #d4a84c;
+    font-size: 15px;
+    margin: 0 2px;
 }
 
-.batchActions {
-  display: flex;
-  gap: 8px;
+.batchActions { display: flex; gap: 8px; }
+
+/* === 表头批量按钮 === */
+.batchHeader {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.batchBtns {
+    display: flex;
+    gap: 6px;
+}
+
+.batchBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    background: #ffffff;
+    border: 1.5px solid #ede7db;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    white-space: nowrap;
+}
+.batchBtn:hover {
+    border-color: #d4a84c !important;
+    box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
+    color: #1a1a1a !important;
+    transform: translateY(-1px);
+    background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, #ffffff 100%);
+}
+.batchBtn svg {
+    width: 16px;
+    height: 16px;
+    color: #8c8c8c;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.batchBtn:hover svg {
+    color: #d4a84c;
+    transform: scale(1.1);
+    filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+}
+
+/* === 类型图标 pill === */
+.typeIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+.typeIcon svg { width: 15px; height: 15px; }
+
+.typeDoc  { background: rgba(212, 168, 76, 0.1); }
+.typeDoc svg  { color: #d4a84c; }
+
+.typeFolder { background: rgba(180, 160, 120, 0.1); }
+.typeFolder svg { color: #b4a078; }
+
+.typeExcel { background: rgba(196, 154, 62, 0.1); }
+.typeExcel svg { color: #c49a3e; }
+
+.typeFile { background: rgba(212, 168, 76, 0.06); }
+.typeFile svg { color: #b4a078; }
+
+/* === 权限标签 === */
+.permissionTag {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.permissionTag:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.permissionEdit {
+    background: rgba(212, 168, 76, 0.08);
+    color: #c49a3e;
+}
+
+.permissionView {
+    background: rgba(141, 149, 163, 0.07);
+    color: #6b7280;
+}
+
+/* === 三点按钮 === */
+.moreBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #8c8c8c;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+.moreBtn:hover {
+    background: rgba(212, 168, 76, 0.1);
+    color: #d4a84c;
+}
+
+/* === 菜单项标签 === */
+.menuItemLabel {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* === 下拉菜单 === */
+.dropdownMenu .ant-dropdown-menu {
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid #ede7db;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.03);
+    background: linear-gradient(165deg, #fdfaf5 0%, #fefefc 100%);
+    min-width: 148px;
+}
+
+/* 菜单项 */
+.dropdownMenu .ant-dropdown-menu-item,
+.dropdownMenu .ant-dropdown-menu-submenu-title {
+    border-radius: 10px;
+    padding: 9px 14px;
+    margin: 2px 0;
+    font-size: 0;
+    color: #6b6660;
+    transition: all 0.2s ease;
+}
+
+.dropdownMenu .ant-dropdown-menu-item:hover {
+    background: linear-gradient(135deg, rgba(212, 168, 76, 0.12), rgba(212, 168, 76, 0.06));
+    color: #c49a3e;
+}
+
+.dropdownMenu .ant-dropdown-menu-item:hover .menuItemLabel {
+    color: #c49a3e;
+}
+
+/* 菜单项图标 */
+.dropdownMenu .ant-dropdown-menu-item .anticon {
+    font-size: 15px;
+    margin-right: 10px;
+    color: #a89a7e;
+    transition: all 0.2s ease;
+    vertical-align: -2px;
+}
+.dropdownMenu .ant-dropdown-menu-item:hover .anticon {
+    color: #c49a3e;
+}
+
+/* 分割线 */
+.dropdownMenu .ant-dropdown-menu-item-divider {
+    margin: 6px 10px;
+    border-color: #ede7db;
+}
+
+/* === 置顶行 === */
+.pinnedRow td {
+    background: rgba(212, 168, 76, 0.04) !important;
+}
+.pinnedRow td:first-child {
+    position: relative;
+}
+.pinnedRow td:first-child::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: #d4a84c;
+}
+
+.cancelBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #8c8c8c;
+    border: 1px solid #ede7db;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.cancelBtn:hover {
+    color: #d4a84c;
+    border-color: #d4a84c;
+    background: rgba(212, 168, 76, 0.05);
+}
+
+.confirmBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(135deg, #d4a84c, #c49a3e);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(212, 168, 76, 0.25);
+}
+.confirmBtn:hover {
+    background: linear-gradient(135deg, #e0b860, #d4a84c);
+    box-shadow: 0 3px 12px rgba(212, 168, 76, 0.35);
 }

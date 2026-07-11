@@ -12,7 +12,9 @@ dist
 dist-ssr
 dist.zip
 TODO.md
-docs/
+# Personal document storage (keep folder structure, ignore content)
+docs/personal/*
+!docs/personal/.gitkeep
 *.local
 
 # Editor directories and files

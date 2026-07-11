@@ -1,12 +1,12 @@
-import React, { memo, useEffect, useState, useRef } from 'react';
+import React, { memo, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover, Checkbox } from 'antd';
-import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined } from '@ant-design/icons';
+import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
+import { Resizable } from 'react-resizable';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
-import { getFileType } from '@/utils/fileType'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
 import style from './index.module.css'
@@ -35,67 +35,111 @@ const FileList = () => {
     const [currentFolder, setCurrentFolder] = useState('')
     const [downloading, setDownloading] = useState(false)
     const folderName = useRef('')
+
+    // 可拖拽列宽
+    const [columnWidths, setColumnWidths] = useState({
+        name: 220,
+        owner: 100,
+        updateTime: 160,
+        permission: 80,
+        operation: 60,
+    })
+    const handleResize = useCallback((key) => (e, { size }) => {
+        setColumnWidths(prev => ({ ...prev, [key]: Math.max(60, size.width) }))
+    }, [])
+    const ResizableTitle = useCallback((props) => {
+        const { onResize, width, ...restProps } = props
+        if (!width) return <th {...restProps} />
+        return (
+            <Resizable
+                width={width}
+                height={0}
+                onResize={onResize}
+                draggableOpts={{ enableUserSelectHack: false }}
+            >
+                <th {...restProps} />
+            </Resizable>
+        )
+    }, [])
+
+    const getTypeStyle = (status) => {
+        const map = {
+            1: { cls: style.typeDoc,    icon: <EditOutlined /> },
+            2: { cls: style.typeFolder, icon: <FolderOutlined /> },
+            3: { cls: style.typeExcel,  icon: <TableOutlined /> },
+            4: { cls: style.typeFile,   icon: <FileOutlined /> },
+        }
+        return map[status] || map[4]
+    }
     const columns = [
         {
             title: '名称',
             dataIndex: 'name',
             key: 'name',
+            width: columnWidths.name,
+            ellipsis: true,
+            onHeaderCell: (col) => ({
+                width: col.width,
+                onResize: handleResize('name'),
+            }),
             render: (text, record) => {
-                if (record.status === 1) {
-                    return (
-                        <span>
-                            <EditOutlined style={{ marginRight: 8 }} />
-                            {text}
+                const iconStyle = getTypeStyle(record.status)
+                return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', maxWidth: '100%' }}>
+                        <span className={`${style.typeIcon} ${iconStyle.cls}`}>
+                            {iconStyle.icon}
                         </span>
-                    )
-                } else if (record.status === 2) {
-                    return (
-                        <span>
-                            <FolderOutlined style={{ marginRight: 8 }} />
-                            {text}
-                        </span>
-                    )
-                } else if (record.status === 3) {
-                    return (
-                        <span>
-                            <TableOutlined style={{ marginRight: 8 }} />
-                            {text}
-                        </span>
-                    )
-                } else if (record.status === 4) {
-                    return (
-                        <span>
-                            <FileOutlined style={{ marginRight: 8 }} />
-                            {text}
-                        </span>
-                    )
-                }
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
+                    </span>
+                )
             }
         },
         {
             title: '所有者',
             dataIndex: 'owner',
             key: 'owner',
+            width: columnWidths.owner,
+            onHeaderCell: (col) => ({
+                width: col.width,
+                onResize: handleResize('owner'),
+            }),
         },
         {
             title: '修改时间',
             dataIndex: 'updateTime',
             key: 'updateTime',
+            width: columnWidths.updateTime,
+            onHeaderCell: (col) => ({
+                width: col.width,
+                onResize: handleResize('updateTime'),
+            }),
         },
         {
             title: '权限',
             key: 'permission',
-            width: 100,
+            width: columnWidths.permission,
+            onHeaderCell: (col) => ({
+                width: col.width,
+                onResize: handleResize('permission'),
+            }),
             render: (text, record) => {
-                if (record.status === 1 || record.status === 3) {
-                    return <span style={{ color: '#1890ff' }}>可编辑</span>;
-                }
-                return <span style={{ color: '#8c8c8c' }}>可阅读</span>;
+                const isEdit = record.permissionType === 'EDIT'
+                return (
+                    <span
+                        className={`${style.permissionTag} ${isEdit ? style.permissionEdit : style.permissionView}`}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (!batchType) handleClick(record)
+                        }}
+                    >
+                        {isEdit ? '可编辑' : '可阅读'}
+                    </span>
+                )
             }
         },
         {
             title: (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', cursor: 'pointer', gap: 8 }}>
+                <div className={style.batchHeader}>
                     {batchType ? (
                         <Checkbox
                             checked={list.length > 0 && selectedRowKeys.length === list.length}
@@ -110,14 +154,32 @@ const FileList = () => {
                                 }
                             }}
                         />
-                    ) : (<>
-                        <DownloadOutlined onClick={() => setBatchType('download')} />
-                        <DeleteOutlined onClick={() => setBatchType('delete')} />
-                    </>)}
+                    ) : (
+                        <div className={style.batchBtns}>
+                            <span
+                                className={style.batchBtn}
+                                onClick={() => setBatchType('download')}
+                            >
+                                <DownloadOutlined />
+                                批量下载
+                            </span>
+                            <span
+                                className={style.batchBtn}
+                                onClick={() => setBatchType('delete')}
+                            >
+                                <DeleteOutlined />
+                                批量删除
+                            </span>
+                        </div>
+                    )}
                 </div>
             ),
             key: 'operation',
-            width: 100,
+            width: columnWidths.operation,
+            onHeaderCell: (col) => ({
+                width: col.width,
+                onResize: handleResize('operation'),
+            }),
             render: (text, record) => {
                 let menuItems = []
                 // 确保 pinned 字段存在且为 true
@@ -125,85 +187,94 @@ const FileList = () => {
 
                 if (record.status === 1 || record.status === 3) menuItems = [
                     {
-                        key: 'details',
-                        label: '详情',
-                        onClick: () => handleMenuClick('details', record),
+                        key: 'export',
+                        icon: <ExportOutlined />,
+                        label: (<span className={style.menuItemLabel}>导出</span>),
+                        onClick: () => handleMenuClick('export', record),
                     },
+                    { type: 'divider' },
                     {
                         key: isPinned ? 'unpin' : 'pin',
-                        label: isPinned ? '取消置顶' : '置顶',
+                        icon: <PushpinOutlined />,
+                        label: (<span className={style.menuItemLabel}>{isPinned ? '取消置顶' : '置顶'}</span>),
                         onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
                     },
                     {
                         key: 'download',
-                        label: '下载',
+                        icon: <DownloadOutlined />,
+                        label: (<span className={style.menuItemLabel}>下载</span>),
                         onClick: () => handleMenuClick('download', record),
                     },
+                    { type: 'divider' },
                     {
                         key: 'delete',
-                        label: '删除',
-                        danger: true,
+                        icon: <DeleteOutlined />,
+                        label: (<span className={style.menuItemLabel}>删除</span>),
                         onClick: () => handleMenuClick('delete', record),
                     },
                 ]
                 if (record.status === 2) menuItems = [
                     {
-                        key: 'details',
-                        label: '详情',
-                        onClick: () => handleMenuClick('details', record),
-                    },
-                    {
                         key: 'update',
-                        label: '更名',
+                        icon: <SwapOutlined />,
+                        label: (<span className={style.menuItemLabel}>重命名</span>),
                         onClick: () => handleMenuClick('update', record),
                     },
                     {
+                        key: 'export',
+                        icon: <ExportOutlined />,
+                        label: (<span className={style.menuItemLabel}>导出</span>),
+                        onClick: () => handleMenuClick('export', record),
+                    },
+                    { type: 'divider' },
+                    {
                         key: isPinned ? 'unpin' : 'pin',
-                        label: isPinned ? '取消置顶' : '置顶',
+                        icon: <PushpinOutlined />,
+                        label: (<span className={style.menuItemLabel}>{isPinned ? '取消置顶' : '置顶'}</span>),
                         onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
                     },
                     {
                         key: 'download',
-                        label: '下载',
+                        icon: <DownloadOutlined />,
+                        label: (<span className={style.menuItemLabel}>下载</span>),
                         onClick: () => handleMenuClick('download', record),
                     },
+                    { type: 'divider' },
                     {
                         key: 'delete',
-                        label: '删除',
-                        danger: true,
+                        icon: <DeleteOutlined />,
+                        label: (<span className={style.menuItemLabel}>删除</span>),
                         onClick: () => handleMenuClick('delete', record),
                     },
                 ]
                 if (record.status === 4) {
-                    const { category } = getFileType(record.name)
-                    const canPreview = category !== 'unsupported'
                     menuItems = [
-                        ...(canPreview ? [{
-                            key: 'details',
-                            label: '详情',
-                            onClick: () => handleMenuClick('details', record),
-                        }] : []),
+                        {
+                            key: 'export',
+                            icon: <ExportOutlined />,
+                            label: (<span className={style.menuItemLabel}>导出</span>),
+                            onClick: () => handleMenuClick('export', record),
+                        },
                         {
                             key: 'download',
-                            label: '下载',
+                            icon: <DownloadOutlined />,
+                            label: (<span className={style.menuItemLabel}>下载</span>),
                             onClick: () => handleMenuClick('download', record),
                         },
                         {
                             key: isPinned ? 'unpin' : 'pin',
-                            label: isPinned ? '取消置顶' : '置顶',
+                            icon: <PushpinOutlined />,
+                            label: (<span className={style.menuItemLabel}>{isPinned ? '取消置顶' : '置顶'}</span>),
                             onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
                         },
+                        { type: 'divider' },
                         {
                             key: 'delete',
-                            label: '删除',
-                            danger: true,
+                            icon: <DeleteOutlined />,
+                            label: (<span className={style.menuItemLabel}>删除</span>),
                             onClick: () => handleMenuClick('delete', record),
                         },
                     ]
-                }
-                const roleName = () => {
-                    if (record.permissionType === 'EDIT') return '可编辑'
-                    if (record.permissionType === 'VIEW') return '可阅读'
                 }
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
@@ -229,15 +300,12 @@ const FileList = () => {
                             <Dropdown
                                 menu={{ items: menuItems }}
                                 trigger={['click']}
-                                overlayStyle={{
-                                    width: '60px'
-                                }}
+                                overlayClassName={style.dropdownMenu}
+                                placement="bottomRight"
                             >
-                                <Button
-                                    icon={<EllipsisOutlined />}
-                                    size="big"
-                                    style={{ border: 'none' }}
-                                />
+                                <span className={style.moreBtn}>
+                                    <EllipsisOutlined />
+                                </span>
                             </Dropdown>
                         </div>
                     </div>
@@ -324,8 +392,8 @@ const FileList = () => {
         })
     }
     const handleMenuClick = async (action, record) => {
-        if (action === 'details') {
-            handleClick(record)
+        if (action === 'export') {
+            handleSingleDownload(record)
         } else if (action === 'delete') {
             try {
                 if (record.status === 1) {
@@ -426,54 +494,65 @@ const FileList = () => {
     }, [location.state])
     return (
         <>
+            <style>{`
+                .ant-checkbox-checked .ant-checkbox-inner {
+                    background-color: #d4a84c !important;
+                    border-color: #d4a84c !important;
+                }
+                .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+                .ant-checkbox:hover .ant-checkbox-inner {
+                    border-color: #d4a84c !important;
+                }
+                .ant-checkbox-inner {
+                    border-color: #c5c0b5 !important;
+                }
+            `}</style>
             {contextHolder}
             {
                 loading
                     ? <Spin size='large' className={style.spin} />
                     : <div className={style.tableWrapper}>
-                        <div className={style.batchBar} style={{ visibility: batchType ? 'visible' : 'hidden' }}>
-                            {selectedRowKeys.length > 0 && (
+                        {batchType && (
+                            <div className={style.batchBar}>
                                 <span className={style.batchText}>
-                                    已选择 {selectedRowKeys.length} 项
+                                    已选 <strong>{selectedRowKeys.length}</strong> 项
                                 </span>
-                            )}
-                            <div className={style.batchActions}>
-                                <Button size="small" onClick={clearSelection}>取消</Button>
-                                {batchType === 'download' && (
-                                    <Button size="small" type="primary" loading={downloading} disabled={selectedRowKeys.length === 0} onClick={handleBatchDownload}>下载</Button>
-                                )}
-                                {batchType === 'delete' && (
-                                    <Button size="small" danger type="primary" disabled={selectedRowKeys.length === 0} onClick={handleBatchDelete}>移入回收站</Button>
-                                )}
+                                <div className={style.batchActions}>
+                                    <span className={style.cancelBtn} onClick={clearSelection}>取消</span>
+                                    {batchType === 'download' && (
+                                        <span
+                                            className={style.confirmBtn}
+                                            onClick={selectedRowKeys.length > 0 && !downloading ? handleBatchDownload : undefined}
+                                        >
+                                            {downloading ? '下载中...' : '批量下载'}
+                                        </span>
+                                    )}
+                                    {batchType === 'delete' && (
+                                        <span
+                                            className={style.confirmBtn}
+                                            onClick={selectedRowKeys.length > 0 ? handleBatchDelete : undefined}
+                                        >
+                                            移入回收站
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <Table
                             columns={columns}
                             dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
-                            scroll={{ y: 'calc(100vh - 260px)', x: 700 }}
-                            onRow={(record) => ({
-                                onClick: () => {
-                                    if (batchType) {
-                                        const key = `${record.id}${record.status}`
-                                        const isSelected = selectedRowKeys.includes(key)
-                                        if (isSelected) {
-                                            setSelectedRowKeys(prev => prev.filter(k => k !== key))
-                                            setSelectedRows(prev => prev.filter(r => `${r.id}${r.status}` !== key))
-                                        } else {
-                                            setSelectedRowKeys(prev => [...prev, key])
-                                            setSelectedRows(prev => [...prev, record])
-                                        }
-                                        return
-                                    }
-                                    handleClick(record)
-                                }
-                            })}
+                            scroll={{ y: 'calc(100vh - 310px)', x: 'max-content' }}
                             rowClassName={(record) => {
                                 const isPinned = record.pinned === true || record.pinned === 'true';
                                 return isPinned ? style.pinnedRow : '';
                             }}
                             className={style.fileList}
+                            components={{
+                                header: {
+                                    cell: ResizableTitle,
+                                },
+                            }}
                         />
                     </div>
             }

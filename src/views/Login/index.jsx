@@ -194,8 +194,9 @@ const Login = () => {
             <div className={style.login}>
                 <Card className={style.loginCard}>
                     <div className={style.logo}>
-                        <div className={style.logoTitle}>甘蔗育种中心</div>
-                        <div className={style.logoSub}>ZhangLab · 广西大学农学院</div>
+                        <div className={style.logoTitle}>知邮南山</div>
+                        <div className={style.logoDivider} />
+                        <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
                     </div>
 
                     {/* ========== 登录模式 ========== */}

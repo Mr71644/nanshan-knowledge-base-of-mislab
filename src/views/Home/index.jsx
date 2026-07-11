@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -97,7 +97,7 @@ const walkFilter = (items, keyword, parentKeys = []) => {
 
 const Home = () => {
     const {
-        token: { colorBgContainer, borderRadiusLG },
+        token: { },
     } = theme.useToken();
     const dispatch = useDispatch();
     const navigate = useNavigate()
@@ -132,18 +132,14 @@ const Home = () => {
     const [api, contextHolderNotification] = notification.useNotification({
         maxCount: 1
     })
+    const [exitModalOpen, setExitModalOpen] = useState(false);
     const exit = () => {
-        Modal.confirm({
-            title: '确认退出',
-            content: '确定要退出登录吗？',
-            okText: '确认',
-            cancelText: '取消',
-            onOk: () => {
-                dispatch(showMessage({ message: '退出成功', type: 'success' }))
-                dispatch(clearUserInfo())
-                navigate('/login')
-            }
-        })
+        setExitModalOpen(true)
+    }
+    const handleExitConfirm = () => {
+        dispatch(showMessage({ message: '退出成功', type: 'success' }))
+        dispatch(clearUserInfo())
+        navigate('/login')
     }
     const handleOpenModal = () => {
         form.setFieldsValue({
@@ -250,7 +246,7 @@ const Home = () => {
 
         const onMouseMove = (e) => {
             if (!isDragging.current) return
-            const newWidth = Math.min(500, Math.max(180, startWidth + e.clientX - startX))
+            const newWidth = Math.min(500, Math.max(270, startWidth + e.clientX - startX))
             setSiderWidth(newWidth)
         }
         const onMouseUp = () => {
@@ -431,7 +427,7 @@ const Home = () => {
         }
 
         if (!info.dropToGap && dropItem.status === 2) {
-            // Case A: 拖入文件夹
+            // 情况 A：拖入文件夹（移入目标文件夹）
             Modal.confirm({
                 title: '确认移动',
                 content: `确定将「${dragItem.name}」移动到「${dropItem.name}」吗？`,
@@ -440,7 +436,7 @@ const Home = () => {
                 onOk: () => doMove(dropItem.id)
             })
         } else if (String(dragFolderId) === String(dropFolderId)) {
-            // Case B: 同层排序
+            // 情况 B：同层排序（无需确认）
             const newTreeData = reorderTreeData(folderTree, dragNode, dropNode, info.dropToGap, info.dropPosition, dropFolderId)
             SetFolderTree(newTreeData)
             const siblings = findSiblingsByParentId(newTreeData, dropFolderId)
@@ -452,7 +448,7 @@ const Home = () => {
                 getTree()
             }
         } else {
-            // Case C: 跨层 gap drop
+            // 情况 C：跨层 gap drop（移到目标节点所在层级）
             const targetFolderName = findFolderName(folderTree, dropFolderId) ?? '未知文件夹'
             Modal.confirm({
                 title: '确认移动',
@@ -466,6 +462,7 @@ const Home = () => {
     const reorderTreeData = (treeData, dragNode, dropNode, dropToGap, dropPosition, newParentFolderId) => {
         const newTreeData = JSON.parse(JSON.stringify(treeData))
 
+        // 通过 key 查找并操作节点
         const dragKey = dragNode.key
         const dropKey = dropNode.key
 
@@ -480,6 +477,7 @@ const Home = () => {
             }
         }
 
+        // 移除拖拽节点
         let dragObj
         loop(newTreeData, dragKey, (item, index, arr) => {
             arr.splice(index, 1)
@@ -487,11 +485,14 @@ const Home = () => {
         })
 
         if (!dropToGap) {
+            // 放在节点内部（不应发生，allowDrop 已阻止）
             loop(newTreeData, dropKey, (item) => {
                 item.children = item.children || []
                 item.children.unshift(dragObj)
             })
         } else {
+            // 放在节点之间的间隙
+            // dropPosition 是绝对位置，需要减去节点在父数组中的索引得到相对位置
             const dropPosArr = dropNode.pos.split('-')
             const dropIndex = Number(dropPosArr[dropPosArr.length - 1])
             const relativePosition = dropPosition - dropIndex
@@ -504,12 +505,15 @@ const Home = () => {
             })
 
             if (relativePosition === -1) {
+                // 放在目标节点前面
                 ar.splice(i, 0, dragObj)
             } else {
+                // 放在目标节点后面
                 ar.splice(i + 1, 0, dragObj)
             }
         }
 
+        // 更新移动节点的 folderId，确保后续拖拽时 case 判断正确
         dragObj.folderId = newParentFolderId
 
         return newTreeData
@@ -571,12 +575,46 @@ const Home = () => {
     }, [location.pathname, folderTree])
     return (
         <Fragment>
-        <style>{`.ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }`}</style>
+        <style>{`
+            .ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }
+            .ant-tree .ant-tree-node-content-wrapper { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+        `}</style>
         <Layout style={{
             height: '100vh',
-        }}>
+        }} className={style.layoutRoot}>
             {contextHolder}
             {contextHolderNotification}
+            <Modal
+                open={exitModalOpen}
+                onCancel={() => setExitModalOpen(false)}
+                onOk={handleExitConfirm}
+                okText="确认退出"
+                cancelText="取消"
+                okButtonProps={{
+                    style: {
+                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontWeight: 500,
+                    }
+                }}
+                cancelButtonProps={{
+                    style: { borderRadius: 8 }
+                }}
+                width={400}
+                centered
+                className={style.exitModal}
+            >
+                <div className={style.exitModalBody}>
+                    <div className={style.exitModalIcon}>
+                        <LogoutOutlined />
+                    </div>
+                    <div className={style.exitModalTitle}>确认退出登录</div>
+                    <div className={style.exitModalDesc}>
+                        退出后您将跳转至登录页面，<br />需要重新输入账号密码才能访问系统。
+                    </div>
+                </div>
+            </Modal>
             <Modal
                 title="修改个人信息"
                 open={isModalOpen}
@@ -645,6 +683,11 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            <ConfigProvider
+                theme={{
+                    token: { colorPrimary: '#d4a84c' },
+                }}
+            >
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -652,30 +695,23 @@ const Home = () => {
                 onCollapse={setCollapsed}
                 collapsedWidth={80}
                 style={{
-                    background: colorBgContainer,
+                    background: '#ffffff',
                     overflowY: 'scroll',
                     position: 'relative',
+                    borderRight: '1px solid #eaecf0',
                 }}
                 className={style.sider}
             >
                 <div className={style.logo}>
                     {collapsed ? <CloudOutlined style={{
                         fontSize: '25px',
-                        color: '#1677ff'
+                        color: '#d4a84c'
                     }} /> : (
-                        <>
-                            <span className={style.logoTitle}>甘蔗育种中心-ZhangLab</span>
-                            <Space size={4} className={style.logoActions}>
-                                <Tooltip title="展开全部">
-                                    <Button type="text" size="small" onClick={handleExpandAll}
-                                        icon={<FolderOpenOutlined />} />
-                                </Tooltip>
-                                <Tooltip title="折叠全部">
-                                    <Button type="text" size="small" onClick={handleCollapseAll}
-                                        icon={<FolderOutlined />} />
-                                </Tooltip>
-                            </Space>
-                        </>
+                        <div className={style.logoInner}>
+                            <div className={style.logoTitle}>知邮南山</div>
+                            <div className={style.logoDivider} />
+                            <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
+                        </div>
                     )}
                 </div>
                 {!collapsed && (
@@ -687,7 +723,16 @@ const Home = () => {
                             size="small"
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
+                            className={style.treeSearchInput}
                         />
+                        <Tooltip title="展开全部">
+                            <Button type="text" size="small" onClick={handleExpandAll}
+                                icon={<FolderOpenOutlined />} />
+                        </Tooltip>
+                        <Tooltip title="折叠全部">
+                            <Button type="text" size="small" onClick={handleCollapseAll}
+                                icon={<FolderOutlined />} />
+                        </Tooltip>
                     </div>
                 )}
                 <Tree
@@ -719,9 +764,11 @@ const Home = () => {
                     />
                 )}
             </Sider>
+            </ConfigProvider>
             <Layout
                 style={{
                     padding: '0 var(--layout-padding) 0',
+                    background: '#faf7f2',
                 }}
             >
                 <Content
@@ -729,69 +776,117 @@ const Home = () => {
                         padding: 'var(--layout-padding)',
                         margin: 0,
                         minHeight: 280,
-                        background: colorBgContainer,
-                        borderRadius: borderRadiusLG,
+                        background: '#ffffff',
+                        borderRadius: '12px',
                     }}
                 >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Breadcrumb separator=">" items={folderLayer}
-                            style={{
-                                fontSize: 'var(--breadcrumb-font-size)',
-                            }}
-                            className={style.breadcrumb}
-                        />
-                        <Button
-                            danger
-                            onClick={exit}
-                        >
-                            <LogoutOutlined />
-                            退出
-                        </Button>
+                    <div className={style.topBar}>
+                        <nav className={style.breadcrumb}>
+                            {folderLayer.map((item, i) => (
+                                <Fragment key={i}>
+                                    {i > 0 && (
+                                        <span className={style.breadcrumbSep}>
+                                            <RightOutlined />
+                                        </span>
+                                    )}
+                                    <span
+                                        className={`${style.crumb} ${i === folderLayer.length - 1 ? style.crumbActive : ''}`}
+                                        onClick={item.onClick}
+                                    >
+                                        {i === 0 && <CloudOutlined className={style.crumbIcon} />}
+                                        {i > 0 && <FolderOutlined className={style.crumbIcon} />}
+                                        {item.title}
+                                    </span>
+                                </Fragment>
+                            ))}
+                        </nav>
+                        <div className={style.topBarUser}>
+                            <Avatar
+                                size={36}
+                                style={{
+                                    backgroundColor: '#d4a84c',
+                                    flexShrink: 0,
+                                    fontSize: 16,
+                                    fontWeight: 600,
+                                }}
+                            >
+                                {userInfo.username?.charAt(0)?.toUpperCase() || 'U'}
+                            </Avatar>
+                            <div className={style.topBarMeta}>
+                                <span className={style.topBarName}>{userInfo.username || '用户'}</span>
+                                <span className={style.topBarRole}>{userInfo.roleName?.join('、') || '—'}</span>
+                            </div>
+                            <Tooltip title="退出登录">
+                                <Button
+                                    type="text"
+                                    icon={<LogoutOutlined />}
+                                    onClick={exit}
+                                    className={style.topBarLogout}
+                                />
+                            </Tooltip>
+                        </div>
                     </div>
                     <ConfigProvider
                         wave={{
-                            disabled: true, // 全局禁用波纹效果
+                            disabled: true,
+                        }}
+                        theme={{
+                            components: {
+                                Checkbox: {
+                                    colorPrimary: '#d4a84c',
+                                    colorPrimaryHover: '#c49a3e',
+                                    colorBorder: '#c5c0b5',
+                                },
+                            },
                         }}
                     >
-                        <div className={style.actionButtons}>
-                            <MemoAddNewFile></MemoAddNewFile>
-                            <UploadFile></UploadFile>
-                            <Button
-                                className={style.authority}
-                                onClick={handleOpenModal}>
-                                <IdcardOutlined />
-                                <span style={{
-                                    fontSize: 'var(--action-btn-font-size)'
-                                }}>用户信息修改</span>
-                            </Button>
-                            {
-                                userInfo.isAdministrator ?
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => navigate('/administrator')}>
-                                        <UserOutlined />
-                                        <span style={{
-                                            fontSize: 'var(--action-btn-font-size)'
-                                        }}>权限管理入口</span>
-                                    </Button>
-                                    : null
-                            }
-                            {userInfo.isAdministrator ? (
+                        <div data-impeccable-variants="59ef42c8" data-impeccable-variant-count="3" style={{ display: "contents" }}>
+                          {/* impeccable-variants-start 59ef42c8 */}
+                          {/* Original */}
+                          <div data-impeccable-variant="original">
+                            <div className={style.actionButtons}>
+                                <MemoAddNewFile className={style.authority}></MemoAddNewFile>
+                                <UploadFile className={style.authority}></UploadFile>
                                 <Button
                                     className={style.authority}
-                                    onClick={() => setRecycleBinOpen(true)}>
-                                    <DeleteOutlined />
+                                    onClick={handleOpenModal}>
+                                    <IdcardOutlined />
                                     <span style={{
                                         fontSize: 'var(--action-btn-font-size)'
-                                    }}>回收站</span>
+                                    }}>用户信息修改</span>
                                 </Button>
-                            ) : null}
+                                {
+                                    userInfo.isAdministrator ?
+                                        <Button
+                                            className={style.authority}
+                                            onClick={() => navigate('/administrator')}>
+                                            <UserOutlined />
+                                            <span style={{
+                                                fontSize: 'var(--action-btn-font-size)'
+                                            }}>权限管理入口</span>
+                                        </Button>
+                                        : null
+                                }
+                                {userInfo.isAdministrator ? (
+                                    <Button
+                                        className={style.authority}
+                                        onClick={() => setRecycleBinOpen(true)}>
+                                        <DeleteOutlined />
+                                        <span style={{
+                                            fontSize: 'var(--action-btn-font-size)'
+                                        }}>回收站</span>
+                                    </Button>
+                                ) : null}
+                            </div>
+                          </div>
+                          {/* Variants: insert below this line */}
+                          {/* impeccable-variants-end 59ef42c8 */}
                         </div>
                     </ConfigProvider>
                     <div
                         style={{
-                            background: colorBgContainer,
-                            borderRadius: borderRadiusLG,
+                            background: '#ffffff',
+                            borderRadius: '12px',
                         }}
                         className={style.fileList}
                     >
