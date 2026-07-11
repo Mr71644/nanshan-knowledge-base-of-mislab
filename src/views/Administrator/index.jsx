@@ -485,7 +485,7 @@ const Administrator = () => {
     }
 
     // 角色用户查看相关方法
-    const avatarColors = ['#d4a84c', '#c49a3e', '#b8956e', '#a08060', '#8b6f4e', '#c4a060', '#ba8a50', '#a07040']
+    const avatarColors = ['#5e963c', '#4c7a2e', '#b8956e', '#a08060', '#8b6f4e', '#c4a060', '#ba8a50', '#a07040']
     const getAvatarColor = (username) => {
         let hash = 0
         for (let i = 0; i < username.length; i++) {

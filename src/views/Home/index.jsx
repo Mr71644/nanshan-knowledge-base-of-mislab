@@ -592,7 +592,7 @@ const Home = () => {
                 cancelText="取消"
                 okButtonProps={{
                     style: {
-                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
+                        background: 'linear-gradient(135deg, #5e963c, #4c7a2e)',
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 500,
@@ -685,7 +685,7 @@ const Home = () => {
             </Modal>
             <ConfigProvider
                 theme={{
-                    token: { colorPrimary: '#d4a84c' },
+                    token: { colorPrimary: '#5e963c' },
                 }}
             >
             <Sider
@@ -705,12 +705,12 @@ const Home = () => {
                 <div className={style.logo}>
                     {collapsed ? <CloudOutlined style={{
                         fontSize: '25px',
-                        color: '#d4a84c'
+                        color: '#5e963c'
                     }} /> : (
                         <div className={style.logoInner}>
-                            <div className={style.logoTitle}>知邮南山</div>
+                            <div className={style.logoTitle}>甘蔗育种中心</div>
                             <div className={style.logoDivider} />
-                            <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
+                            <div className={style.logoSub}>ZhangLab · 广西大学农学院</div>
                         </div>
                     )}
                 </div>
@@ -768,7 +768,7 @@ const Home = () => {
             <Layout
                 style={{
                     padding: '0 var(--layout-padding) 0',
-                    background: '#faf7f2',
+                    background: '#f0f3ed',
                 }}
             >
                 <Content
@@ -804,7 +804,7 @@ const Home = () => {
                             <Avatar
                                 size={36}
                                 style={{
-                                    backgroundColor: '#d4a84c',
+                                    backgroundColor: '#5e963c',
                                     flexShrink: 0,
                                     fontSize: 16,
                                     fontWeight: 600,
@@ -833,9 +833,9 @@ const Home = () => {
                         theme={{
                             components: {
                                 Checkbox: {
-                                    colorPrimary: '#d4a84c',
-                                    colorPrimaryHover: '#c49a3e',
-                                    colorBorder: '#c5c0b5',
+                                    colorPrimary: '#5e963c',
+                                    colorPrimaryHover: '#4c7a2e',
+                                    colorBorder: '#b0c4a8',
                                 },
                             },
                         }}

@@ -59,7 +59,7 @@
 }
 
 .selectedRow {
-  background-color: rgba(212, 168, 76, 0.06) !important;
+  background-color: rgba(94, 150, 60, 0.06) !important;
 }
 
 /* ========== 角色用户查看模态框 ========== */
@@ -86,7 +86,7 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #d4a84c 0%, #e0b860 100%);
+  background: linear-gradient(135deg, #5e963c 0%, #72b04a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +127,7 @@
   display: block;
   font-size: 32px;
   font-weight: 800;
-  color: #d4a84c;
+  color: #5e963c;
   line-height: 1;
 }
 

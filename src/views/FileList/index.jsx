@@ -496,15 +496,15 @@ const FileList = () => {
         <>
             <style>{`
                 .ant-checkbox-checked .ant-checkbox-inner {
-                    background-color: #d4a84c !important;
-                    border-color: #d4a84c !important;
+                    background-color: #5e963c !important;
+                    border-color: #5e963c !important;
                 }
                 .ant-checkbox-wrapper:hover .ant-checkbox-inner,
                 .ant-checkbox:hover .ant-checkbox-inner {
-                    border-color: #d4a84c !important;
+                    border-color: #5e963c !important;
                 }
                 .ant-checkbox-inner {
-                    border-color: #c5c0b5 !important;
+                    border-color: #b0c4a8 !important;
                 }
             `}</style>
             {contextHolder}

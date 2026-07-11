@@ -3,21 +3,21 @@
 // 重庆邮电大学经济管理学院  |  经管+技术融合
 // ============================================================
 
-@accent:           #d4a84c;
-@accent-hover:     #e0b860;
-@accent-deep:      #c49a3e;
-@accent-pale:      rgba(212, 168, 76, 0.07);
-@accent-glow:      rgba(212, 168, 76, 0.14);
-@accent-subtle:    rgba(212, 168, 76, 0.04);
+@accent:           #5e963c;
+@accent-hover:     #72b04a;
+@accent-deep:      #4c7a2e;
+@accent-pale:      rgba(94, 150, 60, 0.07);
+@accent-glow:      rgba(94, 150, 60, 0.14);
+@accent-subtle:    rgba(94, 150, 60, 0.04);
 @ink:              #1a1a1a;
 @ink-secondary:    #555;
 @ink-muted:        #8c8c8c;
 @white:            #ffffff;
-@page-bg:          #faf7f2;
-@sider-bg-start:   #f8f3eb;
+@page-bg:          #f0f3ed;
+@sider-bg-start:   #eef3e8;
 @sider-bg-end:     #ffffff;
-@border-light:     #f0ebe0;
-@border-card:      #ede7db;
+@border-light:     #d8e4d0;
+@border-card:      #dce4d4;
 @shadow-card:      0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
 @radius-lg:        14px;
 @radius-md:        10px;
@@ -50,13 +50,13 @@
         background: linear-gradient(135deg, @accent, @accent-deep) !important;
         border: none !important;
         border-radius: @radius-sm !important;
-        box-shadow: 0 2px 8px rgba(212, 168, 76, 0.22);
+        box-shadow: 0 2px 8px rgba(94, 150, 60, 0.22);
         font-weight: 500;
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 
         &:hover {
             background: linear-gradient(135deg, @accent-hover, @accent) !important;
-            box-shadow: 0 4px 16px rgba(212, 168, 76, 0.35) !important;
+            box-shadow: 0 4px 16px rgba(94, 150, 60, 0.35) !important;
             transform: translateY(-1px);
         }
 
@@ -108,9 +108,9 @@
     // ---- FloatButton ----
     .ant-float-btn-primary {
         background: linear-gradient(135deg, @accent, @accent-deep) !important;
-        box-shadow: 0 4px 16px rgba(212, 168, 76, 0.3) !important;
+        box-shadow: 0 4px 16px rgba(94, 150, 60, 0.3) !important;
         &:hover {
-            box-shadow: 0 6px 24px rgba(212, 168, 76, 0.4) !important;
+            box-shadow: 0 6px 24px rgba(94, 150, 60, 0.4) !important;
         }
     }
 
@@ -178,16 +178,16 @@
 .sider {
     user-select: none;
     -webkit-user-select: none;
-    background: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%) !important;
-    border-right: 1px solid #ede5d5 !important;
+    background: linear-gradient(175deg, #eaf1e4 0%, #eaf1e4 30%, #ffffff 100%) !important;
+    border-right: 1px solid #d4e0cc !important;
     border-radius: 0 12px 12px 0;
     overflow: hidden;
 
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb {
-        background: rgba(212, 168, 76, 0.2);
+        background: rgba(94, 150, 60, 0.2);
         border-radius: 4px;
-        &:hover { background: rgba(212, 168, 76, 0.4); }
+        &:hover { background: rgba(94, 150, 60, 0.4); }
     }
     &::-webkit-scrollbar-track { background: transparent; }
 }
@@ -205,7 +205,7 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    background: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+    background: linear-gradient(180deg, #eaf1e4 0%, rgba(249, 244, 234, 0.92) 100%);
     backdrop-filter: blur(10px);
     padding: 28px 16px 20px;
 }
@@ -223,7 +223,7 @@
     font-weight: 800;
     letter-spacing: 0.1em;
     line-height: 1.2;
-    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+    background: linear-gradient(135deg, #1a2e10 0%, #3a5e28 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -231,7 +231,7 @@
 
 .logoSub {
     font-size: 13px;
-    color: #9a8b72;
+    color: #6e8a60;
     letter-spacing: 0.08em;
     font-weight: 400;
 }
@@ -240,7 +240,7 @@
     width: 40px;
     height: 2.5px;
     border-radius: 1px;
-    background: linear-gradient(90deg, transparent, @accent 30%, #e0b860 70%, transparent);
+    background: linear-gradient(90deg, transparent, @accent 30%, #72b04a 70%, transparent);
     margin: 4px 0;
 }
 
@@ -260,7 +260,7 @@
 
     :global(.ant-btn) {
         flex-shrink: 0;
-        color: #b0a590;
+        color: #8ca480;
         width: 30px;
         height: 30px;
         display: flex;
@@ -271,7 +271,7 @@
 
         &:hover {
             color: @accent;
-            background: rgba(212, 168, 76, 0.1) !important;
+            background: rgba(94, 150, 60, 0.1) !important;
         }
 
         svg {
@@ -282,34 +282,34 @@
 
     :global(.ant-input-affix-wrapper) {
         border-radius: 10px !important;
-        border: 1.5px solid #e8dfcf !important;
-        background: #fdfcf8;
+        border: 1.5px solid #d0dcc8 !important;
+        background: #f6faf4;
         transition: all 0.3s ease;
         box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.02);
 
         &:hover {
-            border-color: rgba(212, 168, 76, 0.4) !important;
+            border-color: rgba(94, 150, 60, 0.4) !important;
             background: @white;
-            box-shadow: 0 2px 8px rgba(212,168,76,0.08), inset 0 1px 2px rgba(0,0,0,0.01);
+            box-shadow: 0 2px 8px rgba(94, 150, 60, 0.08), inset 0 1px 2px rgba(0,0,0,0.01);
         }
         &:focus-within {
             border-color: @accent !important;
-            box-shadow: 0 0 0 4px rgba(212, 168, 76, 0.1), 0 2px 8px rgba(212,168,76,0.06) !important;
+            box-shadow: 0 0 0 4px rgba(94, 150, 60, 0.1), 0 2px 8px rgba(94, 150, 60, 0.06) !important;
             background: @white;
         }
 
         :global(.ant-input) {
             font-size: 13px;
-            color: #4a3f2e;
+            color: #2a3e18;
             &::placeholder {
-                color: #b0a590;
+                color: #8ca480;
                 font-style: italic;
                 font-size: 12.5px;
             }
         }
 
         :global(.ant-input-suffix) :global(.anticon) {
-            color: #c5b898;
+            color: #a0c498;
             transition: color 0.3s ease;
         }
 
@@ -338,8 +338,8 @@
     .ant-tree-treenode-selected {
         &::before { background: transparent !important; }
         .ant-tree-node-content-wrapper {
-            background: linear-gradient(90deg, rgba(212,168,76,0.1), rgba(212,168,76,0.03)) !important;
-            color: #2d2416 !important;
+            background: linear-gradient(90deg, rgba(94, 150, 60, 0.1), rgba(94, 150, 60, 0.03)) !important;
+            color: #1a2e10 !important;
             font-weight: 600;
             border-radius: 8px !important;
             position: relative;
@@ -357,11 +357,11 @@
         padding: 0 12px;
         transition: all 0.2s ease;
         font-size: 13px;
-        color: #5c5346;
+        color: #3d5232;
 
         &:hover {
-            background: rgba(212, 168, 76, 0.06) !important;
-            color: #2d2416;
+            background: rgba(94, 150, 60, 0.06) !important;
+            color: #1a2e10;
             box-shadow: inset 3px 0 0 @accent;
         }
     }
@@ -373,14 +373,14 @@
     .ant-tree-treenode-draggable { cursor: grab; }
     .ant-tree-treenode-dragging { opacity: 0.45; }
     .ant-tree-treenode-drag-over {
-        background-color: rgba(212, 168, 76, 0.08) !important;
+        background-color: rgba(94, 150, 60, 0.08) !important;
         border-radius: 8px;
     }
     .ant-tree .ant-tree-draggable-icon { visibility: hidden; }
 
     // 节点图标
     .ant-tree .ant-tree-node-content-wrapper .ant-tree-iconEle {
-        color: #a89a7e;
+        color: #7a9670;
         transition: all 0.2s ease;
     }
     .ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle,
@@ -390,7 +390,7 @@
 
     // switcher
     .ant-tree-switcher {
-        color: #b0a590;
+        color: #8ca480;
         width: 20px;
         transition: color 0.2s ease;
         &:hover { color: @accent; }
@@ -424,7 +424,7 @@
 //  搜索高亮
 // ============================================================
 .searchHighlight {
-    background-color: rgba(212, 168, 76, 0.32);
+    background-color: rgba(94, 150, 60, 0.32);
     color: inherit;
     border-radius: 3px;
     padding: 1px 3px;
@@ -450,7 +450,7 @@
 
     &:hover,
     &:active {
-        background: rgba(212, 168, 76, 0.4);
+        background: rgba(94, 150, 60, 0.4);
     }
 }
 
@@ -471,7 +471,7 @@
     gap: 10px;
     padding: 5px 14px 5px 5px;
     border-radius: 28px;
-    background: #fefdf9;
+    background: #f8fcf6;
     border: 1.5px solid @border-card;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     flex-shrink: 0;
@@ -480,7 +480,7 @@
     &:hover {
         background: @white;
         border-color: @accent;
-        box-shadow: 0 2px 16px rgba(212, 168, 76, 0.16);
+        box-shadow: 0 2px 16px rgba(94, 150, 60, 0.16);
     }
 }
 
@@ -513,12 +513,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
-    border: 1.5px solid #d9cebc !important;
+    border: 1.5px solid #b0c8a0 !important;
     transition: all 0.25s ease;
 
     &:hover {
         color: @accent !important;
-        background: rgba(212, 168, 76, 0.1) !important;
+        background: rgba(94, 150, 60, 0.1) !important;
         border-color: @accent !important;
         transform: scale(1.12);
     }
@@ -574,7 +574,7 @@
     height: 64px;
     margin: 0 auto 16px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(212, 168, 76, 0.15), rgba(212, 168, 76, 0.06));
+    background: linear-gradient(135deg, rgba(94, 150, 60, 0.15), rgba(94, 150, 60, 0.06));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -637,7 +637,7 @@
         position: absolute;
         inset: 0;
         border-radius: 9px;
-        background: radial-gradient(ellipse at 50% 0%, rgba(212, 168, 76, 0.10), transparent 70%);
+        background: radial-gradient(ellipse at 50% 0%, rgba(94, 150, 60, 0.10), transparent 70%);
         opacity: 0;
         transition: opacity 0.35s ease;
         pointer-events: none;
@@ -652,10 +652,10 @@
 
     &:hover {
         border-color: @accent !important;
-        box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
+        box-shadow: 0 4px 24px rgba(94, 150, 60, 0.18), 0 0 0 1px rgba(94, 150, 60, 0.22);
         color: @ink !important;
         transform: translateY(-2px);
-        background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, @white 100%);
+        background: linear-gradient(180deg, rgba(94, 150, 60, 0.05) 0%, @white 100%);
 
         &::after {
             opacity: 1;
@@ -664,7 +664,7 @@
         svg {
             color: @accent;
             transform: scale(1.12);
-            filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+            filter: drop-shadow(0 1px 3px rgba(94, 150, 60, 0.3));
         }
     }
 
@@ -702,14 +702,14 @@
 
     &:hover {
         color: @accent;
-        background: rgba(212, 168, 76, 0.06);
+        background: rgba(94, 150, 60, 0.06);
     }
 }
 
 .crumbActive {
     color: @accent;
     font-weight: 700;
-    background: rgba(212, 168, 76, 0.08);
+    background: rgba(94, 150, 60, 0.08);
     cursor: default;
     pointer-events: none;
 }
@@ -731,7 +731,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 6px;
-    color: #c5c0b5;
+    color: #b0c4a8;
 
     svg {
         width: 18px;

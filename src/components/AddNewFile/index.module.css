@@ -16,9 +16,9 @@
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .box .ant-btn:hover .firIcon svg {
-    color: #d4a84c;
+    color: #5e963c;
     transform: scale(1.12);
-    filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+    filter: drop-shadow(0 1px 3px rgba(94, 150, 60, 0.3));
 }
 
 /* 下拉菜单图标 */

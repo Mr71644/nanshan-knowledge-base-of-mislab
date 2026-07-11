@@ -197,7 +197,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
                 okButtonProps={{ disabled: selectedFiles.length === 0 }}
             >
                 <div>
-                    <p>您将要上传 <strong style={{ color: '#d4a84c' }}>{selectedFiles.length}</strong> 个文件：</p>
+                    <p>您将要上传 <strong style={{ color: '#5e963c' }}>{selectedFiles.length}</strong> 个文件：</p>
                     <div className={style.modalFileList}>
                         {selectedFiles.map(file => (
                             <div key={file.uid} className={style.modalFileItem}>

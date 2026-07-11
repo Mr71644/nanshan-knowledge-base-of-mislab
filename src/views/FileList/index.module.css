@@ -8,7 +8,7 @@
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
-    border: 1px solid #f0ebe0;
+    border: 1px solid #d8e4d0;
     overflow: hidden;
 }
 
@@ -29,10 +29,10 @@
     transition: background 0.2s;
 }
 :global .react-resizable-handle:hover {
-    background: rgba(212, 168, 76, 0.3);
+    background: rgba(94, 150, 60, 0.3);
 }
 :global .react-resizable-handle:active {
-    background: rgba(212, 168, 76, 0.5);
+    background: rgba(94, 150, 60, 0.5);
 }
 
 /* === 表格 === */
@@ -45,8 +45,8 @@
 
 /* 表头 */
 .fileList .ant-table-thead > tr > th {
-    background: linear-gradient(180deg, #fdfaf5, transparent);
-    border-bottom: 1.5px solid #ede7db;
+    background: linear-gradient(180deg, #f4faf0, transparent);
+    border-bottom: 1.5px solid #dce4d4;
     font-weight: 600;
     font-size: 12px;
     text-transform: uppercase;
@@ -58,7 +58,7 @@
 
 /* 单元格 */
 .fileList .ant-table-tbody > tr > td {
-    border-bottom: 1px solid #ede7db;
+    border-bottom: 1px solid #dce4d4;
     padding: 14px 20px;
     font-size: 14px;
     color: #555;
@@ -67,7 +67,7 @@
 
 /* 行 hover — 铜金暖光 */
 .fileList .ant-table-tbody > tr.ant-table-row:hover > td {
-    background: linear-gradient(90deg, rgba(212, 168, 76, 0.06), rgba(212, 168, 76, 0.02)) !important;
+    background: linear-gradient(90deg, rgba(94, 150, 60, 0.06), rgba(94, 150, 60, 0.02)) !important;
 }
 
 /* 首尾列边距 */
@@ -82,18 +82,18 @@
 /* 滚动条 */
 .fileList .ant-table-body {
     scrollbar-width: thin;
-    scrollbar-color: rgba(212, 168, 76, 0.18) transparent;
+    scrollbar-color: rgba(94, 150, 60, 0.18) transparent;
 }
 .fileList .ant-table-body::-webkit-scrollbar { width: 5px; height: 5px; }
 .fileList .ant-table-body::-webkit-scrollbar-thumb {
-    background: rgba(212, 168, 76, 0.18);
+    background: rgba(94, 150, 60, 0.18);
     border-radius: 5px;
 }
-.fileList .ant-table-body::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 76, 0.3); }
+.fileList .ant-table-body::-webkit-scrollbar-thumb:hover { background: rgba(94, 150, 60, 0.3); }
 .fileList .ant-table-body::-webkit-scrollbar-track { background: transparent; }
 .fileList .ant-empty-description { color: #8c8c8c; }
-.fileList .ant-empty-img-simple-path { fill: rgba(212, 168, 76, 0.2); }
-.fileList .ant-empty-img-simple-ellipse { fill: rgba(212, 168, 76, 0.03); }
+.fileList .ant-empty-img-simple-path { fill: rgba(94, 150, 60, 0.2); }
+.fileList .ant-empty-img-simple-ellipse { fill: rgba(94, 150, 60, 0.03); }
 
 /* === 加载 === */
 .spin {
@@ -103,7 +103,7 @@
     min-height: 360px;
     background: #ffffff;
     border-radius: 16px;
-    border: 1px solid #f0ebe0;
+    border: 1px solid #d8e4d0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
@@ -113,8 +113,8 @@
     align-items: center;
     justify-content: flex-end;
     padding: 12px 20px;
-    background: linear-gradient(90deg, rgba(212, 168, 76, 0.1), rgba(212, 168, 76, 0.03) 80%);
-    border-bottom: 1px solid #f0ebe0;
+    background: linear-gradient(90deg, rgba(94, 150, 60, 0.1), rgba(94, 150, 60, 0.03) 80%);
+    border-bottom: 1px solid #d8e4d0;
     animation: batchSlideIn 0.25s ease;
 }
 
@@ -125,12 +125,12 @@
 
 .batchText {
     font-size: 13px;
-    color: #6b6660;
+    color: #4a5440;
     margin-right: auto;
     font-weight: 500;
 }
 .batchText strong {
-    color: #d4a84c;
+    color: #5e963c;
     font-size: 15px;
     margin: 0 2px;
 }
@@ -159,18 +159,18 @@
     font-weight: 500;
     color: #555;
     background: #ffffff;
-    border: 1.5px solid #ede7db;
+    border: 1.5px solid #dce4d4;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
     white-space: nowrap;
 }
 .batchBtn:hover {
-    border-color: #d4a84c !important;
-    box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
+    border-color: #5e963c !important;
+    box-shadow: 0 4px 24px rgba(94, 150, 60, 0.18), 0 0 0 1px rgba(94, 150, 60, 0.22);
     color: #1a1a1a !important;
     transform: translateY(-1px);
-    background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, #ffffff 100%);
+    background: linear-gradient(180deg, rgba(94, 150, 60, 0.05) 0%, #ffffff 100%);
 }
 .batchBtn svg {
     width: 16px;
@@ -179,9 +179,9 @@
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .batchBtn:hover svg {
-    color: #d4a84c;
+    color: #5e963c;
     transform: scale(1.1);
-    filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+    filter: drop-shadow(0 1px 3px rgba(94, 150, 60, 0.3));
 }
 
 /* === 类型图标 pill === */
@@ -198,17 +198,17 @@
 }
 .typeIcon svg { width: 15px; height: 15px; }
 
-.typeDoc  { background: rgba(212, 168, 76, 0.1); }
-.typeDoc svg  { color: #d4a84c; }
+.typeDoc  { background: rgba(94, 150, 60, 0.1); }
+.typeDoc svg  { color: #5e963c; }
 
 .typeFolder { background: rgba(180, 160, 120, 0.1); }
-.typeFolder svg { color: #b4a078; }
+.typeFolder svg { color: #82a060; }
 
 .typeExcel { background: rgba(196, 154, 62, 0.1); }
-.typeExcel svg { color: #c49a3e; }
+.typeExcel svg { color: #4c7a2e; }
 
-.typeFile { background: rgba(212, 168, 76, 0.06); }
-.typeFile svg { color: #b4a078; }
+.typeFile { background: rgba(94, 150, 60, 0.06); }
+.typeFile svg { color: #82a060; }
 
 /* === 权限标签 === */
 .permissionTag {
@@ -226,8 +226,8 @@
 }
 
 .permissionEdit {
-    background: rgba(212, 168, 76, 0.08);
-    color: #c49a3e;
+    background: rgba(94, 150, 60, 0.08);
+    color: #4c7a2e;
 }
 
 .permissionView {
@@ -249,8 +249,8 @@
     font-size: 16px;
 }
 .moreBtn:hover {
-    background: rgba(212, 168, 76, 0.1);
-    color: #d4a84c;
+    background: rgba(94, 150, 60, 0.1);
+    color: #5e963c;
 }
 
 /* === 菜单项标签 === */
@@ -264,11 +264,11 @@
 .dropdownMenu .ant-dropdown-menu {
     padding: 8px;
     border-radius: 14px;
-    border: 1px solid #ede7db;
+    border: 1px solid #dce4d4;
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.08),
         0 0 0 1px rgba(0, 0, 0, 0.03);
-    background: linear-gradient(165deg, #fdfaf5 0%, #fefefc 100%);
+    background: linear-gradient(165deg, #f4faf0 0%, #f8fcf6 100%);
     min-width: 148px;
 }
 
@@ -279,40 +279,40 @@
     padding: 9px 14px;
     margin: 2px 0;
     font-size: 0;
-    color: #6b6660;
+    color: #4a5440;
     transition: all 0.2s ease;
 }
 
 .dropdownMenu .ant-dropdown-menu-item:hover {
-    background: linear-gradient(135deg, rgba(212, 168, 76, 0.12), rgba(212, 168, 76, 0.06));
-    color: #c49a3e;
+    background: linear-gradient(135deg, rgba(94, 150, 60, 0.12), rgba(94, 150, 60, 0.06));
+    color: #4c7a2e;
 }
 
 .dropdownMenu .ant-dropdown-menu-item:hover .menuItemLabel {
-    color: #c49a3e;
+    color: #4c7a2e;
 }
 
 /* 菜单项图标 */
 .dropdownMenu .ant-dropdown-menu-item .anticon {
     font-size: 15px;
     margin-right: 10px;
-    color: #a89a7e;
+    color: #7a9670;
     transition: all 0.2s ease;
     vertical-align: -2px;
 }
 .dropdownMenu .ant-dropdown-menu-item:hover .anticon {
-    color: #c49a3e;
+    color: #4c7a2e;
 }
 
 /* 分割线 */
 .dropdownMenu .ant-dropdown-menu-item-divider {
     margin: 6px 10px;
-    border-color: #ede7db;
+    border-color: #dce4d4;
 }
 
 /* === 置顶行 === */
 .pinnedRow td {
-    background: rgba(212, 168, 76, 0.04) !important;
+    background: rgba(94, 150, 60, 0.04) !important;
 }
 .pinnedRow td:first-child {
     position: relative;
@@ -325,7 +325,7 @@
     bottom: 10px;
     width: 3px;
     border-radius: 0 2px 2px 0;
-    background: #d4a84c;
+    background: #5e963c;
 }
 
 .cancelBtn {
@@ -336,15 +336,15 @@
     font-size: 13px;
     font-weight: 500;
     color: #8c8c8c;
-    border: 1px solid #ede7db;
+    border: 1px solid #dce4d4;
     background: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 .cancelBtn:hover {
-    color: #d4a84c;
-    border-color: #d4a84c;
-    background: rgba(212, 168, 76, 0.05);
+    color: #5e963c;
+    border-color: #5e963c;
+    background: rgba(94, 150, 60, 0.05);
 }
 
 .confirmBtn {
@@ -355,13 +355,13 @@
     font-size: 13px;
     font-weight: 500;
     color: #fff;
-    background: linear-gradient(135deg, #d4a84c, #c49a3e);
+    background: linear-gradient(135deg, #5e963c, #4c7a2e);
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(212, 168, 76, 0.25);
+    box-shadow: 0 2px 8px rgba(94, 150, 60, 0.25);
 }
 .confirmBtn:hover {
-    background: linear-gradient(135deg, #e0b860, #d4a84c);
-    box-shadow: 0 3px 12px rgba(212, 168, 76, 0.35);
+    background: linear-gradient(135deg, #72b04a, #5e963c);
+    box-shadow: 0 3px 12px rgba(94, 150, 60, 0.35);
 }

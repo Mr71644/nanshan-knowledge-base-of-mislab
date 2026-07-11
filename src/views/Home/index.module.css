@@ -5,7 +5,7 @@
 
 /* === 全局 === */
 :global body {
-    background-color: #faf7f2;
+    background-color: #f0f3ed;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
@@ -24,43 +24,43 @@
 
 /* 主按钮：铜金渐变 */
 :global .ant-btn-primary {
-    background: linear-gradient(135deg, #d4a84c, #c49a3e) !important;
+    background: linear-gradient(135deg, #5e963c, #4c7a2e) !important;
     border: none !important;
     border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(212, 168, 76, 0.22);
+    box-shadow: 0 2px 8px rgba(94, 150, 60, 0.22);
     font-weight: 500;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 :global .ant-btn-primary:hover {
-    background: linear-gradient(135deg, #e0b860, #d4a84c) !important;
-    box-shadow: 0 4px 16px rgba(212, 168, 76, 0.35) !important;
+    background: linear-gradient(135deg, #72b04a, #5e963c) !important;
+    box-shadow: 0 4px 16px rgba(94, 150, 60, 0.35) !important;
     transform: translateY(-1px);
 }
 :global .ant-btn-primary:active { transform: translateY(0); }
 
 /* 链接色 */
-:global .ant-btn-link { color: #d4a84c; }
-:global .ant-btn-link:hover { color: #e0b860; }
+:global .ant-btn-link { color: #5e963c; }
+:global .ant-btn-link:hover { color: #72b04a; }
 
 /* 默认按钮 hover */
 :global .ant-btn-default:not(:disabled):hover {
-    border-color: #d4a84c !important;
-    color: #d4a84c !important;
+    border-color: #5e963c !important;
+    color: #5e963c !important;
 }
 
 /* Checkbox */
 :global .ant-checkbox-checked .ant-checkbox-inner {
-    background-color: #d4a84c !important;
-    border-color: #d4a84c !important;
+    background-color: #5e963c !important;
+    border-color: #5e963c !important;
 }
 :global .ant-checkbox-wrapper:hover .ant-checkbox-inner,
 :global .ant-checkbox:hover .ant-checkbox-inner {
-    border-color: #d4a84c !important;
+    border-color: #5e963c !important;
 }
 
 /* Dropdown */
 :global .ant-dropdown-menu-item:hover {
-    background-color: rgba(212, 168, 76, 0.07) !important;
+    background-color: rgba(94, 150, 60, 0.07) !important;
 }
 :global .ant-dropdown-menu-item-danger:hover {
     background-color: rgba(255, 77, 79, 0.06) !important;
@@ -68,40 +68,40 @@
 
 /* Modal */
 :global .ant-modal-confirm-btns .ant-btn-primary {
-    background: linear-gradient(135deg, #d4a84c, #c49a3e) !important;
+    background: linear-gradient(135deg, #5e963c, #4c7a2e) !important;
 }
 
 /* Spin */
-:global .ant-spin-dot-item { background-color: #d4a84c !important; }
+:global .ant-spin-dot-item { background-color: #5e963c !important; }
 
 /* FloatButton */
 :global .ant-float-btn-primary {
-    background: linear-gradient(135deg, #d4a84c, #c49a3e) !important;
-    box-shadow: 0 4px 16px rgba(212, 168, 76, 0.3) !important;
+    background: linear-gradient(135deg, #5e963c, #4c7a2e) !important;
+    box-shadow: 0 4px 16px rgba(94, 150, 60, 0.3) !important;
 }
 :global .ant-float-btn-primary:hover {
-    box-shadow: 0 6px 24px rgba(212, 168, 76, 0.4) !important;
+    box-shadow: 0 6px 24px rgba(94, 150, 60, 0.4) !important;
 }
 
 /* Notification */
 :global .ant-notification-notice {
     border-radius: 10px;
-    border-left: 3px solid #d4a84c;
+    border-left: 3px solid #5e963c;
 }
 
 /* Progress 进度条 */
 :global .ant-progress-bg {
-    background: linear-gradient(90deg, #d4a84c, #c49a3e) !important;
+    background: linear-gradient(90deg, #5e963c, #4c7a2e) !important;
 }
-:global .ant-progress-success-bg { background: #d4a84c !important; }
+:global .ant-progress-success-bg { background: #5e963c !important; }
 
 /* Result 信息图标 */
 :global .ant-result-info .ant-result-icon > .anticon {
-    color: #d4a84c !important;
+    color: #5e963c !important;
 }
 
 /* Spin loading 图标 */
-:global .anticon-loading { color: #d4a84c; }
+:global .anticon-loading { color: #5e963c; }
 
 /* 全局表格圆角 */
 :global .ant-table-wrapper {
@@ -130,23 +130,23 @@
 }
 
 /* === 根布局 === */
-.layoutRoot { background: #faf7f2; }
+.layoutRoot { background: #f0f3ed; }
 
 /* === 侧边栏 === */
 .sider {
     user-select: none;
     -webkit-user-select: none;
-    background: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%) !important;
-    border-right: 1px solid #ede5d5 !important;
+    background: linear-gradient(175deg, #eaf1e4 0%, #eaf1e4 30%, #ffffff 100%) !important;
+    border-right: 1px solid #d4e0cc !important;
     border-radius: 0 12px 12px 0;
     overflow: hidden;
 }
 .sider::-webkit-scrollbar { width: 4px; }
 .sider::-webkit-scrollbar-thumb {
-    background: rgba(212, 168, 76, 0.2);
+    background: rgba(94, 150, 60, 0.2);
     border-radius: 4px;
 }
-.sider::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 76, 0.4); }
+.sider::-webkit-scrollbar-thumb:hover { background: rgba(94, 150, 60, 0.4); }
 .sider::-webkit-scrollbar-track { background: transparent; }
 
 /* === Logo === */
@@ -160,7 +160,7 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    background: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+    background: linear-gradient(180deg, #eaf1e4 0%, rgba(249, 244, 234, 0.92) 100%);
     backdrop-filter: blur(10px);
     padding: 28px 16px 20px;
 }
@@ -176,10 +176,10 @@
 .logoTitle {
     font-size: 28px;
     font-weight: 800;
-    color: #1f180e;
+    color: #122008;
     letter-spacing: 0.1em;
     line-height: 1.2;
-    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+    background: linear-gradient(135deg, #1a2e10 0%, #3a5e28 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -189,13 +189,13 @@
     width: 40px;
     height: 2.5px;
     border-radius: 1px;
-    background: linear-gradient(90deg, transparent, #d4a84c 30%, #e0b860 70%, transparent);
+    background: linear-gradient(90deg, transparent, #5e963c 30%, #72b04a 70%, transparent);
     margin: 4px 0;
 }
 
 .logoSub {
     font-size: 13px;
-    color: #9a8b72;
+    color: #6e8a60;
     letter-spacing: 0.08em;
     font-weight: 400;
 }
@@ -218,7 +218,7 @@
 }
 .treeSearchBox .ant-btn {
     flex-shrink: 0;
-    color: #b0a590;
+    color: #8ca480;
     width: 30px;
     height: 30px;
     display: flex;
@@ -228,8 +228,8 @@
     transition: all 0.25s ease;
 }
 .treeSearchBox .ant-btn:hover {
-    color: #d4a84c;
-    background: rgba(212, 168, 76, 0.1) !important;
+    color: #5e963c;
+    background: rgba(94, 150, 60, 0.1) !important;
 }
 .treeSearchBox .ant-btn svg {
     width: 16px;
@@ -237,36 +237,36 @@
 }
 .treeSearchBox .ant-input-affix-wrapper {
     border-radius: 10px !important;
-    border: 1.5px solid #e8dfcf !important;
-    background: #fdfcf8;
+    border: 1.5px solid #d0dcc8 !important;
+    background: #f6faf4;
     transition: all 0.3s ease;
     box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.02);
 }
 .treeSearchBox .ant-input-affix-wrapper:hover {
-    border-color: rgba(212, 168, 76, 0.4) !important;
+    border-color: rgba(94, 150, 60, 0.4) !important;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(212,168,76,0.08), inset 0 1px 2px rgba(0,0,0,0.01);
+    box-shadow: 0 2px 8px rgba(94, 150, 60, 0.08), inset 0 1px 2px rgba(0,0,0,0.01);
 }
 .treeSearchBox .ant-input-affix-wrapper:focus-within {
-    border-color: #d4a84c !important;
-    box-shadow: 0 0 0 4px rgba(212, 168, 76, 0.1), 0 2px 8px rgba(212,168,76,0.06) !important;
+    border-color: #5e963c !important;
+    box-shadow: 0 0 0 4px rgba(94, 150, 60, 0.1), 0 2px 8px rgba(94, 150, 60, 0.06) !important;
     background: #fff;
 }
 .treeSearchBox .ant-input-affix-wrapper .ant-input {
     font-size: 13px;
-    color: #4a3f2e;
+    color: #2a3e18;
 }
 .treeSearchBox .ant-input-affix-wrapper .ant-input::placeholder {
-    color: #b0a590;
+    color: #8ca480;
     font-style: italic;
     font-size: 12.5px;
 }
 .treeSearchBox .ant-input-suffix .anticon {
-    color: #c5b898;
+    color: #a0c498;
     transition: color 0.3s ease;
 }
 .treeSearchBox .ant-input-affix-wrapper:focus-within .ant-input-suffix .anticon {
-    color: #d4a84c;
+    color: #5e963c;
 }
 
 /* === Tree === */
@@ -286,11 +286,11 @@
 }
 .ant-tree-treenode-selected::before { background: transparent !important; }
 .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
-    background: linear-gradient(90deg, rgba(212,168,76,0.1), rgba(212,168,76,0.03)) !important;
-    color: #2d2416 !important;
+    background: linear-gradient(90deg, rgba(94, 150, 60, 0.1), rgba(94, 150, 60, 0.03)) !important;
+    color: #1a2e10 !important;
     font-weight: 600;
     border-radius: 8px !important;
-    box-shadow: inset 3px 0 0 #d4a84c;
+    box-shadow: inset 3px 0 0 #5e963c;
 }
 
 .ant-tree .ant-tree-node-content-wrapper {
@@ -304,12 +304,12 @@
     padding: 0 12px;
     transition: all 0.2s ease;
     font-size: 13px;
-    color: #5c5346;
+    color: #3d5232;
 }
 .ant-tree .ant-tree-node-content-wrapper:hover {
-    background: rgba(212, 168, 76, 0.06) !important;
-    color: #2d2416;
-    box-shadow: inset 3px 0 0 #d4a84c;
+    background: rgba(94, 150, 60, 0.06) !important;
+    color: #1a2e10;
+    box-shadow: inset 3px 0 0 #5e963c;
 }
 
 .ant-tree-indent-unit { width: 18px; }
@@ -317,26 +317,26 @@
 .ant-tree-treenode-draggable { cursor: grab; }
 .ant-tree-treenode-dragging { opacity: 0.45; }
 .ant-tree-treenode-drag-over {
-    background-color: rgba(212, 168, 76, 0.08) !important;
+    background-color: rgba(94, 150, 60, 0.08) !important;
     border-radius: 8px;
 }
 .ant-tree .ant-tree-draggable-icon { visibility: hidden; }
 
 .ant-tree .ant-tree-node-content-wrapper .ant-tree-iconEle {
-    color: #a89a7e;
+    color: #7a9670;
     transition: all 0.2s ease;
 }
 .ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle,
 .ant-tree .ant-tree-node-content-wrapper:hover .ant-tree-iconEle {
-    color: #d4a84c;
+    color: #5e963c;
 }
 
 .ant-tree-switcher {
-    color: #b0a590;
+    color: #8ca480;
     width: 20px;
     transition: color 0.2s ease;
 }
-.ant-tree-switcher:hover { color: #d4a84c; }
+.ant-tree-switcher:hover { color: #5e963c; }
 
 .ant-tree-show-line .ant-tree-indent-unit::before {
     border-color: #e0d8c8 !important;
@@ -355,7 +355,7 @@
 
 /* === 搜索高亮 === */
 .searchHighlight {
-    background-color: rgba(212, 168, 76, 0.32);
+    background-color: rgba(94, 150, 60, 0.32);
     color: inherit;
     border-radius: 3px;
     padding: 1px 3px;
@@ -374,7 +374,7 @@
     z-index: 10;
     transition: background 0.2s;
 }
-.resizeHandle:hover, .resizeHandle:active { background: rgba(212, 168, 76, 0.4); }
+.resizeHandle:hover, .resizeHandle:active { background: rgba(94, 150, 60, 0.4); }
 
 /* === 顶栏 — 面包屑 + 用户 === */
 .topBar {
@@ -391,16 +391,16 @@
     gap: 10px;
     padding: 5px 14px 5px 5px;
     border-radius: 28px;
-    background: #fefdf9;
-    border: 1.5px solid #ede7db;
+    background: #f8fcf6;
+    border: 1.5px solid #dce4d4;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     flex-shrink: 0;
     cursor: default;
 }
 .topBarUser:hover {
     background: #ffffff;
-    border-color: #d4a84c;
-    box-shadow: 0 2px 16px rgba(212, 168, 76, 0.16);
+    border-color: #5e963c;
+    box-shadow: 0 2px 16px rgba(94, 150, 60, 0.16);
 }
 
 .topBarMeta {
@@ -432,13 +432,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
-    border: 1.5px solid #d9cebc !important;
+    border: 1.5px solid #b0c8a0 !important;
     transition: all 0.25s ease;
 }
 .topBarLogout:hover {
-    color: #d4a84c !important;
-    background: rgba(212, 168, 76, 0.1) !important;
-    border-color: #d4a84c !important;
+    color: #5e963c !important;
+    background: rgba(94, 150, 60, 0.1) !important;
+    border-color: #5e963c !important;
     transform: scale(1.12);
 }
 
@@ -462,7 +462,7 @@
     height: 64px;
     margin: 0 auto 16px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(212, 168, 76, 0.15), rgba(212, 168, 76, 0.06));
+    background: linear-gradient(135deg, rgba(94, 150, 60, 0.15), rgba(94, 150, 60, 0.06));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -470,7 +470,7 @@
 
 .exitModalIcon svg {
     font-size: 28px;
-    color: #d4a84c;
+    color: #5e963c;
 }
 
 .exitModalTitle {
@@ -487,7 +487,7 @@
 }
 
 .exitModal .ant-modal-footer {
-    border-top: 1px solid #f0ebe0;
+    border-top: 1px solid #d8e4d0;
     padding: 14px 24px 18px;
     display: flex;
     justify-content: center;
@@ -503,12 +503,12 @@
 }
 
 .exitModal .ant-modal-footer .ant-btn-default {
-    border-color: #ede7db;
+    border-color: #dce4d4;
     color: #555;
 }
 .exitModal .ant-modal-footer .ant-btn-default:hover {
-    border-color: #d4a84c;
-    color: #d4a84c;
+    border-color: #5e963c;
+    color: #5e963c;
 }
 
 /* === 操作按钮 tile 卡片 === */
@@ -530,7 +530,7 @@
     width: var(--action-btn-width);
     height: var(--action-btn-height);
     background: #ffffff;
-    border: 1.5px solid #ede7db;
+    border: 1.5px solid #dce4d4;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -548,7 +548,7 @@
     position: absolute;
     inset: 0;
     border-radius: 9px;
-    background: radial-gradient(ellipse at 50% 0%, rgba(212, 168, 76, 0.10), transparent 70%);
+    background: radial-gradient(ellipse at 50% 0%, rgba(94, 150, 60, 0.10), transparent 70%);
     opacity: 0;
     transition: opacity 0.35s ease;
     pointer-events: none;
@@ -561,19 +561,19 @@
     color: #8c8c8c;
 }
 .authority:hover {
-    border-color: #d4a84c !important;
-    box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
+    border-color: #5e963c !important;
+    box-shadow: 0 4px 24px rgba(94, 150, 60, 0.18), 0 0 0 1px rgba(94, 150, 60, 0.22);
     color: #1a1a1a !important;
     transform: translateY(-2px);
-    background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, #ffffff 100%);
+    background: linear-gradient(180deg, rgba(94, 150, 60, 0.05) 0%, #ffffff 100%);
 }
 .authority:hover::after {
     opacity: 1;
 }
 .authority:hover svg {
-    color: #d4a84c;
+    color: #5e963c;
     transform: scale(1.12);
-    filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+    filter: drop-shadow(0 1px 3px rgba(94, 150, 60, 0.3));
 }
 .authority:active { transform: translateY(0); }
 
@@ -604,14 +604,14 @@
 }
 
 .crumb:hover {
-    color: #d4a84c;
-    background: rgba(212, 168, 76, 0.06);
+    color: #5e963c;
+    background: rgba(94, 150, 60, 0.06);
 }
 
 .crumbActive {
-    color: #d4a84c;
+    color: #5e963c;
     font-weight: 700;
-    background: rgba(212, 168, 76, 0.08);
+    background: rgba(94, 150, 60, 0.08);
     cursor: default;
     pointer-events: none;
 }
@@ -624,7 +624,7 @@
 }
 .crumb:hover .crumbIcon svg,
 .crumbActive .crumbIcon svg {
-    color: #d4a84c;
+    color: #5e963c;
 }
 
 .breadcrumbSep {
@@ -632,7 +632,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 6px;
-    color: #c5c0b5;
+    color: #b0c4a8;
 }
 .breadcrumbSep svg {
     width: 18px;
