@@ -157,8 +157,8 @@ export default function BG() {
                         starty = this._height - hide;
                     }
                     var ribbon = [], point1 = new Point(startx, starty), point2 = new Point(startx, starty), point3 = null,
-                        // 铜金 & 青蓝 融合色盘：经管温度 + 技术理性
-                        huePalette = [32, 38, 42, 48, 185, 195, 200, 210],
+                        // 铜金色盘：经管温度
+                        huePalette = [32, 36, 38, 42, 45, 48],
                         color = huePalette[Math.floor(random(0, huePalette.length - 1))],
                         delay = 0;
                     let T = true

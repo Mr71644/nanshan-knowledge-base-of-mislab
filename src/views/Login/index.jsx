@@ -195,6 +195,7 @@ const Login = () => {
                 <Card className={style.loginCard}>
                     <div className={style.logo}>
                         <div className={style.logoTitle}>知邮南山</div>
+                        <div className={style.logoDivider} />
                         <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
                     </div>
 
