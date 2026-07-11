@@ -26,7 +26,25 @@
         .ant-table-cell {
             word-break: break-all;
         }
+
+        // 表格圆角
+        .ant-table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .ant-table-thead > tr > th:first-child {
+            border-radius: 12px 0 0 0;
+        }
+
+        .ant-table-thead > tr > th:last-child {
+            border-radius: 0 12px 0 0;
+        }
     }
+}
+
+.selectedRow {
+    background-color: rgba(212, 168, 76, 0.06) !important;
 }
 
 .scrollbar {
@@ -75,13 +93,13 @@
     width: 52px;
     height: 52px;
     border-radius: 14px;
-    background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+    background: linear-gradient(135deg, #d4a84c 0%, #e0b860 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     font-size: 24px;
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(212, 168, 76, 0.25);
     flex-shrink: 0;
 }
 
@@ -116,7 +134,7 @@
     display: block;
     font-size: 32px;
     font-weight: 800;
-    color: #1677ff;
+    color: #d4a84c;
     line-height: 1;
 }
 

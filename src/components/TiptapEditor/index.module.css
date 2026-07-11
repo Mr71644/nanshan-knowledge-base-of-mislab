@@ -107,7 +107,7 @@
 
 .outlineResizeHandle:hover,
 .outlineResizeHandle:active {
-  background: #1677ff;
+  background: #d4a84c;
 }
 
 .outlineTitle {
@@ -128,7 +128,7 @@
 }
 
 .outlineItem:hover {
-  color: #1677ff;
+  color: #d4a84c;
 }
 
 .outlineH2 {
@@ -682,7 +682,7 @@
   width: 10px;
   height: 10px;
   background: #fff;
-  border: 2px solid #1890ff;
+  border: 2px solid #d4a84c;
   border-radius: 2px;
   z-index: 10;
   opacity: 0;
@@ -696,13 +696,13 @@
 
 /* 选中图片高亮边框 */
 .tiptapContent :global(.tiptap-prosemirror) .ProseMirror-selectednode [data-resize-wrapper] img {
-  outline: 2px solid #1890ff;
+  outline: 2px solid #d4a84c;
   outline-offset: 2px;
 }
 
 /* 链接 */
 .tiptapContent :global(.tiptap-prosemirror) a {
-  color: #1890ff;
+  color: #d4a84c;
   text-decoration: none;
 }
 
@@ -740,7 +740,7 @@
 
 .contextMenuItem:hover {
   background: #e6f4ff;
-  color: #1677ff;
+  color: #d4a84c;
 }
 
 .contextMenuDivider {

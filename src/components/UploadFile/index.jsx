@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Button, Upload, Result, Modal, Progress } from 'antd'
-import { CloudUploadOutlined, SelectOutlined, LoadingOutlined } from '@ant-design/icons'
+import { CloudUploadOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
 import { uploadFilesBatch, uploadFile } from '@/apis/file'
 import style from './index.module.css'
 
-export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) => {
+export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, className }) => {
     const { success, error, contextHolder } = useMessage()
     const param = useParams()
     const navigate = useNavigate()
@@ -178,10 +178,9 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) =>
                     disabled={loading || isInRoot}
                     showUploadList={false}
                 >
-                    <Button type='default' disabled={loading || isInRoot} size="large">
+                    <Button type='default' disabled={loading || isInRoot} className={className}>
                         <CloudUploadOutlined className={style.firIcon} />
                         {loading ? '上传中...' : '上传文件'}
-                        <SelectOutlined className={style.secIcon} />
                     </Button>
                 </Upload>
             </div>
@@ -198,7 +197,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId }) =>
                 okButtonProps={{ disabled: selectedFiles.length === 0 }}
             >
                 <div>
-                    <p>您将要上传 <strong style={{ color: '#1890ff' }}>{selectedFiles.length}</strong> 个文件：</p>
+                    <p>您将要上传 <strong style={{ color: '#d4a84c' }}>{selectedFiles.length}</strong> 个文件：</p>
                     <div className={style.modalFileList}>
                         {selectedFiles.map(file => (
                             <div key={file.uid} className={style.modalFileItem}>

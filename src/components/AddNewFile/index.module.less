@@ -1,33 +1,33 @@
+// ============================================================
+// 知邮南山-MISLab  新建按钮
+// 图标专属样式（按钮 tile 样式复用 Home 的 .authority）
+// ============================================================
+
+@ink-muted:    #8c8c8c;
+@accent:       #d4a84c;
+
 .box {
-    width: 200px;
-    height: 64px;
+    display: inline-block;
+    width: var(--action-btn-width);
+    height: var(--action-btn-height);
 
-    span:nth-child(2) {
-        width: 100px;
-        font-size: 16px;
-        display: flex;
+    .firIcon svg {
+        width: 22px;
+        height: 22px;
+        color: @ink-muted;
+        transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
-
-    .firIcon {
-        svg {
-            width: 24px;
-            height: 24px;
-        }
-    }
-
-    .secIcon {
-        svg {
-            width: 12px;
-            height: 12px;
-        }
+    :global(.ant-btn:hover) .firIcon svg {
+        color: @accent;
+        transform: scale(1.12);
+        filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
     }
 }
 
+// 下拉菜单图标
 :global {
-    .ant-dropdown-menu {
-        svg {
-            width: 14px !important;
-            height: 14px !important;
-        }
+    .ant-dropdown-menu svg {
+        width: 14px !important;
+        height: 14px !important;
     }
 }

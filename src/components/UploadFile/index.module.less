@@ -1,34 +1,37 @@
+// ============================================================
+// 知邮南山-MISLab  上传按钮
+// 图标专属样式（按钮 tile 样式复用 Home 的 .authority）
+// ============================================================
+
+@ink-muted:    #8c8c8c;
+@accent:       #d4a84c;
+
+.uploadContainer {
+    display: inline-block;
+}
+
 .box {
     display: inline-block;
-    width: 200px;
-    height: 64px;
+    width: var(--action-btn-width);
+    height: var(--action-btn-height);
 
-    span:nth-child(2) {
-        width: 100px;
-        font-size: 16px;
-        display: flex;
+    .firIcon svg {
+        width: 22px;
+        height: 22px;
+        color: @ink-muted;
+        transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
-
-    .firIcon {
-        svg {
-            width: 24px;
-            height: 24px;
-        }
+    :global(.ant-btn:hover:not(:disabled)) .firIcon svg {
+        color: @accent;
+        transform: scale(1.12);
+        filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
     }
-
-    .secIcon {
-        svg {
-            width: 12px;
-            height: 12px;
-        }
-    }
-
-    button {
-        width: 200px;
-        height: 64px;
+    :global(.ant-btn:disabled) .firIcon svg {
+        color: #c5c5c5;
     }
 }
 
+// 上传中全屏遮罩
 .fullScreen {
     position: fixed;
     top: 0;
@@ -38,18 +41,34 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: rgba(255, 255, 255, 0.92);
     z-index: 999;
     opacity: 0;
-    animation: fadeIn 0.5s forwards;
+    animation: fadeIn 0.4s ease forwards;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
-    to {
-        opacity: 1;
-    }
+// 上传确认模态框文件列表
+.modalFileList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 12px 0;
+}
+
+.modalFileItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    &:hover { background: rgba(212, 168, 76, 0.06); }
+    &:not(:last-child) { border-bottom: 1px solid #ede7db; }
+}
+
+.loadingContainer {
+    text-align: center;
 }

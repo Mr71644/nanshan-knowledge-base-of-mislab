@@ -25,6 +25,20 @@
   word-break: break-all;
 }
 
+/* 表格圆角 */
+.ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ant-table-thead > tr > th:first-child {
+  border-radius: 12px 0 0 0;
+}
+
+.ant-table-thead > tr > th:last-child {
+  border-radius: 0 12px 0 0;
+}
+
 .scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #cfcfcf transparent;
@@ -45,7 +59,7 @@
 }
 
 .selectedRow {
-  background-color: #f9f9f9 !important;
+  background-color: rgba(212, 168, 76, 0.06) !important;
 }
 
 /* ========== 角色用户查看模态框 ========== */
@@ -72,7 +86,7 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  background: linear-gradient(135deg, #d4a84c 0%, #e0b860 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,7 +127,7 @@
   display: block;
   font-size: 32px;
   font-weight: 800;
-  color: #1677ff;
+  color: #d4a84c;
   line-height: 1;
 }
 

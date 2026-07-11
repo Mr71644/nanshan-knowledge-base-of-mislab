@@ -88,9 +88,9 @@ const FileList = () => {
             width: 100,
             render: (text, record) => {
                 if (record.status === 1 || record.status === 3) {
-                    return <span style={{ color: '#1890ff' }}>可编辑</span>;
+                    return <span style={{ color: '#d4a84c' }}>可编辑</span>;
                 }
-                return <span style={{ color: '#8c8c8c' }}>可阅读</span>;
+                return <span style={{ color: '#8d95a3' }}>可阅读</span>;
             }
         },
         {

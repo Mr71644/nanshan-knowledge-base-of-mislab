@@ -97,7 +97,7 @@ const walkFilter = (items, keyword, parentKeys = []) => {
 
 const Home = () => {
     const {
-        token: { colorBgContainer, borderRadiusLG },
+        token: { },
     } = theme.useToken();
     const dispatch = useDispatch();
     const navigate = useNavigate()
@@ -582,7 +582,7 @@ const Home = () => {
         <style>{`.ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }`}</style>
         <Layout style={{
             height: '100vh',
-        }}>
+        }} className={style.layoutRoot}>
             {contextHolder}
             {contextHolderNotification}
             <Modal
@@ -658,10 +658,10 @@ const Home = () => {
                     icon={<LogoutOutlined />}
                     type='primary'
                     onClick={exit}
-                    danger
                     style={{
                         insetInlineEnd: 24,
                         bottom: 24,
+                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
                     }}
                 />
             </Tooltip>
@@ -672,19 +672,21 @@ const Home = () => {
                 onCollapse={setCollapsed}
                 collapsedWidth={80}
                 style={{
-                    background: colorBgContainer,
+                    background: '#ffffff',
                     overflowY: 'scroll',
                     position: 'relative',
+                    borderRight: '1px solid #eaecf0',
                 }}
                 className={style.sider}
             >
                 <div className={style.logo}>
                     {collapsed ? <CloudOutlined style={{
                         fontSize: '25px',
-                        color: '#1677ff'
+                        color: '#d4a84c'
                     }} /> : (
-                        <>
-                            <span className={style.logoTitle}>知邮南山 - MISLab</span>
+                        <div className={style.logoInner}>
+                            <div className={style.logoTitle}>知邮南山</div>
+                            <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
                             <Space size={4} className={style.logoActions}>
                                 <Tooltip title="展开全部">
                                     <Button type="text" size="small" onClick={handleExpandAll}
@@ -695,7 +697,7 @@ const Home = () => {
                                         icon={<FolderOutlined />} />
                                 </Tooltip>
                             </Space>
-                        </>
+                        </div>
                     )}
                 </div>
                 {!collapsed && (
@@ -742,6 +744,7 @@ const Home = () => {
             <Layout
                 style={{
                     padding: '0 var(--layout-padding) 0',
+                    background: '#faf7f2',
                 }}
             >
                 <Content
@@ -749,8 +752,8 @@ const Home = () => {
                         padding: 'var(--layout-padding)',
                         margin: 0,
                         minHeight: 280,
-                        background: colorBgContainer,
-                        borderRadius: borderRadiusLG,
+                        background: '#ffffff',
+                        borderRadius: '12px',
                     }}
                 >
                     <Breadcrumb separator=">" items={folderLayer}
@@ -764,45 +767,53 @@ const Home = () => {
                             disabled: true, // 全局禁用波纹效果
                         }}
                     >
-                        <div className={style.actionButtons}>
-                            <MemoAddNewFile></MemoAddNewFile>
-                            <UploadFile></UploadFile>
-                            <Button
-                                className={style.authority}
-                                onClick={handleOpenModal}>
-                                <IdcardOutlined />
-                                <span style={{
-                                    fontSize: 'var(--action-btn-font-size)'
-                                }}>用户信息修改</span>
-                            </Button>
-                            {
-                                userInfo.isAdministrator ?
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => navigate('/administrator')}>
-                                        <UserOutlined />
-                                        <span style={{
-                                            fontSize: 'var(--action-btn-font-size)'
-                                        }}>权限管理入口</span>
-                                    </Button>
-                                    : null
-                            }
-                            {userInfo.isAdministrator ? (
+                        <div data-impeccable-variants="59ef42c8" data-impeccable-variant-count="3" style={{ display: "contents" }}>
+                          {/* impeccable-variants-start 59ef42c8 */}
+                          {/* Original */}
+                          <div data-impeccable-variant="original">
+                            <div className={style.actionButtons}>
+                                <MemoAddNewFile className={style.authority}></MemoAddNewFile>
+                                <UploadFile className={style.authority}></UploadFile>
                                 <Button
                                     className={style.authority}
-                                    onClick={() => setRecycleBinOpen(true)}>
-                                    <DeleteOutlined />
+                                    onClick={handleOpenModal}>
+                                    <IdcardOutlined />
                                     <span style={{
                                         fontSize: 'var(--action-btn-font-size)'
-                                    }}>回收站</span>
+                                    }}>用户信息修改</span>
                                 </Button>
-                            ) : null}
+                                {
+                                    userInfo.isAdministrator ?
+                                        <Button
+                                            className={style.authority}
+                                            onClick={() => navigate('/administrator')}>
+                                            <UserOutlined />
+                                            <span style={{
+                                                fontSize: 'var(--action-btn-font-size)'
+                                            }}>权限管理入口</span>
+                                        </Button>
+                                        : null
+                                }
+                                {userInfo.isAdministrator ? (
+                                    <Button
+                                        className={style.authority}
+                                        onClick={() => setRecycleBinOpen(true)}>
+                                        <DeleteOutlined />
+                                        <span style={{
+                                            fontSize: 'var(--action-btn-font-size)'
+                                        }}>回收站</span>
+                                    </Button>
+                                ) : null}
+                            </div>
+                          </div>
+                          {/* Variants: insert below this line */}
+                          {/* impeccable-variants-end 59ef42c8 */}
                         </div>
                     </ConfigProvider>
                     <div
                         style={{
-                            background: colorBgContainer,
-                            borderRadius: borderRadiusLG,
+                            background: '#ffffff',
+                            borderRadius: '12px',
                         }}
                         className={style.fileList}
                     >

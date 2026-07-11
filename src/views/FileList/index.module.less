@@ -1,3 +1,38 @@
+// ============================================================
+// 知邮南山-MISLab  文件列表
+// 重庆邮电大学经济管理学院
+// ============================================================
+
+@accent:           #d4a84c;
+@accent-pale:      rgba(212, 168, 76, 0.06);
+@accent-warm:      rgba(212, 168, 76, 0.04);
+@accent-glow:      rgba(212, 168, 76, 0.10);
+@ink:              #1a1a1a;
+@ink-secondary:    #555;
+@ink-muted:        #8c8c8c;
+@white:            #ffffff;
+@border-light:     #f0ebe0;
+@border-table:     #ede7db;
+@shadow-card:      0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+@radius-lg:        14px;
+@radius-md:        10px;
+@radius-sm:        8px;
+
+// ============================================================
+//  表格整体 — 白色圆角卡片
+// ============================================================
+.tableWrapper {
+    background: @white;
+    border-radius: @radius-lg;
+    box-shadow: @shadow-card;
+    border: 1px solid @border-light;
+    overflow: hidden;
+    padding: 4px 0 8px;
+}
+
+// ============================================================
+//  文件列表表格
+// ============================================================
 .fileList {
     user-select: none;
     -webkit-user-select: none;
@@ -5,60 +40,104 @@
     -ms-user-select: none;
 
     :global {
-        .ant-table-body {
-            scrollbar-width: auto;
-            scrollbar-color: auto;
-
-            &::-webkit-scrollbar {
-                width: 5px;
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background: #ccc;
-                border-radius: 5px;
-            }
+        // ---- 表格头 ----
+        .ant-table-thead > tr > th {
+            background: transparent;
+            border-bottom: 2px solid @accent;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: @ink-muted;
+            padding: 14px 16px;
+            &::before { display: none; }
         }
+
+        // ---- 单元格 ----
+        .ant-table-tbody > tr > td {
+            border-bottom: 1px solid @border-table;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: @ink-secondary;
+            transition: background 0.2s ease;
+        }
+
+        // ---- 行 hover — 铜金暖光 ----
+        .ant-table-tbody > tr.ant-table-row:hover > td {
+            background: @accent-warm !important;
+        }
+
+        // ---- 名称列加粗 ----
+        .ant-table-cell:first-child {
+            font-weight: 500;
+            color: @ink;
+        }
+
+        // ---- 滚动条 ----
+        .ant-table-body {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212, 168, 76, 0.2) transparent;
+
+            &::-webkit-scrollbar { width: 5px; height: 5px; }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(212, 168, 76, 0.2);
+                border-radius: 5px;
+                &:hover { background: rgba(212, 168, 76, 0.35); }
+            }
+            &::-webkit-scrollbar-track { background: transparent; }
+        }
+
+        // ---- 空状态 ----
+        .ant-empty-description { color: @ink-muted; }
     }
 }
 
+// ============================================================
+//  加载居中
+// ============================================================
 .spin {
-    position: absolute;
-    top: 50%;
-    left: 55%;
-    transform: translateX(-50%) translateY(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
 }
 
-.eyeIcon {
-    span {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-}
-
+// ============================================================
+//  批量操作栏
+// ============================================================
 .batchBar {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 10px 16px;
-    margin-bottom: 12px;
-    border-radius: 6px;
+    padding: 12px 20px;
+    margin-bottom: 0;
+    background: linear-gradient(90deg, @accent-warm, transparent);
+    border-bottom: 1px solid @border-light;
 }
 
 .batchText {
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: @ink-secondary;
     margin-right: auto;
-}
-
-.batchText {
-    font-size: 14px;
-    color: #666;
+    font-weight: 500;
 }
 
 .batchActions {
     display: flex;
     gap: 8px;
+}
+
+// ============================================================
+//  置顶行 — 铜金微妙区别
+// ============================================================
+.pinnedRow {
+    td {
+        background: linear-gradient(90deg, rgba(212, 168, 76, 0.05), transparent) !important;
+    }
+
+    // 置顶行名称前的铜金小标记
+    td:first-child::before {
+        content: '📌 ';
+        font-size: 11px;
+    }
 }
