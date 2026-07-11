@@ -1,23 +1,22 @@
 // ============================================================
-// 知邮南山-MISLab  登录/重置密码
-// 重庆邮电大学经济管理学院  |  经管+技术融合
-// 玻璃卡片 + Canvas 铜金&青蓝飘带背景
+// 甘蔗育种中心-ZhangLab  登录/重置密码
+// 玻璃卡片 + Canvas 绿色渐变飘带背景
 // ============================================================
 
-// -- 调色板：铜金经管温度 × 青蓝技术锚点 ---
-@accent:          #d4a84c;
-@accent-hover:    #e0b860;
-@accent-pale:     rgba(212, 168, 76, 0.06);
-@accent-ring:     rgba(212, 168, 76, 0.16);
-@ink:             #2c2c2c;
-@ink-secondary:   #5e5e5e;
-@ink-muted:       #999;
-@white:           #ffffff;
-@glass-bg:        rgba(255, 255, 255, 0.58);
-@glass-border:    rgba(255, 255, 255, 0.70);
-@radius-card:     22px;
-@radius-input:    12px;
-@radius-btn:      12px;
+// -- 调色板 ---
+@green:         #388e3c;
+@green-hover:   #43a047;
+@green-pale:    rgba(56, 142, 60, 0.06);
+@green-ring:    rgba(56, 142, 60, 0.16);
+@ink:           #2c2c2c;
+@ink-secondary: #5e5e5e;
+@ink-muted:     #999;
+@white:         #ffffff;
+@glass-bg:      rgba(255, 255, 255, 0.58);
+@glass-border:  rgba(255, 255, 255, 0.70);
+@radius-card:   22px;
+@radius-input:  12px;
+@radius-btn:    12px;
 
 // ============================================================
 //  关键帧
@@ -51,7 +50,7 @@
 }
 
 :global(body) {
-    background-color: #faf7f2;
+    background-color: #f0f3ed;
 }
 
 // ============================================================
@@ -81,12 +80,12 @@
             0 8px 48px rgba(0, 0, 0, 0.07),
             0 2px 8px rgba(0, 0, 0, 0.05),
             inset 0 1px 0 rgba(255, 255, 255, 0.65);
-        border-color: rgba(212, 168, 76, 0.18);
+        border-color: rgba(56, 142, 60, 0.18);
     }
 }
 
 // ============================================================
-//  Logo — 双行布局
+//  Logo
 // ============================================================
 .logo {
     width: 100%;
@@ -95,32 +94,21 @@
     align-items: center;
     margin-bottom: 32px;
     user-select: none;
-    gap: 6px;
 }
 
 .logoTitle {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    line-height: 1.2;
-    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.logoDivider {
-    width: 40px;
-    height: 2.5px;
-    border-radius: 1px;
-    background: linear-gradient(90deg, transparent, @accent 30%, #e0b860 70%, transparent);
-    margin: 2px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: @ink;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
 }
 
 .logoSub {
     font-size: 13px;
     color: @ink-muted;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
+    margin-top: 6px;
 }
 
 // ============================================================
@@ -182,9 +170,9 @@
     position: relative;
     z-index: 1;
 
-    background: @accent-pale;
+    background: @green-pale;
     color: @ink-muted;
-    border: 1.5px solid rgba(212, 168, 76, 0.14);
+    border: 1.5px solid rgba(56, 142, 60, 0.14);
 
     svg {
         width: 12px;
@@ -205,7 +193,7 @@
 .stepLine {
     width: 44px;
     height: 1.5px;
-    background: rgba(212, 168, 76, 0.10);
+    background: rgba(56, 142, 60, 0.10);
     margin: 0 6px;
     position: relative;
     top: -8px;
@@ -218,7 +206,7 @@
         top: 0;
         height: 100%;
         width: 0;
-        background: linear-gradient(90deg, @accent, @accent-hover);
+        background: linear-gradient(90deg, @green, @green-hover);
         transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
         border-radius: 1px;
     }
@@ -229,10 +217,10 @@
 }
 
 .stepCircleDone {
-    background: @accent !important;
-    border-color: @accent !important;
+    background: @green !important;
+    border-color: @green !important;
     color: #fff !important;
-    box-shadow: 0 2px 8px rgba(212, 168, 76, 0.25);
+    box-shadow: 0 2px 8px rgba(56, 142, 60, 0.25);
 
     svg {
         opacity: 1 !important;
@@ -241,15 +229,15 @@
 }
 
 .stepLabelDone {
-    color: @accent;
+    color: @green;
     font-weight: 500;
 }
 
 .stepCircleActive {
-    background: @accent-pale !important;
-    border-color: @accent !important;
-    color: @accent !important;
-    box-shadow: 0 0 0 4px @accent-ring;
+    background: @green-pale !important;
+    border-color: @green !important;
+    color: @green !important;
+    box-shadow: 0 0 0 4px @green-ring;
 }
 
 .stepLabelActive {
@@ -271,14 +259,14 @@
         padding: 8px 14px;
 
         &:hover {
-            border-color: rgba(212, 168, 76, 0.25);
+            border-color: rgba(56, 142, 60, 0.25);
             background: rgba(255, 255, 255, 0.6);
         }
 
         &:focus,
         &:focus-within {
-            border-color: @accent;
-            box-shadow: 0 0 0 4px @accent-ring;
+            border-color: @green;
+            box-shadow: 0 0 0 4px @green-ring;
             background: @white;
         }
     }
@@ -291,13 +279,13 @@
         padding: 0 14px;
 
         &:hover {
-            border-color: rgba(212, 168, 76, 0.25);
+            border-color: rgba(56, 142, 60, 0.25);
             background: rgba(255, 255, 255, 0.6);
         }
 
         &:focus-within {
-            border-color: @accent;
-            box-shadow: 0 0 0 4px @accent-ring;
+            border-color: @green;
+            box-shadow: 0 0 0 4px @green-ring;
             background: @white;
         }
 
@@ -317,14 +305,14 @@
     :global(.ant-btn-primary) {
         position: relative;
         border-radius: @radius-btn !important;
-        background: linear-gradient(135deg, @accent, #c49a3e) !important;
+        background: linear-gradient(135deg, @green, #2e7d32) !important;
         border: none !important;
         font-weight: 500;
         font-size: 15px;
         height: 46px;
         letter-spacing: 0.03em;
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-        box-shadow: 0 2px 10px rgba(212, 168, 76, 0.20);
+        box-shadow: 0 2px 10px rgba(56, 142, 60, 0.20);
         overflow: hidden;
 
         &::after {
@@ -340,8 +328,8 @@
         }
 
         &:hover {
-            background: linear-gradient(135deg, @accent-hover, #d4a84c) !important;
-            box-shadow: 0 4px 20px rgba(212, 168, 76, 0.32);
+            background: linear-gradient(135deg, @green-hover, #388e3c) !important;
+            box-shadow: 0 4px 20px rgba(56, 142, 60, 0.32);
             transform: translateY(-1px);
 
             &::after {
@@ -351,7 +339,7 @@
 
         &:active {
             transform: translateY(0);
-            box-shadow: 0 1px 4px rgba(212, 168, 76, 0.14);
+            box-shadow: 0 1px 4px rgba(56, 142, 60, 0.14);
         }
     }
 
@@ -382,14 +370,14 @@
     height: 28px;
     font-size: 12px;
     padding: 0 8px;
-    color: @accent !important;
+    color: @green !important;
     white-space: nowrap;
     border-radius: 6px;
     font-weight: 500;
 
     &:hover {
-        color: @accent-hover !important;
-        background: @accent-pale;
+        color: @green-hover !important;
+        background: @green-pale;
     }
 
     &:disabled {
@@ -406,7 +394,7 @@
     margin-top: 10px;
 
     span {
-        color: @accent;
+        color: @green;
         cursor: pointer;
         font-size: 13px;
         user-select: none;
@@ -420,13 +408,13 @@
             bottom: -2px;
             width: 0;
             height: 1px;
-            background: @accent;
+            background: @green;
             transition: all 0.3s ease;
             transform: translateX(-50%);
         }
 
         &:hover {
-            color: @accent-hover;
+            color: @green-hover;
 
             &::after {
                 width: 100%;
