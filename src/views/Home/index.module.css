@@ -535,30 +535,25 @@ body {
 .crumb {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 8px 16px;
-    border-radius: 22px;
+    gap: 5px;
+    padding: 0;
     font-size: 15px;
-    font-weight: 500;
-    color: #555;
+    font-weight: 400;
+    color: #8c8c8c;
     background: transparent;
-    border: 1px solid transparent;
+    border: none;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: color 0.2s ease;
     white-space: nowrap;
 }
 
 .crumb:hover {
     color: #d4a84c;
-    background: rgba(212, 168, 76, 0.06);
-    border-color: rgba(212, 168, 76, 0.2);
 }
 
 .crumbActive {
     color: #d4a84c;
     font-weight: 600;
-    background: rgba(212, 168, 76, 0.08);
-    border-color: rgba(212, 168, 76, 0.25);
     cursor: default;
     pointer-events: none;
 }
