@@ -522,18 +522,67 @@ body {
 }
 .authority:active { transform: translateY(0); }
 
-/* === 面包屑 === */
+/* === 面包屑 — 铜金 pill 导航 === */
 .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0;
     user-select: none;
     -webkit-user-select: none;
-    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
-.breadcrumb .ant-breadcrumb-link {
-    transition: color 0.25s ease;
+
+.crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: 22px;
+    font-size: 15px;
     font-weight: 500;
+    color: #555;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+    white-space: nowrap;
 }
-.breadcrumb .ant-breadcrumb-link:hover { color: #d4a84c; }
-.breadcrumb .ant-breadcrumb-separator {
+
+.crumb:hover {
+    color: #d4a84c;
+    background: rgba(212, 168, 76, 0.06);
+    border-color: rgba(212, 168, 76, 0.2);
+}
+
+.crumbActive {
+    color: #d4a84c;
+    font-weight: 600;
+    background: rgba(212, 168, 76, 0.08);
+    border-color: rgba(212, 168, 76, 0.25);
+    cursor: default;
+    pointer-events: none;
+}
+
+.crumbIcon svg {
+    width: 16px;
+    height: 16px;
     color: #8c8c8c;
-    margin: 0 6px;
+    transition: color 0.25s ease;
+}
+.crumb:hover .crumbIcon svg,
+.crumbActive .crumbIcon svg {
+    color: #d4a84c;
+}
+
+.breadcrumbSep {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+    color: #c5c0b5;
+}
+.breadcrumbSep svg {
+    width: 13px;
+    height: 13px;
+    transform: rotate(0deg);
 }

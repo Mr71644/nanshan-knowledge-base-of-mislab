@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
+import { Layout, Tree, theme, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -773,12 +773,25 @@ const Home = () => {
                     }}
                 >
                     <div className={style.topBar}>
-                        <Breadcrumb separator=">" items={folderLayer}
-                            style={{
-                                fontSize: 'var(--breadcrumb-font-size)',
-                            }}
-                            className={style.breadcrumb}
-                        />
+                        <nav className={style.breadcrumb}>
+                            {folderLayer.map((item, i) => (
+                                <Fragment key={i}>
+                                    {i > 0 && (
+                                        <span className={style.breadcrumbSep}>
+                                            <RightOutlined />
+                                        </span>
+                                    )}
+                                    <span
+                                        className={`${style.crumb} ${i === folderLayer.length - 1 ? style.crumbActive : ''}`}
+                                        onClick={item.onClick}
+                                    >
+                                        {i === 0 && <CloudOutlined className={style.crumbIcon} />}
+                                        {i > 0 && <FolderOutlined className={style.crumbIcon} />}
+                                        {item.title}
+                                    </span>
+                                </Fragment>
+                            ))}
+                        </nav>
                         <div className={style.topBarUser}>
                             <Avatar
                                 size={36}
