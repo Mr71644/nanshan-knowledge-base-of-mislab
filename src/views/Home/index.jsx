@@ -246,7 +246,7 @@ const Home = () => {
 
         const onMouseMove = (e) => {
             if (!isDragging.current) return
-            const newWidth = Math.min(500, Math.max(180, startWidth + e.clientX - startX))
+            const newWidth = Math.min(500, Math.max(270, startWidth + e.clientX - startX))
             setSiderWidth(newWidth)
         }
         const onMouseUp = () => {
@@ -769,18 +769,15 @@ const Home = () => {
                 style={{
                     padding: '0 var(--layout-padding) 0',
                     background: '#faf7f2',
-                    height: '100vh',
-                    overflow: 'hidden',
                 }}
             >
                 <Content
                     style={{
                         padding: 'var(--layout-padding)',
                         margin: 0,
+                        minHeight: 280,
                         background: '#ffffff',
                         borderRadius: '12px',
-                        overflow: 'hidden',
-                        minHeight: 0,
                     }}
                 >
                     <div className={style.topBar}>
