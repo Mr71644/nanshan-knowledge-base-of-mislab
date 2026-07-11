@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
+import { Layout, Tree, theme, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -575,7 +575,10 @@ const Home = () => {
     }, [location.pathname, folderTree])
     return (
         <Fragment>
-        <style>{`.ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }`}</style>
+        <style>{`
+            .ant-tree .ant-tree-draggable-icon { width: 24px; flex-shrink: 0; }
+            .ant-tree .ant-tree-node-content-wrapper { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+        `}</style>
         <Layout style={{
             height: '100vh',
         }} className={style.layoutRoot}>
@@ -680,6 +683,11 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            <ConfigProvider
+                theme={{
+                    token: { colorPrimary: '#d4a84c' },
+                }}
+            >
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -701,17 +709,8 @@ const Home = () => {
                     }} /> : (
                         <div className={style.logoInner}>
                             <div className={style.logoTitle}>知邮南山</div>
+                            <div className={style.logoDivider} />
                             <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
-                            <Space size={4} className={style.logoActions}>
-                                <Tooltip title="展开全部">
-                                    <Button type="text" size="small" onClick={handleExpandAll}
-                                        icon={<FolderOpenOutlined />} />
-                                </Tooltip>
-                                <Tooltip title="折叠全部">
-                                    <Button type="text" size="small" onClick={handleCollapseAll}
-                                        icon={<FolderOutlined />} />
-                                </Tooltip>
-                            </Space>
                         </div>
                     )}
                 </div>
@@ -724,7 +723,16 @@ const Home = () => {
                             size="small"
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
+                            className={style.treeSearchInput}
                         />
+                        <Tooltip title="展开全部">
+                            <Button type="text" size="small" onClick={handleExpandAll}
+                                icon={<FolderOpenOutlined />} />
+                        </Tooltip>
+                        <Tooltip title="折叠全部">
+                            <Button type="text" size="small" onClick={handleCollapseAll}
+                                icon={<FolderOutlined />} />
+                        </Tooltip>
                     </div>
                 )}
                 <Tree
@@ -755,8 +763,8 @@ const Home = () => {
                         onMouseDown={handleResizeMouseDown}
                     />
                 )}
-                )}
             </Sider>
+            </ConfigProvider>
             <Layout
                 style={{
                     padding: '0 var(--layout-padding) 0',

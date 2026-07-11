@@ -171,32 +171,27 @@
 }
 
 // ============================================================
-//  侧边栏 Sider
+//  侧边栏 Sider — 铜金精炼风
 // ============================================================
 .sider {
     user-select: none;
     -webkit-user-select: none;
+    background: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%) !important;
+    border-right: 1px solid #ede5d5 !important;
+    border-radius: 0 12px 12px 0;
+    overflow: hidden;
 
-    // 暖色渐变背景
-    background: linear-gradient(180deg, @sider-bg-start 0%, @sider-bg-end 60%) !important;
-    border-right: 1px solid @border-light;
-
-    // 自定义滚动条 — 铜金色
-    &::-webkit-scrollbar {
-        width: 4px;
-    }
+    &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb {
-        background: rgba(212, 168, 76, 0.25);
+        background: rgba(212, 168, 76, 0.2);
         border-radius: 4px;
         &:hover { background: rgba(212, 168, 76, 0.4); }
     }
-    &::-webkit-scrollbar-track {
-        background: transparent;
-    }
+    &::-webkit-scrollbar-track { background: transparent; }
 }
 
 // ============================================================
-//  Logo 区域 — 侧边栏顶部
+//  Logo — 侧边栏顶部
 // ============================================================
 .logo {
     user-select: none;
@@ -208,10 +203,9 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    background: linear-gradient(180deg, @sider-bg-start, rgba(248, 243, 235, 0.95));
-    backdrop-filter: blur(8px);
-    padding: 20px 16px 16px;
-    border-bottom: 1px solid @border-light;
+    background: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+    backdrop-filter: blur(10px);
+    padding: 28px 16px 20px;
 }
 
 .logoInner {
@@ -219,164 +213,192 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-    position: relative;
-    gap: 4px;
+    gap: 8px;
 }
 
 .logoTitle {
-    font-size: 20px;
-    font-weight: 700;
-    color: @ink;
-    letter-spacing: 0.06em;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
     line-height: 1.2;
-    position: relative;
-
-    // 顶部铜金装饰点
-    &::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: @accent;
-    }
+    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .logoSub {
-    font-size: 11px;
-    color: @ink-muted;
-    letter-spacing: 0.04em;
+    font-size: 13px;
+    color: #9a8b72;
+    letter-spacing: 0.08em;
+    font-weight: 400;
 }
 
-.logoActions {
-    position: absolute;
-    right: -4px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 2px;
-
-    :global(.ant-btn) {
-        color: @ink-muted;
-        &:hover {
-            color: @accent;
-            background: @accent-pale;
-        }
-    }
+.logoDivider {
+    width: 40px;
+    height: 2.5px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, @accent 30%, #e0b860 70%, transparent);
+    margin: 4px 0;
 }
 
 // ============================================================
 //  搜索框
 // ============================================================
 .treeSearchBox {
-    padding: 12px 16px 10px;
+    padding: 12px 14px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: linear-gradient(180deg, rgba(249,244,234,0.97) 0%, rgba(249,244,234,0.6) 70%, transparent 100%);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
-    :global(.ant-input-affix-wrapper) {
-        border-radius: 20px !important;
-        border: 1.5px solid @border-light !important;
-        background: rgba(255, 255, 255, 0.7);
-        transition: all 0.3s ease;
+    :global(.ant-btn) {
+        flex-shrink: 0;
+        color: #b0a590;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px !important;
+        transition: all 0.25s ease;
 
         &:hover {
-            border-color: rgba(212, 168, 76, 0.3) !important;
+            color: @accent;
+            background: rgba(212, 168, 76, 0.1) !important;
+        }
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    :global(.ant-input-affix-wrapper) {
+        border-radius: 10px !important;
+        border: 1.5px solid #e8dfcf !important;
+        background: #fdfcf8;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.02);
+
+        &:hover {
+            border-color: rgba(212, 168, 76, 0.4) !important;
             background: @white;
+            box-shadow: 0 2px 8px rgba(212,168,76,0.08), inset 0 1px 2px rgba(0,0,0,0.01);
         }
         &:focus-within {
             border-color: @accent !important;
-            box-shadow: 0 0 0 3px @accent-glow !important;
+            box-shadow: 0 0 0 4px rgba(212, 168, 76, 0.1), 0 2px 8px rgba(212,168,76,0.06) !important;
             background: @white;
         }
 
         :global(.ant-input) {
             font-size: 13px;
-            &::placeholder { color: @ink-muted; }
+            color: #4a3f2e;
+            &::placeholder {
+                color: #b0a590;
+                font-style: italic;
+                font-size: 12.5px;
+            }
+        }
+
+        :global(.ant-input-suffix) :global(.anticon) {
+            color: #c5b898;
+            transition: color 0.3s ease;
+        }
+
+        &:focus-within :global(.ant-input-suffix) :global(.anticon) {
+            color: @accent;
         }
     }
 }
 
 // ============================================================
-//  Ant Design Tree 彻底重写
+//  Tree 节点
 // ============================================================
 :global {
-    // 树节点间更多呼吸空间
-    .ant-tree .ant-tree-treenode {
-        padding: 2px 0;
-        overflow: hidden;
-        border-radius: @radius-sm;
-        margin: 0 6px;
+    .ant-tree {
+        background: transparent !important;
+        padding: 4px 4px 12px;
     }
 
-    // 选中态：铜金 pill
-    .ant-tree-treenode-selected {
-        &::before {
-            background: transparent !important;
-        }
-        .ant-tree-node-content-wrapper {
-            background: @accent-pale !important;
-            color: @ink !important;
-            font-weight: 600;
-            border-radius: @radius-sm !important;
-            position: relative;
+    .ant-tree .ant-tree-treenode {
+        padding: 1px 0;
+        overflow: hidden;
+        border-radius: 8px;
+        margin: 0 8px;
+    }
 
-            // 左侧铜金竖条
-            &::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 4px;
-                bottom: 4px;
-                width: 3px;
-                border-radius: 0 2px 2px 0;
-                background: @accent;
-            }
+    .ant-tree-treenode-selected {
+        &::before { background: transparent !important; }
+        .ant-tree-node-content-wrapper {
+            background: linear-gradient(90deg, rgba(212,168,76,0.1), rgba(212,168,76,0.03)) !important;
+            color: #2d2416 !important;
+            font-weight: 600;
+            border-radius: 8px !important;
+            position: relative;
+            box-shadow: inset 3px 0 0 @accent;
         }
     }
 
     .ant-tree .ant-tree-node-content-wrapper {
-        height: 32px;
-        line-height: 32px;
+        height: 34px;
+        line-height: 34px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        border-radius: @radius-sm;
-        padding: 0 10px;
+        border-radius: 8px;
+        padding: 0 12px;
         transition: all 0.2s ease;
         font-size: 13px;
-        color: @ink-secondary;
+        color: #5c5346;
 
         &:hover {
-            background: @accent-subtle !important;
-            color: @ink;
+            background: rgba(212, 168, 76, 0.06) !important;
+            color: #2d2416;
+            box-shadow: inset 3px 0 0 @accent;
         }
     }
 
+    // 子节点缩进更宽松
+    .ant-tree-indent-unit { width: 18px; }
+
     // 拖拽态
     .ant-tree-treenode-draggable { cursor: grab; }
-    .ant-tree-treenode-dragging { opacity: 0.5; }
+    .ant-tree-treenode-dragging { opacity: 0.45; }
     .ant-tree-treenode-drag-over {
-        background-color: @accent-pale !important;
-        border-radius: @radius-sm;
+        background-color: rgba(212, 168, 76, 0.08) !important;
+        border-radius: 8px;
     }
-
-    .ant-tree-indent-unit { width: 16px; }
     .ant-tree .ant-tree-draggable-icon { visibility: hidden; }
 
-    // 树节点图标颜色
+    // 节点图标
     .ant-tree .ant-tree-node-content-wrapper .ant-tree-iconEle {
-        color: @ink-muted;
-        transition: color 0.2s;
+        color: #a89a7e;
+        transition: all 0.2s ease;
     }
-    .ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle {
+    .ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle,
+    .ant-tree .ant-tree-node-content-wrapper:hover .ant-tree-iconEle {
         color: @accent;
     }
 
-    // switcher 箭头颜色
+    // switcher
     .ant-tree-switcher {
-        color: @ink-muted;
+        color: #b0a590;
+        width: 20px;
+        transition: color 0.2s ease;
+        &:hover { color: @accent; }
     }
+
+    // 连接线
+    .ant-tree-show-line .ant-tree-indent-unit::before {
+        border-color: #e0d8c8 !important;
+    }
+}
 }
 
 // ============================================================
@@ -489,12 +511,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
-
+    border: 1.5px solid #d9cebc !important;
     transition: all 0.25s ease;
 
     &:hover {
         color: @accent !important;
         background: rgba(212, 168, 76, 0.1) !important;
+        border-color: @accent !important;
+        transform: scale(1.12);
     }
 }
 
@@ -662,32 +686,35 @@
 .crumb {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 0;
-    font-size: 15px;
-    font-weight: 400;
+    gap: 10px;
+    padding: 6px 16px;
+    font-size: 22px;
+    font-weight: 500;
     color: @ink-muted;
     background: transparent;
     border: none;
+    border-radius: 10px;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, background 0.2s ease;
     white-space: nowrap;
 
     &:hover {
         color: @accent;
+        background: rgba(212, 168, 76, 0.06);
     }
 }
 
 .crumbActive {
     color: @accent;
-    font-weight: 600;
+    font-weight: 700;
+    background: rgba(212, 168, 76, 0.08);
     cursor: default;
     pointer-events: none;
 }
 
 .crumbIcon svg {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
     color: @ink-muted;
     transition: color 0.25s ease;
 }
@@ -701,12 +728,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0 2px;
+    margin: 0 6px;
     color: #c5c0b5;
 
     svg {
-        width: 13px;
-        height: 13px;
+        width: 18px;
+        height: 18px;
     }
 }
 

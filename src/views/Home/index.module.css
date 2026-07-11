@@ -132,12 +132,14 @@ body {
 .sider {
     user-select: none;
     -webkit-user-select: none;
-    background: linear-gradient(180deg, #f8f3eb 0%, #ffffff 60%) !important;
-    border-right: 1px solid #f0ebe0;
+    background: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%) !important;
+    border-right: 1px solid #ede5d5 !important;
+    border-radius: 0 12px 12px 0;
+    overflow: hidden;
 }
 .sider::-webkit-scrollbar { width: 4px; }
 .sider::-webkit-scrollbar-thumb {
-    background: rgba(212, 168, 76, 0.25);
+    background: rgba(212, 168, 76, 0.2);
     border-radius: 4px;
 }
 .sider::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 76, 0.4); }
@@ -154,10 +156,9 @@ body {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: linear-gradient(180deg, #f8f3eb, rgba(248, 243, 235, 0.95));
-    backdrop-filter: blur(8px);
-    padding: 20px 16px 16px;
-    border-bottom: 1px solid #f0ebe0;
+    background: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+    backdrop-filter: blur(10px);
+    padding: 28px 16px 20px;
 }
 
 .logoInner {
@@ -165,130 +166,177 @@ body {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    position: relative;
-    gap: 4px;
+    gap: 8px;
 }
 
 .logoTitle {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1a1a1a;
-    letter-spacing: 0.06em;
+    font-size: 28px;
+    font-weight: 800;
+    color: #1f180e;
+    letter-spacing: 0.1em;
     line-height: 1.2;
-    position: relative;
+    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
-.logoTitle::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #d4a84c;
+
+.logoDivider {
+    width: 40px;
+    height: 2.5px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, #d4a84c 30%, #e0b860 70%, transparent);
+    margin: 4px 0;
 }
 
 .logoSub {
-    font-size: 11px;
-    color: #8c8c8c;
-    letter-spacing: 0.04em;
-}
-
-.logoActions {
-    position: absolute;
-    right: -4px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 2px;
-}
-.logoActions .ant-btn { color: #8c8c8c; }
-.logoActions .ant-btn:hover {
-    color: #d4a84c;
-    background: rgba(212, 168, 76, 0.07);
+    font-size: 13px;
+    color: #9a8b72;
+    letter-spacing: 0.08em;
+    font-weight: 400;
 }
 
 /* === 搜索框 === */
-.treeSearchBox { padding: 12px 16px 10px; }
+.treeSearchBox {
+    padding: 12px 14px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: linear-gradient(180deg, rgba(249,244,234,0.97) 0%, rgba(249,244,234,0.6) 70%, transparent 100%);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.treeSearchInput {
+    flex: 1;
+    min-width: 0;
+}
+.treeSearchBox .ant-btn {
+    flex-shrink: 0;
+    color: #b0a590;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px !important;
+    transition: all 0.25s ease;
+}
+.treeSearchBox .ant-btn:hover {
+    color: #d4a84c;
+    background: rgba(212, 168, 76, 0.1) !important;
+}
+.treeSearchBox .ant-btn svg {
+    width: 16px;
+    height: 16px;
+}
 .treeSearchBox .ant-input-affix-wrapper {
-    border-radius: 20px !important;
-    border: 1.5px solid #f0ebe0 !important;
-    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px !important;
+    border: 1.5px solid #e8dfcf !important;
+    background: #fdfcf8;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.02);
 }
 .treeSearchBox .ant-input-affix-wrapper:hover {
-    border-color: rgba(212, 168, 76, 0.3) !important;
+    border-color: rgba(212, 168, 76, 0.4) !important;
     background: #fff;
+    box-shadow: 0 2px 8px rgba(212,168,76,0.08), inset 0 1px 2px rgba(0,0,0,0.01);
 }
 .treeSearchBox .ant-input-affix-wrapper:focus-within {
     border-color: #d4a84c !important;
-    box-shadow: 0 0 0 3px rgba(212, 168, 76, 0.14) !important;
+    box-shadow: 0 0 0 4px rgba(212, 168, 76, 0.1), 0 2px 8px rgba(212,168,76,0.06) !important;
     background: #fff;
 }
-.treeSearchBox .ant-input-affix-wrapper .ant-input { font-size: 13px; }
-.treeSearchBox .ant-input-affix-wrapper .ant-input::placeholder { color: #8c8c8c; }
+.treeSearchBox .ant-input-affix-wrapper .ant-input {
+    font-size: 13px;
+    color: #4a3f2e;
+}
+.treeSearchBox .ant-input-affix-wrapper .ant-input::placeholder {
+    color: #b0a590;
+    font-style: italic;
+    font-size: 12.5px;
+}
+.treeSearchBox .ant-input-suffix .anticon {
+    color: #c5b898;
+    transition: color 0.3s ease;
+}
+.treeSearchBox .ant-input-affix-wrapper:focus-within .ant-input-suffix .anticon {
+    color: #d4a84c;
+}
 
 /* === Tree === */
+.ant-tree {
+    background: transparent !important;
+    padding: 4px 4px 12px;
+}
 .ant-tree .ant-tree-treenode {
-    padding: 2px 0;
+    display: flex;
     overflow: hidden;
     border-radius: 8px;
-    margin: 0 6px;
+    margin: 0 8px;
+}
+.ant-tree .ant-tree-node-content-wrapper {
+    flex: 1;
+    min-width: 0;
 }
 .ant-tree-treenode-selected::before { background: transparent !important; }
 .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
-    background: rgba(212, 168, 76, 0.07) !important;
-    color: #1a1a1a !important;
+    background: linear-gradient(90deg, rgba(212,168,76,0.1), rgba(212,168,76,0.03)) !important;
+    color: #2d2416 !important;
     font-weight: 600;
     border-radius: 8px !important;
-    position: relative;
-}
-.ant-tree-treenode-selected .ant-tree-node-content-wrapper::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 3px;
-    border-radius: 0 2px 2px 0;
-    background: #d4a84c;
+    box-shadow: inset 3px 0 0 #d4a84c;
 }
 
 .ant-tree .ant-tree-node-content-wrapper {
-    height: 32px;
-    line-height: 32px;
+    height: 34px;
+    line-height: 34px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     border-radius: 8px;
-    padding: 0 10px;
+    max-width: 100%;
+    padding: 0 12px;
     transition: all 0.2s ease;
     font-size: 13px;
-    color: #555;
+    color: #5c5346;
 }
 .ant-tree .ant-tree-node-content-wrapper:hover {
-    background: rgba(212, 168, 76, 0.04) !important;
-    color: #1a1a1a;
+    background: rgba(212, 168, 76, 0.06) !important;
+    color: #2d2416;
+    box-shadow: inset 3px 0 0 #d4a84c;
 }
 
+.ant-tree-indent-unit { width: 18px; }
+
 .ant-tree-treenode-draggable { cursor: grab; }
-.ant-tree-treenode-dragging { opacity: 0.5; }
+.ant-tree-treenode-dragging { opacity: 0.45; }
 .ant-tree-treenode-drag-over {
-    background-color: rgba(212, 168, 76, 0.07) !important;
+    background-color: rgba(212, 168, 76, 0.08) !important;
     border-radius: 8px;
 }
-.ant-tree-indent-unit { width: 16px; }
 .ant-tree .ant-tree-draggable-icon { visibility: hidden; }
 
 .ant-tree .ant-tree-node-content-wrapper .ant-tree-iconEle {
-    color: #8c8c8c;
-    transition: color 0.2s;
+    color: #a89a7e;
+    transition: all 0.2s ease;
 }
-.ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle {
+.ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle,
+.ant-tree .ant-tree-node-content-wrapper:hover .ant-tree-iconEle {
     color: #d4a84c;
 }
-.ant-tree-switcher { color: #8c8c8c; }
+
+.ant-tree-switcher {
+    color: #b0a590;
+    width: 20px;
+    transition: color 0.2s ease;
+}
+.ant-tree-switcher:hover { color: #d4a84c; }
+
+.ant-tree-show-line .ant-tree-indent-unit::before {
+    border-color: #e0d8c8 !important;
+}
 
 /* === 展开图标 === */
 .treeExpandIcon {
@@ -380,11 +428,14 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
+    border: 1.5px solid #d9cebc !important;
     transition: all 0.25s ease;
 }
 .topBarLogout:hover {
     color: #d4a84c !important;
     background: rgba(212, 168, 76, 0.1) !important;
+    border-color: #d4a84c !important;
+    transform: scale(1.12);
 }
 
 /* === 退出确认弹窗 === */
@@ -535,32 +586,35 @@ body {
 .crumb {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 0;
-    font-size: 15px;
-    font-weight: 400;
+    gap: 10px;
+    padding: 6px 16px;
+    font-size: 22px;
+    font-weight: 500;
     color: #8c8c8c;
     background: transparent;
     border: none;
+    border-radius: 10px;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, background 0.2s ease;
     white-space: nowrap;
 }
 
 .crumb:hover {
     color: #d4a84c;
+    background: rgba(212, 168, 76, 0.06);
 }
 
 .crumbActive {
     color: #d4a84c;
-    font-weight: 600;
+    font-weight: 700;
+    background: rgba(212, 168, 76, 0.08);
     cursor: default;
     pointer-events: none;
 }
 
 .crumbIcon svg {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
     color: #8c8c8c;
     transition: color 0.25s ease;
 }
@@ -573,11 +627,11 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0 2px;
+    margin: 0 6px;
     color: #c5c0b5;
 }
 .breadcrumbSep svg {
-    width: 13px;
-    height: 13px;
+    width: 18px;
+    height: 18px;
     transform: rotate(0deg);
 }
