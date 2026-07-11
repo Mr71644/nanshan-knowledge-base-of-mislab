@@ -3,32 +3,17 @@
 // 重庆邮电大学经济管理学院  |  经管+技术融合
 // ============================================================
 
-@accent:           #d4a84c;
-@accent-hover:     #e0b860;
-@accent-deep:      #c49a3e;
-@accent-pale:      rgba(212, 168, 76, 0.07);
-@accent-glow:      rgba(212, 168, 76, 0.14);
-@accent-subtle:    rgba(212, 168, 76, 0.04);
-@ink:              #1a1a1a;
-@ink-secondary:    #555;
-@ink-muted:        #8c8c8c;
-@white:            #ffffff;
-@page-bg:          #faf7f2;
-@sider-bg-start:   #f8f3eb;
-@sider-bg-end:     #ffffff;
-@border-light:     #f0ebe0;
-@border-card:      #ede7db;
-@shadow-card:      0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
-@radius-lg:        14px;
-@radius-md:        10px;
-@radius-sm:        8px;
+@white:    #ffffff;
+@radius-lg: 14px;
+@radius-md: 10px;
+@radius-sm: 8px;
 
 // ============================================================
 //  全局
 // ============================================================
 :global {
     body {
-        background-color: @page-bg;
+        background-color: var(--color-page-bg);
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
@@ -47,16 +32,16 @@
 
     // ---- 主按钮：铜金渐变 ----
     .ant-btn-primary {
-        background: linear-gradient(135deg, @accent, @accent-deep) !important;
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-deep)) !important;
         border: none !important;
         border-radius: @radius-sm !important;
-        box-shadow: 0 2px 8px rgba(212, 168, 76, 0.22);
+        box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.22);
         font-weight: 500;
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 
         &:hover {
-            background: linear-gradient(135deg, @accent-hover, @accent) !important;
-            box-shadow: 0 4px 16px rgba(212, 168, 76, 0.35) !important;
+            background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent)) !important;
+            box-shadow: 0 4px 16px rgba(var(--color-accent-rgb), 0.35) !important;
             transform: translateY(-1px);
         }
 
@@ -67,29 +52,29 @@
 
     // ---- 链接色 ----
     .ant-btn-link {
-        color: @accent;
-        &:hover { color: @accent-hover; }
+        color: var(--color-accent);
+        &:hover { color: var(--color-accent-hover); }
     }
 
     // ---- 默认按钮 hover ----
     .ant-btn-default:not(:disabled):hover {
-        border-color: @accent !important;
-        color: @accent !important;
+        border-color: var(--color-accent) !important;
+        color: var(--color-accent) !important;
     }
 
     // ---- Checkbox ----
     .ant-checkbox-checked .ant-checkbox-inner {
-        background-color: @accent !important;
-        border-color: @accent !important;
+        background-color: var(--color-accent) !important;
+        border-color: var(--color-accent) !important;
     }
     .ant-checkbox-wrapper:hover .ant-checkbox-inner,
     .ant-checkbox:hover .ant-checkbox-inner {
-        border-color: @accent !important;
+        border-color: var(--color-accent) !important;
     }
 
     // ---- Dropdown menu item ----
     .ant-dropdown-menu-item:hover {
-        background-color: @accent-pale !important;
+        background-color: var(--color-accent-07) !important;
     }
     .ant-dropdown-menu-item-danger:hover {
         background-color: rgba(255, 77, 79, 0.06) !important;
@@ -97,45 +82,45 @@
 
     // ---- Modal 确认按钮 ----
     .ant-modal-confirm-btns .ant-btn-primary {
-        background: linear-gradient(135deg, @accent, @accent-deep) !important;
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-deep)) !important;
     }
 
     // ---- Spin 加载指示器 ----
     .ant-spin-dot-item {
-        background-color: @accent !important;
+        background-color: var(--color-accent) !important;
     }
 
     // ---- FloatButton ----
     .ant-float-btn-primary {
-        background: linear-gradient(135deg, @accent, @accent-deep) !important;
-        box-shadow: 0 4px 16px rgba(212, 168, 76, 0.3) !important;
+        background: linear-gradient(135deg, var(--color-accent), var(--color-accent-deep)) !important;
+        box-shadow: 0 4px 16px rgba(var(--color-accent-rgb), 0.3) !important;
         &:hover {
-            box-shadow: 0 6px 24px rgba(212, 168, 76, 0.4) !important;
+            box-shadow: 0 6px 24px rgba(var(--color-accent-rgb), 0.4) !important;
         }
     }
 
     // ---- Notification ----
     .ant-notification-notice {
         border-radius: @radius-md;
-        border-left: 3px solid @accent;
+        border-left: 3px solid var(--color-accent);
     }
 
     // ---- Progress 进度条 ----
     .ant-progress-bg {
-        background: linear-gradient(90deg, @accent, @accent-deep) !important;
+        background: linear-gradient(90deg, var(--color-accent), var(--color-accent-deep)) !important;
     }
     .ant-progress-success-bg {
-        background: @accent !important;
+        background: var(--color-accent) !important;
     }
 
     // ---- Result 信息图标 ----
     .ant-result-info .ant-result-icon > .anticon {
-        color: @accent !important;
+        color: var(--color-accent) !important;
     }
 
     // ---- Spin loading 图标 ----
     .anticon-loading {
-        color: @accent;
+        color: var(--color-accent);
     }
 
     // ---- 全局表格圆角 ----
@@ -169,7 +154,7 @@
 //  根布局
 // ============================================================
 .layoutRoot {
-    background: @page-bg;
+    background: var(--color-page-bg);
 }
 
 // ============================================================
@@ -178,16 +163,16 @@
 .sider {
     user-select: none;
     -webkit-user-select: none;
-    background: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%) !important;
-    border-right: 1px solid #ede5d5 !important;
+    background: linear-gradient(175deg, var(--color-sider-bg-start) 0%, var(--color-sider-bg-mid) 30%, #ffffff 100%) !important;
+    border-right: 1px solid var(--color-border-sider) !important;
     border-radius: 0 12px 12px 0;
     overflow: hidden;
 
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb {
-        background: rgba(212, 168, 76, 0.2);
+        background: rgba(var(--color-accent-rgb), 0.2);
         border-radius: 4px;
-        &:hover { background: rgba(212, 168, 76, 0.4); }
+        &:hover { background: rgba(var(--color-accent-rgb), 0.4); }
     }
     &::-webkit-scrollbar-track { background: transparent; }
 }
@@ -205,7 +190,7 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    background: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+    background: linear-gradient(180deg, var(--color-sider-bg-start) 0%, rgba(249, 244, 234, 0.92) 100%);
     backdrop-filter: blur(10px);
     padding: 28px 16px 20px;
 }
@@ -223,7 +208,7 @@
     font-weight: 800;
     letter-spacing: 0.1em;
     line-height: 1.2;
-    background: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+    background: linear-gradient(135deg, var(--color-ink-tree-selected) 0%, #6b5740 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -231,7 +216,7 @@
 
 .logoSub {
     font-size: 13px;
-    color: #9a8b72;
+    color: var(--color-icon-logo-sub);
     letter-spacing: 0.08em;
     font-weight: 400;
 }
@@ -240,7 +225,7 @@
     width: 40px;
     height: 2.5px;
     border-radius: 1px;
-    background: linear-gradient(90deg, transparent, @accent 30%, #e0b860 70%, transparent);
+    background: linear-gradient(90deg, transparent, var(--color-accent) 30%, var(--color-accent-hover) 70%, transparent);
     margin: 4px 0;
 }
 
@@ -260,7 +245,7 @@
 
     :global(.ant-btn) {
         flex-shrink: 0;
-        color: #b0a590;
+        color: var(--color-icon-sub);
         width: 30px;
         height: 30px;
         display: flex;
@@ -270,8 +255,8 @@
         transition: all 0.25s ease;
 
         &:hover {
-            color: @accent;
-            background: rgba(212, 168, 76, 0.1) !important;
+            color: var(--color-accent);
+            background: rgba(var(--color-accent-rgb), 0.1) !important;
         }
 
         svg {
@@ -282,39 +267,39 @@
 
     :global(.ant-input-affix-wrapper) {
         border-radius: 10px !important;
-        border: 1.5px solid #e8dfcf !important;
-        background: #fdfcf8;
+        border: 1.5px solid var(--color-border-search) !important;
+        background: var(--color-search-bg);
         transition: all 0.3s ease;
         box-shadow: 0 1px 4px rgba(0,0,0,0.03), inset 0 1px 2px rgba(0,0,0,0.02);
 
         &:hover {
-            border-color: rgba(212, 168, 76, 0.4) !important;
+            border-color: rgba(var(--color-accent-rgb), 0.4) !important;
             background: @white;
-            box-shadow: 0 2px 8px rgba(212,168,76,0.08), inset 0 1px 2px rgba(0,0,0,0.01);
+            box-shadow: 0 2px 8px rgba(var(--color-accent-rgb),0.08), inset 0 1px 2px rgba(0,0,0,0.01);
         }
         &:focus-within {
-            border-color: @accent !important;
-            box-shadow: 0 0 0 4px rgba(212, 168, 76, 0.1), 0 2px 8px rgba(212,168,76,0.06) !important;
+            border-color: var(--color-accent) !important;
+            box-shadow: 0 0 0 4px rgba(var(--color-accent-rgb), 0.1), 0 2px 8px rgba(var(--color-accent-rgb),0.06) !important;
             background: @white;
         }
 
         :global(.ant-input) {
             font-size: 13px;
-            color: #4a3f2e;
+            color: var(--color-ink-search);
             &::placeholder {
-                color: #b0a590;
+                color: var(--color-icon-sub);
                 font-style: italic;
                 font-size: 12.5px;
             }
         }
 
         :global(.ant-input-suffix) :global(.anticon) {
-            color: #c5b898;
+            color: var(--color-icon-search);
             transition: color 0.3s ease;
         }
 
         &:focus-within :global(.ant-input-suffix) :global(.anticon) {
-            color: @accent;
+            color: var(--color-accent);
         }
     }
 }
@@ -338,12 +323,12 @@
     .ant-tree-treenode-selected {
         &::before { background: transparent !important; }
         .ant-tree-node-content-wrapper {
-            background: linear-gradient(90deg, rgba(212,168,76,0.1), rgba(212,168,76,0.03)) !important;
-            color: #2d2416 !important;
+            background: linear-gradient(90deg, rgba(var(--color-accent-rgb),0.1), rgba(var(--color-accent-rgb),0.03)) !important;
+            color: var(--color-ink-tree-selected) !important;
             font-weight: 600;
             border-radius: 8px !important;
             position: relative;
-            box-shadow: inset 3px 0 0 @accent;
+            box-shadow: inset 3px 0 0 var(--color-accent);
         }
     }
 
@@ -357,12 +342,12 @@
         padding: 0 12px;
         transition: all 0.2s ease;
         font-size: 13px;
-        color: #5c5346;
+        color: var(--color-ink-tree);
 
         &:hover {
-            background: rgba(212, 168, 76, 0.06) !important;
-            color: #2d2416;
-            box-shadow: inset 3px 0 0 @accent;
+            background: rgba(var(--color-accent-rgb), 0.06) !important;
+            color: var(--color-ink-tree-selected);
+            box-shadow: inset 3px 0 0 var(--color-accent);
         }
     }
 
@@ -373,34 +358,33 @@
     .ant-tree-treenode-draggable { cursor: grab; }
     .ant-tree-treenode-dragging { opacity: 0.45; }
     .ant-tree-treenode-drag-over {
-        background-color: rgba(212, 168, 76, 0.08) !important;
+        background-color: rgba(var(--color-accent-rgb), 0.08) !important;
         border-radius: 8px;
     }
     .ant-tree .ant-tree-draggable-icon { visibility: hidden; }
 
     // 节点图标
     .ant-tree .ant-tree-node-content-wrapper .ant-tree-iconEle {
-        color: #a89a7e;
+        color: var(--color-icon-default);
         transition: all 0.2s ease;
     }
     .ant-tree-treenode-selected .ant-tree-node-content-wrapper .ant-tree-iconEle,
     .ant-tree .ant-tree-node-content-wrapper:hover .ant-tree-iconEle {
-        color: @accent;
+        color: var(--color-accent);
     }
 
     // switcher
     .ant-tree-switcher {
-        color: #b0a590;
+        color: var(--color-icon-sub);
         width: 20px;
         transition: color 0.2s ease;
-        &:hover { color: @accent; }
+        &:hover { color: var(--color-accent); }
     }
 
     // 连接线
     .ant-tree-show-line .ant-tree-indent-unit::before {
         border-color: #e0d8c8 !important;
     }
-}
 }
 
 // ============================================================
@@ -424,7 +408,7 @@
 //  搜索高亮
 // ============================================================
 .searchHighlight {
-    background-color: rgba(212, 168, 76, 0.32);
+    background-color: rgba(var(--color-accent-rgb), 0.32);
     color: inherit;
     border-radius: 3px;
     padding: 1px 3px;
@@ -450,7 +434,7 @@
 
     &:hover,
     &:active {
-        background: rgba(212, 168, 76, 0.4);
+        background: rgba(var(--color-accent-rgb), 0.4);
     }
 }
 
@@ -471,16 +455,16 @@
     gap: 10px;
     padding: 5px 14px 5px 5px;
     border-radius: 28px;
-    background: #fefdf9;
-    border: 1.5px solid @border-card;
+    background: var(--color-card-bg);
+    border: 1.5px solid var(--color-border-card);
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     flex-shrink: 0;
     cursor: default;
 
     &:hover {
         background: @white;
-        border-color: @accent;
-        box-shadow: 0 2px 16px rgba(212, 168, 76, 0.16);
+        border-color: var(--color-accent);
+        box-shadow: 0 2px 16px rgba(var(--color-accent-rgb), 0.16);
     }
 }
 
@@ -494,13 +478,13 @@
 .topBarName {
     font-size: 14px;
     font-weight: 600;
-    color: @ink;
+    color: var(--color-ink);
     white-space: nowrap;
 }
 
 .topBarRole {
     font-size: 11px;
-    color: @ink-muted;
+    color: var(--color-ink-muted);
     white-space: nowrap;
 }
 
@@ -513,13 +497,13 @@
     align-items: center;
     justify-content: center;
     border-radius: 50% !important;
-    border: 1.5px solid #d9cebc !important;
+    border: 1.5px solid var(--color-border-logout) !important;
     transition: all 0.25s ease;
 
     &:hover {
-        color: @accent !important;
-        background: rgba(212, 168, 76, 0.1) !important;
-        border-color: @accent !important;
+        color: var(--color-accent) !important;
+        background: rgba(var(--color-accent-rgb), 0.1) !important;
+        border-color: var(--color-accent) !important;
         transform: scale(1.12);
     }
 }
@@ -538,7 +522,7 @@
     }
 
     :global(.ant-modal-footer) {
-        border-top: 1px solid @border-light;
+        border-top: 1px solid var(--color-border-light);
         padding: 14px 24px 18px;
         display: flex;
         justify-content: center;
@@ -553,12 +537,12 @@
         }
 
         :global(.ant-btn-default) {
-            border-color: @border-card;
-            color: @ink-secondary;
+            border-color: var(--color-border-card);
+            color: var(--color-ink-secondary);
 
             &:hover {
-                border-color: @accent;
-                color: @accent;
+                border-color: var(--color-accent);
+                color: var(--color-accent);
             }
         }
     }
@@ -574,27 +558,27 @@
     height: 64px;
     margin: 0 auto 16px;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(212, 168, 76, 0.15), rgba(212, 168, 76, 0.06));
+    background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.15), rgba(var(--color-accent-rgb), 0.06));
     display: flex;
     align-items: center;
     justify-content: center;
 
     svg {
         font-size: 28px;
-        color: @accent;
+        color: var(--color-accent);
     }
 }
 
 .exitModalTitle {
     font-size: 18px;
     font-weight: 600;
-    color: @ink;
+    color: var(--color-ink);
     margin-bottom: 8px;
 }
 
 .exitModalDesc {
     font-size: 13px;
-    color: @ink-muted;
+    color: var(--color-ink-muted);
     line-height: 1.6;
 }
 
@@ -620,14 +604,14 @@
     width: var(--action-btn-width);
     height: var(--action-btn-height);
     background: @white;
-    border: 1.5px solid @border-card;
+    border: 1.5px solid var(--color-border-card);
     border-radius: @radius-md;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-    box-shadow: @shadow-card;
+    box-shadow: var(--shadow-card-lg);
     padding: 12px 8px;
     font-size: var(--action-btn-font-size);
-    color: @ink-secondary;
+    color: var(--color-ink-secondary);
     font-weight: 500;
     overflow: hidden;
 
@@ -637,7 +621,7 @@
         position: absolute;
         inset: 0;
         border-radius: 9px;
-        background: radial-gradient(ellipse at 50% 0%, rgba(212, 168, 76, 0.10), transparent 70%);
+        background: radial-gradient(ellipse at 50% 0%, rgba(var(--color-accent-rgb), 0.10), transparent 70%);
         opacity: 0;
         transition: opacity 0.35s ease;
         pointer-events: none;
@@ -647,24 +631,24 @@
         width: 22px;
         height: 22px;
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-        color: @ink-muted;
+        color: var(--color-ink-muted);
     }
 
     &:hover {
-        border-color: @accent !important;
-        box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
-        color: @ink !important;
+        border-color: var(--color-accent) !important;
+        box-shadow: 0 4px 24px rgba(var(--color-accent-rgb), 0.18), 0 0 0 1px rgba(var(--color-accent-rgb), 0.22);
+        color: var(--color-ink) !important;
         transform: translateY(-2px);
-        background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, @white 100%);
+        background: linear-gradient(180deg, rgba(var(--color-accent-rgb), 0.05) 0%, @white 100%);
 
         &::after {
             opacity: 1;
         }
 
         svg {
-            color: @accent;
+            color: var(--color-accent);
             transform: scale(1.12);
-            filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+            filter: drop-shadow(0 1px 3px rgba(var(--color-accent-rgb), 0.3));
         }
     }
 
@@ -692,7 +676,7 @@
     padding: 6px 16px;
     font-size: 22px;
     font-weight: 500;
-    color: @ink-muted;
+    color: var(--color-ink-muted);
     background: transparent;
     border: none;
     border-radius: 10px;
@@ -701,15 +685,15 @@
     white-space: nowrap;
 
     &:hover {
-        color: @accent;
-        background: rgba(212, 168, 76, 0.06);
+        color: var(--color-accent);
+        background: rgba(var(--color-accent-rgb), 0.06);
     }
 }
 
 .crumbActive {
-    color: @accent;
+    color: var(--color-accent);
     font-weight: 700;
-    background: rgba(212, 168, 76, 0.08);
+    background: rgba(var(--color-accent-rgb), 0.08);
     cursor: default;
     pointer-events: none;
 }
@@ -717,13 +701,13 @@
 .crumbIcon svg {
     width: 22px;
     height: 22px;
-    color: @ink-muted;
+    color: var(--color-ink-muted);
     transition: color 0.25s ease;
 }
 
 .crumb:hover .crumbIcon svg,
 .crumbActive .crumbIcon svg {
-    color: @accent;
+    color: var(--color-accent);
 }
 
 .breadcrumbSep {
@@ -731,7 +715,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 6px;
-    color: #c5c0b5;
+    color: var(--color-icon-sep);
 
     svg {
         width: 18px;

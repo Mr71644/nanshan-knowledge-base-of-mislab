@@ -14,7 +14,7 @@
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: #d4a84c;
+  background: var(--color-accent);
   color: white;
   font-size: 20px;
   cursor: pointer;
@@ -52,7 +52,7 @@
 }
 
 .input:focus {
-  border-color: #d4a84c;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
 }
 
@@ -60,7 +60,7 @@
   border: none;
   border-radius: 20px;
   padding: 10px 20px;
-  background-color: #d4a84c;
+  background-color: var(--color-accent);
   color: white;
   font-size: 14px;
   font-weight: 500;
@@ -70,7 +70,7 @@
 }
 
 .sendButton:hover {
-  background-color:#d4a84c;
+  background-color:var(--color-accent);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 86, 179, 0.3);
 }
@@ -105,7 +105,7 @@
 
 .popoverTitle {
   padding: 12px 16px;
-  background-color:#d4a84c;
+  background-color:var(--color-accent);
   color: white;
   font-size: 16px;
   font-weight: 600;
@@ -182,7 +182,7 @@
   font-weight: 500;
   margin-bottom: 4px;
   opacity: 0.8;
-  color:#d4a84c;
+  color:var(--color-accent);
   text-align: right;
 }
 

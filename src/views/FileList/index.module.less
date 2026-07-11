@@ -3,20 +3,10 @@
 // 重庆邮电大学经济管理学院  |  铜金精炼风
 // ============================================================
 
-@accent:           #d4a84c;
-@accent-pale:      rgba(212, 168, 76, 0.08);
-@accent-warm:      rgba(212, 168, 76, 0.05);
-@accent-glow:      rgba(212, 168, 76, 0.12);
-@ink:              #1a1a1a;
-@ink-secondary:    #555;
-@ink-muted:        #8c8c8c;
-@white:            #ffffff;
-@border-light:     #f0ebe0;
-@border-table:     #ede7db;
-@shadow-card:      0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
-@radius-lg:        16px;
-@radius-md:        10px;
-@radius-sm:        8px;
+@white:     #ffffff;
+@radius-lg: 16px;
+@radius-md: 10px;
+@radius-sm: 8px;
 
 // ============================================================
 //  表格整体 — 圆角卡片
@@ -24,8 +14,8 @@
 .tableWrapper {
     background: @white;
     border-radius: @radius-lg;
-    box-shadow: @shadow-card;
-    border: 1px solid @border-light;
+    box-shadow: var(--shadow-card-lg);
+    border: 1px solid var(--color-border-light);
     overflow: hidden;
 }
 
@@ -49,10 +39,10 @@
         transition: background 0.2s;
 
         &:hover {
-            background: rgba(212, 168, 76, 0.3);
+            background: rgba(var(--color-accent-rgb), 0.3);
         }
         &:active {
-            background: rgba(212, 168, 76, 0.5);
+            background: rgba(var(--color-accent-rgb), 0.5);
         }
     }
 }
@@ -69,29 +59,29 @@
     :global {
         // ---- 表格头 ----
         .ant-table-thead > tr > th {
-            background: linear-gradient(180deg, #fdfaf5, transparent);
-            border-bottom: 1.5px solid @border-table;
+            background: linear-gradient(180deg, var(--color-table-header-bg-start), transparent);
+            border-bottom: 1.5px solid var(--color-border-table);
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.07em;
-            color: @ink-muted;
+            color: var(--color-ink-muted);
             padding: 16px 20px;
             &::before { display: none !important; }
         }
 
         // ---- 单元格 ----
         .ant-table-tbody > tr > td {
-            border-bottom: 1px solid @border-table;
+            border-bottom: 1px solid var(--color-border-table);
             padding: 14px 20px;
             font-size: 14px;
-            color: @ink-secondary;
+            color: var(--color-ink-secondary);
             transition: all 0.2s ease;
         }
 
         // ---- 行 hover — 铜金暖光 ----
         .ant-table-tbody > tr.ant-table-row:hover > td {
-            background: linear-gradient(90deg, rgba(212, 168, 76, 0.06), rgba(212, 168, 76, 0.02)) !important;
+            background: linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.06), rgba(var(--color-accent-rgb), 0.02)) !important;
         }
 
         // 第一列 & 最后一列无左边框
@@ -111,27 +101,27 @@
         // ---- 名称列 ----
         .ant-table-cell:first-child {
             font-weight: 500;
-            color: @ink;
+            color: var(--color-ink);
         }
 
         // ---- 滚动条 ----
         .ant-table-body {
             scrollbar-width: thin;
-            scrollbar-color: rgba(212, 168, 76, 0.18) transparent;
+            scrollbar-color: rgba(var(--color-accent-rgb), 0.18) transparent;
 
             &::-webkit-scrollbar { width: 5px; height: 5px; }
             &::-webkit-scrollbar-thumb {
-                background: rgba(212, 168, 76, 0.18);
+                background: rgba(var(--color-accent-rgb), 0.18);
                 border-radius: 5px;
-                &:hover { background: rgba(212, 168, 76, 0.3); }
+                &:hover { background: rgba(var(--color-accent-rgb), 0.3); }
             }
             &::-webkit-scrollbar-track { background: transparent; }
         }
 
         // ---- 空状态 ----
-        .ant-empty-description { color: @ink-muted; }
-        .ant-empty-img-simple-path { fill: rgba(212, 168, 76, 0.2); }
-        .ant-empty-img-simple-ellipse { fill: rgba(212, 168, 76, 0.03); }
+        .ant-empty-description { color: var(--color-ink-muted); }
+        .ant-empty-img-simple-path { fill: rgba(var(--color-accent-rgb), 0.2); }
+        .ant-empty-img-simple-ellipse { fill: rgba(var(--color-accent-rgb), 0.03); }
     }
 }
 
@@ -145,8 +135,8 @@
     min-height: 360px;
     background: @white;
     border-radius: @radius-lg;
-    border: 1px solid @border-light;
-    box-shadow: @shadow-card;
+    border: 1px solid var(--color-border-light);
+    box-shadow: var(--shadow-card-lg);
 }
 
 // ============================================================
@@ -157,8 +147,8 @@
     align-items: center;
     justify-content: flex-end;
     padding: 12px 20px;
-    background: linear-gradient(90deg, rgba(212, 168, 76, 0.1), rgba(212, 168, 76, 0.03) 80%);
-    border-bottom: 1px solid @border-light;
+    background: linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.1), rgba(var(--color-accent-rgb), 0.03) 80%);
+    border-bottom: 1px solid var(--color-border-light);
     animation: batchSlideIn 0.25s ease;
 
     :global(.ant-btn-sm) {
@@ -177,12 +167,12 @@
 
 .batchText {
     font-size: 13px;
-    color: #6b6660;
+    color: var(--color-ink-batch);
     margin-right: auto;
     font-weight: 500;
 
     strong {
-        color: @accent;
+        color: var(--color-accent);
         font-size: 15px;
         margin: 0 2px;
     }
@@ -200,16 +190,16 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
-    color: @ink-muted;
-    border: 1px solid @border-table;
+    color: var(--color-ink-muted);
+    border: 1px solid var(--color-border-table);
     background: @white;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-        color: @accent;
-        border-color: @accent;
-        background: rgba(212, 168, 76, 0.05);
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+        background: rgba(var(--color-accent-rgb), 0.05);
     }
 }
 
@@ -221,15 +211,15 @@
     font-size: 13px;
     font-weight: 500;
     color: @white;
-    background: linear-gradient(135deg, @accent, #c49a3e);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-deep));
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(212, 168, 76, 0.25);
+    box-shadow: 0 2px 8px rgba(var(--color-accent-rgb), 0.25);
 
     &:hover {
-        background: linear-gradient(135deg, #e0b860, @accent);
-        box-shadow: 0 3px 12px rgba(212, 168, 76, 0.35);
+        background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent));
+        box-shadow: 0 3px 12px rgba(var(--color-accent-rgb), 0.35);
     }
 }
 
@@ -255,33 +245,33 @@
     border-radius: 10px;
     font-size: 13px;
     font-weight: 500;
-    color: @ink-secondary;
+    color: var(--color-ink-secondary);
     background: @white;
-    border: 1.5px solid @border-table;
+    border: 1.5px solid var(--color-border-table);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
     white-space: nowrap;
 
     &:hover {
-        border-color: @accent !important;
-        box-shadow: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
-        color: @ink !important;
+        border-color: var(--color-accent) !important;
+        box-shadow: 0 4px 24px rgba(var(--color-accent-rgb), 0.18), 0 0 0 1px rgba(var(--color-accent-rgb), 0.22);
+        color: var(--color-ink) !important;
         transform: translateY(-1px);
-        background: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, @white 100%);
+        background: linear-gradient(180deg, rgba(var(--color-accent-rgb), 0.05) 0%, @white 100%);
     }
 
     svg {
         width: 16px;
         height: 16px;
-        color: @ink-muted;
+        color: var(--color-ink-muted);
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 
     &:hover svg {
-        color: @accent;
+        color: var(--color-accent);
         transform: scale(1.1);
-        filter: drop-shadow(0 1px 3px rgba(212, 168, 76, 0.3));
+        filter: drop-shadow(0 1px 3px rgba(var(--color-accent-rgb), 0.3));
     }
 }
 
@@ -306,23 +296,23 @@
 }
 
 .typeDoc {
-    background: rgba(212, 168, 76, 0.1);
-    svg { color: #d4a84c; }
+    background: rgba(var(--color-accent-rgb), 0.1);
+    svg { color: var(--color-accent); }
 }
 
 .typeFolder {
     background: rgba(180, 160, 120, 0.1);
-    svg { color: #b4a078; }
+    svg { color: var(--color-type-folder-icon); }
 }
 
 .typeExcel {
     background: rgba(196, 154, 62, 0.1);
-    svg { color: #c49a3e; }
+    svg { color: var(--color-accent-deep); }
 }
 
 .typeFile {
-    background: rgba(212, 168, 76, 0.06);
-    svg { color: #b4a078; }
+    background: rgba(var(--color-accent-rgb), 0.06);
+    svg { color: var(--color-type-folder-icon); }
 }
 
 // ============================================================
@@ -344,8 +334,8 @@
 }
 
 .permissionEdit {
-    background: rgba(212, 168, 76, 0.08);
-    color: #c49a3e;
+    background: rgba(var(--color-accent-rgb), 0.08);
+    color: var(--color-accent-deep);
 }
 
 .permissionView {
@@ -364,13 +354,13 @@
     height: 32px;
     border-radius: 8px;
     cursor: pointer;
-    color: @ink-muted;
+    color: var(--color-ink-muted);
     transition: all 0.2s ease;
     font-size: 16px;
 
     &:hover {
-        background: rgba(212, 168, 76, 0.1);
-        color: @accent;
+        background: rgba(var(--color-accent-rgb), 0.1);
+        color: var(--color-accent);
     }
 }
 
@@ -390,11 +380,11 @@
     :global(.ant-dropdown-menu) {
         padding: 8px;
         border-radius: 14px;
-        border: 1px solid @border-table;
+        border: 1px solid var(--color-border-table);
         box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.08),
             0 0 0 1px rgba(0, 0, 0, 0.03);
-        background: linear-gradient(165deg, #fdfaf5 0%, #fefefc 100%);
+        background: linear-gradient(165deg, var(--color-table-header-bg-start) 0%, #fefefc 100%);
         min-width: 148px;
     }
 
@@ -404,21 +394,21 @@
         padding: 9px 14px;
         margin: 2px 0;
         font-size: 0;
-        color: #6b6660;
+        color: var(--color-ink-batch);
         transition: all 0.2s ease;
 
         &:hover {
-            background: linear-gradient(135deg, rgba(212, 168, 76, 0.12), rgba(212, 168, 76, 0.06));
-            color: #c49a3e;
+            background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.12), rgba(var(--color-accent-rgb), 0.06));
+            color: var(--color-accent-deep);
 
-            :global(.anticon) { color: #c49a3e; }
-            .menuItemLabel { color: #c49a3e; }
+            :global(.anticon) { color: var(--color-accent-deep); }
+            .menuItemLabel { color: var(--color-accent-deep); }
         }
 
         :global(.anticon) {
             font-size: 15px;
             margin-right: 10px;
-            color: #a89a7e;
+            color: var(--color-icon-default);
             transition: all 0.2s ease;
             vertical-align: -2px;
         }
@@ -427,7 +417,7 @@
     // 分割线
     :global(.ant-dropdown-menu-item-divider) {
         margin: 6px 10px;
-        border-color: @border-table;
+        border-color: var(--color-border-table);
     }
 }
 
@@ -436,7 +426,7 @@
 // ============================================================
 .pinnedRow {
     td {
-        background: rgba(212, 168, 76, 0.04) !important;
+        background: rgba(var(--color-accent-rgb), 0.04) !important;
     }
 
     td:first-child {
@@ -450,7 +440,7 @@
             bottom: 10px;
             width: 3px;
             border-radius: 0 2px 2px 0;
-            background: @accent;
+            background: var(--color-accent);
         }
     }
 }

@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import { previewFile } from '@/apis/file'
 import { getFileType } from '@/utils/fileType'
 import { useMessage } from '@/hooks/useMessage'
-import style from './index.module.css'
+import style from './index.module.less'
 
 const Preview = () => {
     const [searchParams] = useSearchParams()

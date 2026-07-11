@@ -1,3 +1,4 @@
+import '#theme-css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import router from './router/index'
@@ -6,6 +7,16 @@ import { Provider } from 'react-redux'
 import store from './store'
 import 'normalize.css'
 import './styles/tokens.css'
+import themeConfig from '#theme'
+
+// Set document title and favicon from theme config
+document.title = themeConfig.htmlTitle
+const faviconLink = document.querySelector('link[rel="icon"]') || document.createElement('link')
+faviconLink.rel = 'icon'
+faviconLink.href = themeConfig.faviconPath
+if (!document.querySelector('link[rel="icon"]')) {
+    document.head.appendChild(faviconLink)
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <Provider store={store}>

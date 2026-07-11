@@ -9,7 +9,7 @@ import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delet
 import { downloadSingle, downloadBatch } from '@/utils/download'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
-import style from './index.module.css'
+import style from './index.module.less'
 
 /**
  * FileList 视图
@@ -496,15 +496,15 @@ const FileList = () => {
         <>
             <style>{`
                 .ant-checkbox-checked .ant-checkbox-inner {
-                    background-color: #d4a84c !important;
-                    border-color: #d4a84c !important;
+                    background-color: var(--color-accent) !important;
+                    border-color: var(--color-accent) !important;
                 }
                 .ant-checkbox-wrapper:hover .ant-checkbox-inner,
                 .ant-checkbox:hover .ant-checkbox-inner {
-                    border-color: #d4a84c !important;
+                    border-color: var(--color-accent) !important;
                 }
                 .ant-checkbox-inner {
-                    border-color: #c5c0b5 !important;
+                    border-color: var(--color-icon-sep) !important;
                 }
             `}</style>
             {contextHolder}

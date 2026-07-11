@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage';
 import { addContent } from '@/apis/content';
 import TiptapEditor from '@/components/TiptapEditor'
-import style from './index.module.css'
+import style from './index.module.less'
 
 const { Content } = Layout
 

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FileAddOutlined, FileExcelOutlined, FileMarkdownOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { addFolder } from '@/apis/folder';
 import { useMessage } from '@/hooks/useMessage';
-import style from './index.module.css'
+import style from './index.module.less'
 
 const AddNewFile = ({ className }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)

@@ -4,7 +4,7 @@ import { CloudUploadOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
 import { uploadFilesBatch, uploadFile } from '@/apis/file'
-import style from './index.module.css'
+import style from './index.module.less'
 
 export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, className }) => {
     const { success, error, contextHolder } = useMessage()
@@ -197,7 +197,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
                 okButtonProps={{ disabled: selectedFiles.length === 0 }}
             >
                 <div>
-                    <p>您将要上传 <strong style={{ color: '#d4a84c' }}>{selectedFiles.length}</strong> 个文件：</p>
+                    <p>您将要上传 <strong style={{ color: 'var(--color-accent)' }}>{selectedFiles.length}</strong> 个文件：</p>
                     <div className={style.modalFileList}>
                         {selectedFiles.map(file => (
                             <div key={file.uid} className={style.modalFileItem}>

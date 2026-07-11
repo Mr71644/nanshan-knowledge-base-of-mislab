@@ -8,7 +8,7 @@ import { useMessage } from '@/hooks/useMessage';
 import { convertToExcelFormat } from '@/utils';
 import { addExcel } from '@/apis/excel';
 import { getCommonFileList, queryCommonFileList } from '@/apis/file';
-import style from './index.module.css'
+import style from './index.module.less'
 
 const buildFileTreeData = (list = []) => {
     return (Array.isArray(list) ? list : [])

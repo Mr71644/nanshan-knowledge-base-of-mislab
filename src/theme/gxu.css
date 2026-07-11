@@ -1,0 +1,158 @@
+/* ============================================================
+   甘蔗育种中心-ZhangLab (GXU)  |  绿色自然调
+   ============================================================ */
+
+:root {
+  /* ---- Core accent ---- */
+  --color-accent: #5e963c;
+  --color-accent-hover: #72b04a;
+  --color-accent-deep: #4c7a2e;
+  --color-accent-rgb: 94, 150, 60;
+  --color-accent-deep-rgb: 76, 122, 46;
+  --color-accent-hover-rgb: 114, 176, 74;
+
+  /* ---- Accent alpha variants ---- */
+  --color-accent-02: rgba(94, 150, 60, 0.02);
+  --color-accent-03: rgba(94, 150, 60, 0.03);
+  --color-accent-04: rgba(94, 150, 60, 0.04);
+  --color-accent-05: rgba(94, 150, 60, 0.05);
+  --color-accent-06: rgba(94, 150, 60, 0.06);
+  --color-accent-07: rgba(94, 150, 60, 0.07);
+  --color-accent-08: rgba(94, 150, 60, 0.08);
+  --color-accent-10: rgba(94, 150, 60, 0.10);
+  --color-accent-12: rgba(94, 150, 60, 0.12);
+  --color-accent-14: rgba(94, 150, 60, 0.14);
+  --color-accent-16: rgba(94, 150, 60, 0.16);
+  --color-accent-18: rgba(94, 150, 60, 0.18);
+  --color-accent-20: rgba(94, 150, 60, 0.20);
+  --color-accent-22: rgba(94, 150, 60, 0.22);
+  --color-accent-25: rgba(94, 150, 60, 0.25);
+  --color-accent-30: rgba(94, 150, 60, 0.30);
+  --color-accent-32: rgba(94, 150, 60, 0.32);
+  --color-accent-35: rgba(94, 150, 60, 0.35);
+  --color-accent-40: rgba(94, 150, 60, 0.40);
+
+  /* ---- Background colors ---- */
+  --color-page-bg: #f0f3ed;
+  --color-sider-bg-start: #eaf1e4;
+  --color-sider-bg-mid: #eaf1e4;
+  --color-card-bg: #f8fcf6;
+  --color-search-bg: #f6faf4;
+  --color-table-header-bg-start: #f4faf0;
+
+  /* ---- Border colors ---- */
+  --color-border-light: #d8e4d0;
+  --color-border-card: #dce4d4;
+  --color-border-table: #dce4d4;
+  --color-border-muted: #b0c4a8;
+  --color-border-sider: #d4e0cc;
+  --color-border-search: #d0dcc8;
+  --color-border-logout: #b0c8a0;
+
+  /* ---- Text / ink colors ---- */
+  --color-ink: #1a1a1a;
+  --color-ink-secondary: #555555;
+  --color-ink-muted: #8c8c8c;
+  --color-ink-tree: #3d5232;
+  --color-ink-tree-selected: #1a2e10;
+  --color-ink-search: #2a3e18;
+  --color-ink-batch: #4a5440;
+  --color-ink-logo: #122008;
+  --color-ink-logo-login: #2c2c2c;
+
+  /* ---- Icon / neutral colors ---- */
+  --color-icon-default: #7a9670;
+  --color-icon-sub: #8ca480;
+  --color-icon-search: #a0c498;
+  --color-icon-sep: #b0c4a8;
+  --color-icon-logo-sub: #6e8a60;
+
+  /* ---- Type badges ---- */
+  --color-type-doc-bg: rgba(94, 150, 60, 0.1);
+  --color-type-doc-icon: #5e963c;
+  --color-type-folder-bg: rgba(180, 160, 120, 0.1);
+  --color-type-folder-icon: #82a060;
+  --color-type-excel-bg: rgba(196, 154, 62, 0.1);
+  --color-type-excel-icon: #4c7a2e;
+  --color-type-file-bg: rgba(94, 150, 60, 0.06);
+  --color-type-file-icon: #82a060;
+
+  /* ---- Permission badges ---- */
+  --color-permission-edit-bg: rgba(94, 150, 60, 0.08);
+  --color-permission-edit-text: #4c7a2e;
+
+  /* ---- Gradient composites ---- */
+  --gradient-accent: linear-gradient(135deg, #5e963c, #4c7a2e);
+  --gradient-accent-hover: linear-gradient(135deg, #72b04a, #5e963c);
+  --gradient-accent-90: linear-gradient(90deg, #5e963c, #4c7a2e);
+  --gradient-logo-text: linear-gradient(135deg, #1a2e10 0%, #3a5e28 100%);
+  --gradient-sider: linear-gradient(175deg, #eaf1e4 0%, #eaf1e4 30%, #ffffff 100%);
+  --gradient-logo-header: linear-gradient(180deg, #eaf1e4 0%, rgba(249, 244, 234, 0.92) 100%);
+  --gradient-table-header: linear-gradient(180deg, #f4faf0, transparent);
+  --gradient-dropdown: linear-gradient(165deg, #f4faf0 0%, #f8fcf6 100%);
+  --gradient-row-hover: linear-gradient(90deg, rgba(94, 150, 60, 0.06), rgba(94, 150, 60, 0.02));
+  --gradient-tree-selected: linear-gradient(90deg, rgba(94, 150, 60, 0.1), rgba(94, 150, 60, 0.03));
+  --gradient-batch-bar: linear-gradient(90deg, rgba(94, 150, 60, 0.1), rgba(94, 150, 60, 0.03) 80%);
+  --gradient-menu-item-hover: linear-gradient(135deg, rgba(94, 150, 60, 0.12), rgba(94, 150, 60, 0.06));
+  --gradient-btn-hover-bg: linear-gradient(180deg, rgba(94, 150, 60, 0.05) 0%, #ffffff 100%);
+  --gradient-modal-icon: linear-gradient(135deg, rgba(94, 150, 60, 0.15), rgba(94, 150, 60, 0.06));
+  --gradient-resize-handle: rgba(94, 150, 60, 0.3);
+
+  /* ---- Shadows ---- */
+  --shadow-btn: 0 2px 8px rgba(94, 150, 60, 0.22);
+  --shadow-btn-hover: 0 4px 16px rgba(94, 150, 60, 0.35);
+  --shadow-user-hover: 0 2px 16px rgba(94, 150, 60, 0.16);
+  --shadow-action-hover: 0 4px 24px rgba(94, 150, 60, 0.18), 0 0 0 1px rgba(94, 150, 60, 0.22);
+  --shadow-modal-icon: 0 4px 12px rgba(94, 150, 60, 0.25);
+  --shadow-confirm-btn: 0 2px 8px rgba(94, 150, 60, 0.25);
+  --shadow-confirm-btn-hover: 0 3px 12px rgba(94, 150, 60, 0.35);
+  --shadow-dropdown: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  --shadow-card-lg: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  --shadow-float-btn: 0 4px 16px rgba(94, 150, 60, 0.3);
+  --shadow-float-btn-hover: 0 6px 24px rgba(94, 150, 60, 0.4);
+
+  /* ---- Scrollbar ---- */
+  --color-scrollbar: rgba(94, 150, 60, 0.2);
+  --color-scrollbar-hover: rgba(94, 150, 60, 0.4);
+  --color-scrollbar-table: rgba(94, 150, 60, 0.18);
+  --color-scrollbar-table-hover: rgba(94, 150, 60, 0.3);
+
+  /* ---- Misc ---- */
+  --color-avatar-bg: #5e963c;
+  --color-pinned-row-bg: rgba(94, 150, 60, 0.04);
+  --color-pinned-bar: #5e963c;
+  --color-search-highlight: rgba(94, 150, 60, 0.32);
+  --color-empty-path: rgba(94, 150, 60, 0.2);
+  --color-empty-ellipse: rgba(94, 150, 60, 0.03);
+  --color-notification-border: #5e963c;
+
+  /* ---- Login-specific (gxu uses Material Design green) ---- */
+  --color-login-accent: #388e3c;
+  --color-login-accent-hover: #43a047;
+  --color-login-accent-deep: #2e7d32;
+  --color-login-accent-rgb: 56, 142, 60;
+  --color-login-input-border-hover: rgba(56, 142, 60, 0.25);
+  --color-login-ring: rgba(56, 142, 60, 0.16);
+  --color-login-glass-border-hover: rgba(56, 142, 60, 0.18);
+  --color-login-step-line: rgba(56, 142, 60, 0.10);
+  --color-login-step-active-ring: rgba(56, 142, 60, 0.16);
+
+  /* ---- Login gradient/shadow overrides ---- */
+  --gradient-login-btn: linear-gradient(135deg, #388e3c, #2e7d32);
+  --gradient-login-btn-hover: linear-gradient(135deg, #43a047, #388e3c);
+  --gradient-login-step-line: linear-gradient(90deg, #388e3c, #43a047);
+  --shadow-login-btn: 0 2px 10px rgba(56, 142, 60, 0.20);
+  --shadow-login-btn-hover: 0 4px 20px rgba(56, 142, 60, 0.32);
+  --shadow-login-btn-active: 0 1px 4px rgba(56, 142, 60, 0.14);
+  --shadow-login-step-done: 0 2px 8px rgba(56, 142, 60, 0.25);
+
+  /* ---- Login logo layout (gxu: flat title, no divider) ---- */
+  --login-logo-title-font-size: 22px;
+  --login-logo-title-font-weight: 700;
+  --login-logo-title-bg: none;
+  --login-logo-title-bg-clip: unset;
+  --login-logo-title-text-fill: unset;
+  --login-logo-divider-display: none;
+  --login-logo-sub-margin-top: 6px;
+}

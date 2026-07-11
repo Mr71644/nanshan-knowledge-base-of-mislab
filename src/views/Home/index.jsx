@@ -13,7 +13,8 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
 import { UploadFile } from '@/components/UploadFile';
 import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
-import style from './index.module.css'
+import style from './index.module.less'
+import themeConfig from '#theme'
 import { useSelector, useDispatch } from 'react-redux';
 import { request } from '@/utils';  // 页面开始前初始化store，不可删，需要在引入store前引入
 import { showMessage } from '@/store/modules/message';
@@ -592,7 +593,7 @@ const Home = () => {
                 cancelText="取消"
                 okButtonProps={{
                     style: {
-                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
+                        background: 'var(--gradient-accent)',
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 500,
@@ -684,9 +685,7 @@ const Home = () => {
                 </Form>
             </Modal>
             <ConfigProvider
-                theme={{
-                    token: { colorPrimary: '#d4a84c' },
-                }}
+                theme={themeConfig.antdTheme}
             >
             <Sider
                 width={siderWidth}
@@ -705,12 +704,12 @@ const Home = () => {
                 <div className={style.logo}>
                     {collapsed ? <CloudOutlined style={{
                         fontSize: '25px',
-                        color: '#d4a84c'
+                        color: 'var(--color-accent)'
                     }} /> : (
                         <div className={style.logoInner}>
-                            <div className={style.logoTitle}>知邮南山</div>
+                            <div className={style.logoTitle}>{themeConfig.brand.name}</div>
                             <div className={style.logoDivider} />
-                            <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
+                            <div className={style.logoSub}>{themeConfig.brand.subtitle}</div>
                         </div>
                     )}
                 </div>
@@ -768,7 +767,7 @@ const Home = () => {
             <Layout
                 style={{
                     padding: '0 var(--layout-padding) 0',
-                    background: '#faf7f2',
+                    background: 'var(--color-page-bg)',
                 }}
             >
                 <Content
@@ -804,7 +803,7 @@ const Home = () => {
                             <Avatar
                                 size={36}
                                 style={{
-                                    backgroundColor: '#d4a84c',
+                                    backgroundColor: 'var(--color-avatar-bg)',
                                     flexShrink: 0,
                                     fontSize: 16,
                                     fontWeight: 600,
@@ -830,15 +829,7 @@ const Home = () => {
                         wave={{
                             disabled: true,
                         }}
-                        theme={{
-                            components: {
-                                Checkbox: {
-                                    colorPrimary: '#d4a84c',
-                                    colorPrimaryHover: '#c49a3e',
-                                    colorBorder: '#c5c0b5',
-                                },
-                            },
-                        }}
+                        theme={themeConfig.antdTheme}
                     >
                         <div data-impeccable-variants="59ef42c8" data-impeccable-variant-count="3" style={{ display: "contents" }}>
                           {/* impeccable-variants-start 59ef42c8 */}

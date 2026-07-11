@@ -8,7 +8,8 @@ import { LockOutlined, UserOutlined, MailOutlined, SafetyOutlined, CheckOutlined
 import { getCaptcha } from "@/apis/captcha";
 import { sendResetCode, resetPassword } from "@/apis/user";
 import BG from "@/utils/BG";
-import style from "./index.module.css";
+import style from "./index.module.less";
+import themeConfig from '#theme'
 import { showMessage } from "@/store/modules/message";
 
 // 步骤指示器
@@ -194,9 +195,9 @@ const Login = () => {
             <div className={style.login}>
                 <Card className={style.loginCard}>
                     <div className={style.logo}>
-                        <div className={style.logoTitle}>知邮南山</div>
+                        <div className={style.logoTitle}>{themeConfig.brand.name}</div>
                         <div className={style.logoDivider} />
-                        <div className={style.logoSub}>MISLab · 重庆邮电大学经济管理学院</div>
+                        <div className={style.logoSub}>{themeConfig.brand.subtitle}</div>
                     </div>
 
                     {/* ========== 登录模式 ========== */}

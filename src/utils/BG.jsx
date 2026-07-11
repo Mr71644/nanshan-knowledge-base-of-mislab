@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react'
+import themeConfig from '#theme'
 
 export default function BG() {
 
     useEffect(() => {
+        const bgTheme = themeConfig.bg;
         (function (name, factory) {
             if (typeof window === "object") {
                 window[name] = factory();
@@ -88,9 +90,9 @@ export default function BG() {
                 this._scroll = 0;
                 this._ribbons = [];
                 this._options = {
-                    colorSaturation: "55%",
-                    colorBrightness: "52%",
-                    colorAlpha: 0.30,
+                    colorSaturation: bgTheme.colorSaturation,
+                    colorBrightness: bgTheme.colorBrightness,
+                    colorAlpha: bgTheme.colorAlpha,
                     colorCycleSpeed: 0,
                     verticalPosition: "center",
                     horizontalSpeed: 150,
@@ -128,16 +130,14 @@ export default function BG() {
                         this._canvas.style["width"] = "100%";
                         this._canvas.style["height"] = "100%";
                         this._canvas.style["z-index"] = "-1";
-                        this._canvas.style["background-color"] = "#faf7f2";
+                        this._canvas.style["background-color"] = bgTheme.backgroundColor;
                         this._canvas.id = "bgCanvas";
                         this._onResize();
                         this._context = this._canvas.getContext("2d");
                         this._context.clearRect(0, 0, this._width, this._height);
                         this._context.globalAlpha = this._options.colorAlpha;
-                        // 这里可以设置是否随着窗口的滚动而滚动
                         window.addEventListener("resize", this._onResize);
                         window.addEventListener("scroll", this._onScroll);
-                        // 这里设置添加的位置
                         var body_ = document.getElementsByTagName('body')[0];
                         body_.appendChild(this._canvas);
                     } catch (e) {
@@ -157,8 +157,7 @@ export default function BG() {
                         starty = this._height - hide;
                     }
                     var ribbon = [], point1 = new Point(startx, starty), point2 = new Point(startx, starty), point3 = null,
-                        // 铜金色盘：经管温度
-                        huePalette = [32, 36, 38, 42, 45, 48],
+                        huePalette = bgTheme.huePalette,
                         color = huePalette[Math.floor(random(0, huePalette.length - 1))],
                         delay = 0;
                     let T = true

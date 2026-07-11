@@ -1,0 +1,158 @@
+/* ============================================================
+   重庆邮电大学经济管理学院 (CQUPT)  |  铜金暖色调
+   ============================================================ */
+
+:root {
+  /* ---- Core accent ---- */
+  --color-accent: #d4a84c;
+  --color-accent-hover: #e0b860;
+  --color-accent-deep: #c49a3e;
+  --color-accent-rgb: 212, 168, 76;
+  --color-accent-deep-rgb: 196, 154, 62;
+  --color-accent-hover-rgb: 224, 184, 96;
+
+  /* ---- Accent alpha variants ---- */
+  --color-accent-02: rgba(212, 168, 76, 0.02);
+  --color-accent-03: rgba(212, 168, 76, 0.03);
+  --color-accent-04: rgba(212, 168, 76, 0.04);
+  --color-accent-05: rgba(212, 168, 76, 0.05);
+  --color-accent-06: rgba(212, 168, 76, 0.06);
+  --color-accent-07: rgba(212, 168, 76, 0.07);
+  --color-accent-08: rgba(212, 168, 76, 0.08);
+  --color-accent-10: rgba(212, 168, 76, 0.10);
+  --color-accent-12: rgba(212, 168, 76, 0.12);
+  --color-accent-14: rgba(212, 168, 76, 0.14);
+  --color-accent-16: rgba(212, 168, 76, 0.16);
+  --color-accent-18: rgba(212, 168, 76, 0.18);
+  --color-accent-20: rgba(212, 168, 76, 0.20);
+  --color-accent-22: rgba(212, 168, 76, 0.22);
+  --color-accent-25: rgba(212, 168, 76, 0.25);
+  --color-accent-30: rgba(212, 168, 76, 0.30);
+  --color-accent-32: rgba(212, 168, 76, 0.32);
+  --color-accent-35: rgba(212, 168, 76, 0.35);
+  --color-accent-40: rgba(212, 168, 76, 0.40);
+
+  /* ---- Background colors ---- */
+  --color-page-bg: #faf7f2;
+  --color-sider-bg-start: #f9f4ea;
+  --color-sider-bg-mid: #f5efe2;
+  --color-card-bg: #fefdf9;
+  --color-search-bg: #fdfcf8;
+  --color-table-header-bg-start: #fdfaf5;
+
+  /* ---- Border colors ---- */
+  --color-border-light: #f0ebe0;
+  --color-border-card: #ede7db;
+  --color-border-table: #ede7db;
+  --color-border-muted: #c5c0b5;
+  --color-border-sider: #ede5d5;
+  --color-border-search: #e8dfcf;
+  --color-border-logout: #d9cebc;
+
+  /* ---- Text / ink colors ---- */
+  --color-ink: #1a1a1a;
+  --color-ink-secondary: #555555;
+  --color-ink-muted: #8c8c8c;
+  --color-ink-tree: #5c5346;
+  --color-ink-tree-selected: #2d2416;
+  --color-ink-search: #4a3f2e;
+  --color-ink-batch: #6b6660;
+  --color-ink-logo: #1f180e;
+  --color-ink-logo-login: #2c2c2c;
+
+  /* ---- Icon / neutral colors ---- */
+  --color-icon-default: #a89a7e;
+  --color-icon-sub: #b0a590;
+  --color-icon-search: #c5b898;
+  --color-icon-sep: #c5c0b5;
+  --color-icon-logo-sub: #9a8b72;
+
+  /* ---- Type badges ---- */
+  --color-type-doc-bg: rgba(212, 168, 76, 0.1);
+  --color-type-doc-icon: #d4a84c;
+  --color-type-folder-bg: rgba(180, 160, 120, 0.1);
+  --color-type-folder-icon: #b4a078;
+  --color-type-excel-bg: rgba(196, 154, 62, 0.1);
+  --color-type-excel-icon: #c49a3e;
+  --color-type-file-bg: rgba(212, 168, 76, 0.06);
+  --color-type-file-icon: #b4a078;
+
+  /* ---- Permission badges ---- */
+  --color-permission-edit-bg: rgba(212, 168, 76, 0.08);
+  --color-permission-edit-text: #c49a3e;
+
+  /* ---- Gradient composites ---- */
+  --gradient-accent: linear-gradient(135deg, #d4a84c, #c49a3e);
+  --gradient-accent-hover: linear-gradient(135deg, #e0b860, #d4a84c);
+  --gradient-accent-90: linear-gradient(90deg, #d4a84c, #c49a3e);
+  --gradient-logo-text: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+  --gradient-sider: linear-gradient(175deg, #f9f4ea 0%, #f5efe2 30%, #ffffff 100%);
+  --gradient-logo-header: linear-gradient(180deg, #f9f4ea 0%, rgba(249, 244, 234, 0.92) 100%);
+  --gradient-table-header: linear-gradient(180deg, #fdfaf5, transparent);
+  --gradient-dropdown: linear-gradient(165deg, #fdfaf5 0%, #fefefc 100%);
+  --gradient-row-hover: linear-gradient(90deg, rgba(212, 168, 76, 0.06), rgba(212, 168, 76, 0.02));
+  --gradient-tree-selected: linear-gradient(90deg, rgba(212, 168, 76, 0.1), rgba(212, 168, 76, 0.03));
+  --gradient-batch-bar: linear-gradient(90deg, rgba(212, 168, 76, 0.1), rgba(212, 168, 76, 0.03) 80%);
+  --gradient-menu-item-hover: linear-gradient(135deg, rgba(212, 168, 76, 0.12), rgba(212, 168, 76, 0.06));
+  --gradient-btn-hover-bg: linear-gradient(180deg, rgba(212, 168, 76, 0.05) 0%, #ffffff 100%);
+  --gradient-modal-icon: linear-gradient(135deg, rgba(212, 168, 76, 0.15), rgba(212, 168, 76, 0.06));
+  --gradient-resize-handle: rgba(212, 168, 76, 0.3);
+
+  /* ---- Shadows ---- */
+  --shadow-btn: 0 2px 8px rgba(212, 168, 76, 0.22);
+  --shadow-btn-hover: 0 4px 16px rgba(212, 168, 76, 0.35);
+  --shadow-user-hover: 0 2px 16px rgba(212, 168, 76, 0.16);
+  --shadow-action-hover: 0 4px 24px rgba(212, 168, 76, 0.18), 0 0 0 1px rgba(212, 168, 76, 0.22);
+  --shadow-modal-icon: 0 4px 12px rgba(212, 168, 76, 0.25);
+  --shadow-confirm-btn: 0 2px 8px rgba(212, 168, 76, 0.25);
+  --shadow-confirm-btn-hover: 0 3px 12px rgba(212, 168, 76, 0.35);
+  --shadow-dropdown: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  --shadow-card-lg: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  --shadow-float-btn: 0 4px 16px rgba(212, 168, 76, 0.3);
+  --shadow-float-btn-hover: 0 6px 24px rgba(212, 168, 76, 0.4);
+
+  /* ---- Scrollbar ---- */
+  --color-scrollbar: rgba(212, 168, 76, 0.2);
+  --color-scrollbar-hover: rgba(212, 168, 76, 0.4);
+  --color-scrollbar-table: rgba(212, 168, 76, 0.18);
+  --color-scrollbar-table-hover: rgba(212, 168, 76, 0.3);
+
+  /* ---- Misc ---- */
+  --color-avatar-bg: #d4a84c;
+  --color-pinned-row-bg: rgba(212, 168, 76, 0.04);
+  --color-pinned-bar: #d4a84c;
+  --color-search-highlight: rgba(212, 168, 76, 0.32);
+  --color-empty-path: rgba(212, 168, 76, 0.2);
+  --color-empty-ellipse: rgba(212, 168, 76, 0.03);
+  --color-notification-border: #d4a84c;
+
+  /* ---- Login-specific (cqupt uses same accent) ---- */
+  --color-login-accent: #d4a84c;
+  --color-login-accent-hover: #e0b860;
+  --color-login-accent-deep: #c49a3e;
+  --color-login-accent-rgb: 212, 168, 76;
+  --color-login-input-border-hover: rgba(212, 168, 76, 0.25);
+  --color-login-ring: rgba(212, 168, 76, 0.16);
+  --color-login-glass-border-hover: rgba(212, 168, 76, 0.18);
+  --color-login-step-line: rgba(212, 168, 76, 0.10);
+  --color-login-step-active-ring: rgba(212, 168, 76, 0.16);
+
+  /* ---- Login gradient/shadow overrides ---- */
+  --gradient-login-btn: linear-gradient(135deg, #d4a84c, #c49a3e);
+  --gradient-login-btn-hover: linear-gradient(135deg, #e0b860, #d4a84c);
+  --gradient-login-step-line: linear-gradient(90deg, #d4a84c, #e0b860);
+  --shadow-login-btn: 0 2px 10px rgba(212, 168, 76, 0.20);
+  --shadow-login-btn-hover: 0 4px 20px rgba(212, 168, 76, 0.32);
+  --shadow-login-btn-active: 0 1px 4px rgba(212, 168, 76, 0.14);
+  --shadow-login-step-done: 0 2px 8px rgba(212, 168, 76, 0.25);
+
+  /* ---- Login logo layout (cqupt: gradient title + divider) ---- */
+  --login-logo-title-font-size: 28px;
+  --login-logo-title-font-weight: 800;
+  --login-logo-title-bg: linear-gradient(135deg, #2d2416 0%, #6b5740 100%);
+  --login-logo-title-bg-clip: text;
+  --login-logo-title-text-fill: transparent;
+  --login-logo-divider-display: block;
+  --login-logo-sub-margin-top: 0;
+}

@@ -15,7 +15,7 @@ import { useMessage } from '@/hooks/useMessage';
 import { getExcelDetail, updateExcel } from '@/apis/excel';
 import { getCommonFileList, queryCommonFileList } from '@/apis/file';
 import { convertToExcelFormat } from '@/utils';
-import style from './index.module.css'
+import style from './index.module.less'
 
 const buildFileTreeData = (list = []) => {
     return (Array.isArray(list) ? list : [])

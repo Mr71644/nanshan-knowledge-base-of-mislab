@@ -6,7 +6,7 @@ import { getRecycleBinList, restoreRecycleBinItems, purgeRecycleBinItems } from 
 import { getFolderTree } from '@/apis/folder';
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
-import style from './index.module.css'
+import style from './index.module.less'
 
 const typeOptions = [
     { label: '全部类型', value: undefined },

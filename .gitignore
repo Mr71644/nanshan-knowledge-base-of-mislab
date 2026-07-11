@@ -27,3 +27,11 @@ docs/personal/*
 *.njsproj
 *.sln
 *.sw?
+
+# Compiled CSS modules (generated from .module.less by Vite at build time)
+# Files without .less sources (ChatInput, TiptapEditor) are NOT gitignored
+src/views/*/index.module.css
+src/components/AddNewFile/index.module.css
+src/components/RecycleBin/index.module.css
+src/components/UploadFile/index.module.css
+src/components/UniverSheet/index.module.css

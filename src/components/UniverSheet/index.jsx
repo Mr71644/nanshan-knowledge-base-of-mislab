@@ -2,7 +2,7 @@ import '@univerjs/preset-sheets-core/lib/index.css';
 import '@univerjs/preset-sheets-hyper-link/lib/index.css';
 import '@univerjs/find-replace/lib/index.css';
 import '@univerjs/preset-sheets-filter/lib/index.css';
-import style from './index.module.css';
+import style from './index.module.less';
 
 import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';

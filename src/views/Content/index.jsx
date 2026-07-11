@@ -6,7 +6,7 @@ import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
 import TiptapEditor from '@/components/TiptapEditor'
-import style from './index.module.css'
+import style from './index.module.less'
 
 const { Content } = Layout
 
