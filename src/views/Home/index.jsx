@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, FloatButton, Tooltip, Button, notification, Modal, Form, Input } from 'antd';
+import { Layout, Tree, theme, Breadcrumb, Space, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
 import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
@@ -132,18 +132,14 @@ const Home = () => {
     const [api, contextHolderNotification] = notification.useNotification({
         maxCount: 1
     })
+    const [exitModalOpen, setExitModalOpen] = useState(false);
     const exit = () => {
-        Modal.confirm({
-            title: '确认退出',
-            content: '确定要退出登录吗？',
-            okText: '确认',
-            cancelText: '取消',
-            onOk: () => {
-                dispatch(showMessage({ message: '退出成功', type: 'success' }))
-                dispatch(clearUserInfo())
-                navigate('/login')
-            }
-        })
+        setExitModalOpen(true)
+    }
+    const handleExitConfirm = () => {
+        dispatch(showMessage({ message: '退出成功', type: 'success' }))
+        dispatch(clearUserInfo())
+        navigate('/login')
     }
     const handleOpenModal = () => {
         form.setFieldsValue({
@@ -586,6 +582,37 @@ const Home = () => {
             {contextHolder}
             {contextHolderNotification}
             <Modal
+                open={exitModalOpen}
+                onCancel={() => setExitModalOpen(false)}
+                onOk={handleExitConfirm}
+                okText="确认退出"
+                cancelText="取消"
+                okButtonProps={{
+                    style: {
+                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontWeight: 500,
+                    }
+                }}
+                cancelButtonProps={{
+                    style: { borderRadius: 8 }
+                }}
+                width={400}
+                centered
+                className={style.exitModal}
+            >
+                <div className={style.exitModalBody}>
+                    <div className={style.exitModalIcon}>
+                        <LogoutOutlined />
+                    </div>
+                    <div className={style.exitModalTitle}>确认退出登录</div>
+                    <div className={style.exitModalDesc}>
+                        退出后您将跳转至登录页面，<br />需要重新输入账号密码才能访问系统。
+                    </div>
+                </div>
+            </Modal>
+            <Modal
                 title="修改个人信息"
                 open={isModalOpen}
                 onCancel={handleCloseModal}
@@ -653,18 +680,6 @@ const Home = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-            <Tooltip title="退出登录" placement="left">
-                <FloatButton
-                    icon={<LogoutOutlined />}
-                    type='primary'
-                    onClick={exit}
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                        background: 'linear-gradient(135deg, #d4a84c, #c49a3e)',
-                    }}
-                />
-            </Tooltip>
             <Sider
                 width={siderWidth}
                 breakpoint="lg"
@@ -740,6 +755,7 @@ const Home = () => {
                         onMouseDown={handleResizeMouseDown}
                     />
                 )}
+                )}
             </Sider>
             <Layout
                 style={{
@@ -756,12 +772,39 @@ const Home = () => {
                         borderRadius: '12px',
                     }}
                 >
-                    <Breadcrumb separator=">" items={folderLayer}
-                        style={{
-                            fontSize: 'var(--breadcrumb-font-size)',
-                        }}
-                        className={style.breadcrumb}
-                    />
+                    <div className={style.topBar}>
+                        <Breadcrumb separator=">" items={folderLayer}
+                            style={{
+                                fontSize: 'var(--breadcrumb-font-size)',
+                            }}
+                            className={style.breadcrumb}
+                        />
+                        <div className={style.topBarUser}>
+                            <Avatar
+                                size={36}
+                                style={{
+                                    backgroundColor: '#d4a84c',
+                                    flexShrink: 0,
+                                    fontSize: 16,
+                                    fontWeight: 600,
+                                }}
+                            >
+                                {userInfo.username?.charAt(0)?.toUpperCase() || 'U'}
+                            </Avatar>
+                            <div className={style.topBarMeta}>
+                                <span className={style.topBarName}>{userInfo.username || '用户'}</span>
+                                <span className={style.topBarRole}>{userInfo.roleName?.join('、') || '—'}</span>
+                            </div>
+                            <Tooltip title="退出登录">
+                                <Button
+                                    type="text"
+                                    icon={<LogoutOutlined />}
+                                    onClick={exit}
+                                    className={style.topBarLogout}
+                                />
+                            </Tooltip>
+                        </div>
+                    </div>
                     <ConfigProvider
                         wave={{
                             disabled: true, // 全局禁用波纹效果

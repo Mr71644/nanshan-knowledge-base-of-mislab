@@ -324,6 +324,138 @@ body {
 }
 .resizeHandle:hover, .resizeHandle:active { background: rgba(212, 168, 76, 0.4); }
 
+/* === 顶栏 — 面包屑 + 用户 === */
+.topBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 16px;
+}
+
+.topBarUser {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px 5px 5px;
+    border-radius: 28px;
+    background: #fefdf9;
+    border: 1.5px solid #ede7db;
+    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+    flex-shrink: 0;
+    cursor: default;
+}
+.topBarUser:hover {
+    background: #ffffff;
+    border-color: #d4a84c;
+    box-shadow: 0 2px 16px rgba(212, 168, 76, 0.16);
+}
+
+.topBarMeta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    gap: 1px;
+}
+
+.topBarName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+.topBarRole {
+    font-size: 11px;
+    color: #8c8c8c;
+    white-space: nowrap;
+}
+
+.topBarLogout {
+    color: #b0b0b0 !important;
+    font-size: 18px !important;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.25s ease;
+}
+.topBarLogout:hover {
+    color: #d4a84c !important;
+    background: rgba(212, 168, 76, 0.1) !important;
+}
+
+/* === 退出确认弹窗 === */
+.exitModal .ant-modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.exitModal .ant-modal-header {
+    display: none !important;
+}
+
+.exitModalBody {
+    text-align: center;
+    padding: 8px 0 4px;
+}
+
+.exitModalIcon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(212, 168, 76, 0.15), rgba(212, 168, 76, 0.06));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exitModalIcon svg {
+    font-size: 28px;
+    color: #d4a84c;
+}
+
+.exitModalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.exitModalDesc {
+    font-size: 13px;
+    color: #8c8c8c;
+    line-height: 1.6;
+}
+
+.exitModal .ant-modal-footer {
+    border-top: 1px solid #f0ebe0;
+    padding: 14px 24px 18px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.exitModal .ant-modal-footer .ant-btn {
+    border-radius: 8px;
+    font-weight: 500;
+    height: 38px;
+    padding: 0 28px;
+    font-size: 14px;
+}
+
+.exitModal .ant-modal-footer .ant-btn-default {
+    border-color: #ede7db;
+    color: #555;
+}
+.exitModal .ant-modal-footer .ant-btn-default:hover {
+    border-color: #d4a84c;
+    color: #d4a84c;
+}
+
 /* === 操作按钮 tile 卡片 === */
 .actionButtons {
     display: flex;
