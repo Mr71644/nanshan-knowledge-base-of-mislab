@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useEffect } from 'react'
 import { theme, Layout, Form, Input, FloatButton, Spin, Tooltip } from 'antd'
-import { RollbackOutlined, CheckOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
+import { CheckOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage';
 import { addContent } from '@/apis/content';
@@ -63,17 +63,13 @@ const AddContent = () => {
             })
         }
     }
-    const back = () => {
-        if (param.folder === 'main') navigate('/home')
-        else navigate(`/home/list/${param.folder}`)
-    }
     return (
         <>
             {contextHolder}
             <Layout
+                className={style.pageLayout}
                 style={{
                     padding: 'var(--layout-padding)',
-                    height: '100vh'
                 }}
             >
                 <Content
@@ -86,6 +82,9 @@ const AddContent = () => {
                         minHeight: 280,
                         background: colorBgContainer,
                         borderRadius: borderRadiusLG,
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
                     }}
                 >
                     {
@@ -155,16 +154,7 @@ const AddContent = () => {
                                 icon={<CheckOutlined />}
                                 onClick={add}
                                 style={{
-                                    boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
-                                }}
-                            />
-                        </Tooltip>
-                        <Tooltip title="返回" placement="left">
-                            <FloatButton
-                                icon={<RollbackOutlined />}
-                                onClick={back}
-                                style={{
-                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                    boxShadow: 'var(--shadow-float-btn)',
                                 }}
                             />
                         </Tooltip>

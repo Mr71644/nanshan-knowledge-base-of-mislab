@@ -23,10 +23,12 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
     const [contextMenu, setContextMenu] = useState(null)
     const menuRef = useRef(null)
     const [headings, setHeadings] = useState([])
+    const [activeHeadingIndex, setActiveHeadingIndex] = useState(-1)
     const [outlineWidth, setOutlineWidth] = useState(280)
     const resizingRef = useRef(false)
     const startXRef = useRef(0)
     const startWidthRef = useRef(0)
+    const outlineRef = useRef(null)
 
     const editor = useEditor({
         extensions: [
@@ -152,6 +154,47 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
         return () => { editor.off('update', extract) }
     }, [editor])
 
+    // 滚动监听 — 高亮当前可见区域的标题
+    useEffect(() => {
+        if (!editor || headings.length === 0) return
+        const container = editor.view.dom.closest('.tiptapContent') || editor.view.dom.parentElement
+        if (!container) return
+
+        const handleScroll = () => {
+            const containerRect = container.getBoundingClientRect()
+            const viewTop = containerRect.top
+            let activeIdx = -1
+
+            for (let i = headings.length - 1; i >= 0; i--) {
+                const coords = editor.view.coordsAtPos(headings[i].pos)
+                if (coords.top < viewTop + containerRect.height * 0.3) {
+                    activeIdx = i
+                    break
+                }
+            }
+            setActiveHeadingIndex(activeIdx)
+        }
+
+        container.addEventListener('scroll', handleScroll, { passive: true })
+        // 初始检测
+        handleScroll()
+        return () => { container.removeEventListener('scroll', handleScroll) }
+    }, [editor, headings])
+
+    // 大纲自动跟随 — 激活标题变化时滚动大纲面板
+    useEffect(() => {
+        if (activeHeadingIndex < 0 || !outlineRef.current) return
+        const outline = outlineRef.current
+        const activeItem = outline.children[2 + activeHeadingIndex] // 跳过 resizeHandle + outlineTitle
+        if (activeItem) {
+            const outlineRect = outline.getBoundingClientRect()
+            const itemRect = activeItem.getBoundingClientRect()
+            if (itemRect.top < outlineRect.top || itemRect.bottom > outlineRect.bottom) {
+                activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+            }
+        }
+    }, [activeHeadingIndex])
+
     useEffect(() => {
         if (!editor || !editable) return
         const dom = editor.view.dom
@@ -258,7 +301,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
                     <EditorContent editor={editor} className={`${style.tiptapContent} ${fullHeight ? style.tiptapContentFlex : ''}`} />
                 </div>
                 {headings.length > 0 && (
-                    <div className={style.outline} style={{ width: outlineWidth }}>
+                    <div className={style.outline} style={{ width: outlineWidth }} ref={outlineRef}>
                         <div
                             className={style.outlineResizeHandle}
                             onMouseDown={handleResizeStart}
@@ -267,7 +310,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
                         {headings.map((h, i) => (
                             <div
                                 key={i}
-                                className={`${style.outlineItem} ${style[`outlineH${h.level}`]}`}
+                                className={`${style.outlineItem} ${style[`outlineH${h.level}`]} ${i === activeHeadingIndex ? style.outlineItemActive : ''}`}
                                 onClick={() => scrollToHeading(h.pos)}
                                 title={h.text}
                             >

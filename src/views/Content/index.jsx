@@ -1,11 +1,12 @@
 import { memo, useState, useRef, useEffect } from 'react'
-import { theme, Layout, Form, Input, Spin, FloatButton, Tooltip } from 'antd'
-import { HighlightOutlined, RollbackOutlined, SaveOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
-import { useNavigate, useParams } from 'react-router-dom'
+import { theme, Layout, Form, Input, Spin, ConfigProvider } from 'antd'
+import { HighlightOutlined, SaveOutlined, UpOutlined, DownOutlined, VerticalAlignTopOutlined } from '@ant-design/icons'
+import { useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
 import TiptapEditor from '@/components/TiptapEditor'
+import themeConfig from '#theme'
 import style from './index.module.less'
 
 const { Content } = Layout
@@ -20,11 +21,12 @@ const Area = () => {
     const [isEdit, setIsEdit] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
+    const [showBackTop, setShowBackTop] = useState(false)
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
     const uploadHideRef = useRef(null)
-    const navigate = useNavigate()
+    const scrollRef = useRef(null)
 
     const handleUploading = (uploading) => {
         if (uploading) {
@@ -50,10 +52,6 @@ const Area = () => {
             updateTime: formatDate(detail.updateTime)
         }
         setValue(detail.content)
-    }
-    const back = () => {
-        if (param.folder === 'main') navigate('/home')
-        else navigate(`/home/list/${param.folder}`)
     }
     const edit = async ({ title, author, content, id }) => {
         const currentId = id || param.id
@@ -122,15 +120,65 @@ const Area = () => {
         return () => clearTimeout(timer);
     }, [value, isEdit]);
 
+    // 监听文档区域滚动，控制回到顶部按钮显示
+    useEffect(() => {
+        if (isLoading) return
+        const el = scrollRef.current
+        if (!el) return
+
+        const findScrollContainer = () => {
+            const all = el.querySelectorAll('*')
+            for (const node of all) {
+                const style = window.getComputedStyle(node)
+                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+                    return node
+                }
+            }
+            return null
+        }
+
+        const tid = setTimeout(() => {
+            const container = findScrollContainer()
+            if (!container) return
+            const handler = () => setShowBackTop(container.scrollTop > 300)
+            container.addEventListener('scroll', handler, { passive: true })
+            handler()
+            // store for cleanup
+            container._scrollHandler = handler
+        }, 300)
+
+        return () => {
+            clearTimeout(tid)
+            const container = findScrollContainer()
+            if (container && container._scrollHandler) {
+                container.removeEventListener('scroll', container._scrollHandler)
+            }
+        }
+    }, [isLoading, isEdit])
+
+    const scrollToTop = () => {
+        const el = scrollRef.current
+        if (!el) return
+        const all = el.querySelectorAll('*')
+        for (const node of all) {
+            const style = window.getComputedStyle(node)
+            if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+                node.scrollTo({ top: 0, behavior: 'smooth' })
+                return
+            }
+        }
+    }
+
     return (
-        <>
+        <ConfigProvider theme={themeConfig.antdTheme}>
             {contextHolder}
             <Layout
+                className={style.pageLayout}
                 style={{
                     padding: 'var(--layout-padding)',
-                    height: '100vh'
                 }}
             >
+                <div ref={scrollRef} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Content
                     style={{
                         paddingLeft: 'var(--layout-padding)',
@@ -141,6 +189,9 @@ const Area = () => {
                         minHeight: 280,
                         background: colorBgContainer,
                         borderRadius: borderRadiusLG,
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
                     }}
                 >
                     {
@@ -210,42 +261,38 @@ const Area = () => {
                                             <h3>创建时间：{time.current.createTime}&nbsp;&nbsp;&nbsp;&nbsp;更新时间：{time.current.updateTime}</h3>
                                         </div>
                                         <div className={style.contentPreview}>
-                                            <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} />
+                                            <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} fullHeight />
                                         </div>
                                     </div>
 
                             )
                     }
                 </Content>
-                <FloatButton.Group
-                    shape="circle"
-                    style={{
-                        insetInlineEnd: 24,
-                        bottom: 24,
-                    }}
-                >
-                    <Tooltip title={isEdit ? "保存并退出编辑" : "进入编辑模式"} placement="left">
-                        <FloatButton
-                            type="primary"
-                            icon={isEdit ? <SaveOutlined /> : <HighlightOutlined />}
-                            onClick={ChangeIsEdit}
-                            style={{
-                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
-                            }}
-                        />
-                    </Tooltip>
-                    <Tooltip title="返回" placement="left">
-                        <FloatButton
-                            icon={<RollbackOutlined />}
-                            onClick={back}
-                            style={{
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                            }}
-                        />
-                    </Tooltip>
-                </FloatButton.Group>
+                </div>
+                <div className={style.floatBtns}>
+                    <div
+                        className={style.editFloatBtn}
+                        onClick={ChangeIsEdit}
+                    >
+                        <span className={style.editFloatBtnIcon}>
+                            {isEdit ? <SaveOutlined /> : <HighlightOutlined />}
+                        </span>
+                        <span className={style.editFloatBtnText}>
+                            {isEdit ? '保存并退出' : '编辑文档'}
+                        </span>
+                    </div>
+                    {showBackTop && (
+                        <div
+                            className={style.backTopBtn}
+                            onClick={scrollToTop}
+                            title="回到顶部"
+                        >
+                            <VerticalAlignTopOutlined />
+                        </div>
+                    )}
+                </div>
             </Layout >
-        </>
+        </ConfigProvider>
     )
 }
 
