@@ -93,11 +93,30 @@ const queryCommonFileList = ({ keyword = '' } = {}) => {
     })
 }
 
+/**
+ * 统一重命名接口
+ * @param {number} id - 资源主键 ID
+ * @param {string} newName - 新名称（type=4 时不含扩展名）
+ * @param {number} type - 资源类型：1=论文, 2=文件夹, 3=Excel, 4=文件
+ */
+const renameResource = ({ id, newName, type }) => {
+    return request({
+        url: '/minio/rename',
+        method: 'POST',
+        data: {
+            id,
+            newName: newName.trim(),
+            type
+        }
+    })
+}
+
 export {
     uploadFile,
     uploadFilesBatch,
     downloadFile,
     previewFile,
     getCommonFileList,
-    queryCommonFileList
+    queryCommonFileList,
+    renameResource
 }

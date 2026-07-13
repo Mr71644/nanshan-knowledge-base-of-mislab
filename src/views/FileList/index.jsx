@@ -1,12 +1,12 @@
 import React, { memo, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Table, Dropdown, Button, Spin, Modal, Form, Input, Space, Popover, Checkbox } from 'antd';
+import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
 import { Resizable } from 'react-resizable';
 import { getFileList, togglePin } from '@/apis/fileList';
-import { updateFolder } from '@/apis/folder';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
+import { renameResource } from '@/apis/file'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
 import style from './index.module.less'
@@ -32,9 +32,23 @@ const FileList = () => {
     const [batchType, setBatchType] = useState(null) // null | 'delete' | 'download'
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
-    const [currentFolder, setCurrentFolder] = useState('')
+    const [currentRecord, setCurrentRecord] = useState(null)
     const [downloading, setDownloading] = useState(false)
-    const folderName = useRef('')
+    const newName = useRef('')
+
+    /**
+     * 获取重命名弹窗中显示的初始名称
+     * - type=4（文件）：去掉扩展名
+     * - 其他类型：使用原始名称
+     */
+    const getRenameDisplayName = (record) => {
+        if (!record) return ''
+        if (record.status === 4) {
+            const lastDot = record.name.lastIndexOf('.')
+            return lastDot > 0 ? record.name.substring(0, lastDot) : record.name
+        }
+        return record.name
+    }
 
     // 可拖拽列宽
     const [columnWidths, setColumnWidths] = useState({
@@ -187,6 +201,12 @@ const FileList = () => {
 
                 if (record.status === 1 || record.status === 3) menuItems = [
                     {
+                        key: 'update',
+                        icon: <SwapOutlined />,
+                        label: (<span className={style.menuItemLabel}>重命名</span>),
+                        onClick: () => handleMenuClick('update', record),
+                    },
+                    {
                         key: 'export',
                         icon: <ExportOutlined />,
                         label: (<span className={style.menuItemLabel}>导出</span>),
@@ -249,6 +269,12 @@ const FileList = () => {
                 ]
                 if (record.status === 4) {
                     menuItems = [
+                        {
+                            key: 'update',
+                            icon: <SwapOutlined />,
+                            label: (<span className={style.menuItemLabel}>重命名</span>),
+                            onClick: () => handleMenuClick('update', record),
+                        },
                         {
                             key: 'export',
                             icon: <ExportOutlined />,
@@ -422,9 +448,9 @@ const FileList = () => {
             if (param.id === undefined) getList()
             else getList(param.id)
         } else if (action === 'update') {
-            setCurrentFolder(record);
+            setCurrentRecord(record);
+            newName.current = getRenameDisplayName(record);
             setIsModalOpen(true);
-            folderName.current = record.name;
         } else if (action === 'download') {
             handleSingleDownload(record)
         } else if (action === 'pin' || action === 'unpin') {
@@ -467,17 +493,43 @@ const FileList = () => {
         }
     }
     const handleOk = async () => {
+        if (!newName.current || !newName.current.trim()) {
+            error({ content: '名称不能为空' })
+            return
+        }
         setModalLoading(true);
         try {
-            await updateFolder({ name: folderName.current, folderId: currentFolder.id });
+            await renameResource({
+                id: currentRecord.id,
+                newName: newName.current,
+                type: currentRecord.status
+            });
             setIsModalOpen(false);
             setModalLoading(false);
             refreshUrl()
         } catch (e) {
-            error({ content: '更名失败' });
+            error({ content: '重命名失败' });
             setModalLoading(false);
         }
     };
+
+    /**
+     * 获取重命名弹窗标题
+     */
+    const getRenameModalTitle = (record) => {
+        if (!record) return '重命名'
+        const map = { 1: '更改文档名称', 2: '更改文件夹名称', 3: '更改 Excel 名称', 4: '更改文件名称' }
+        return map[record.status] || '重命名'
+    }
+
+    /**
+     * 获取重命名弹窗输入框占位符
+     */
+    const getRenamePlaceholder = (record) => {
+        if (!record) return '请输入新名称'
+        if (record.status === 4) return '请输入文件名称（不含扩展名）'
+        return '请输入新名称'
+    }
 
     const handleCancel = () => {
         setIsModalOpen(false);
@@ -556,26 +608,26 @@ const FileList = () => {
                         />
                     </div>
             }
-            <Modal title={'更改文件夹名称'}
+            <Modal title={getRenameModalTitle(currentRecord)}
                 open={isModalOpen}
                 onOk={handleOk}
                 onCancel={handleCancel}
-                okText={'创建'}
+                okText={'确认'}
                 cancelText={'取消'}
                 destroyOnClose={true}
                 confirmLoading={modalLoding}
             >
                 <Form validateTrigger='onChange' colon={false}>
                     <Form.Item name='name' label={'名称'}
-                        initialValue={folderName.current}
+                        initialValue={newName.current}
                         rules={[() => ({
                             validator(_, value) {
-                                folderName.current = value
+                                newName.current = value
                                 return Promise.resolve()
                             }
                         })]}
                     >
-                        <Input placeholder="请输入文件夹名称" />
+                        <Input placeholder={getRenamePlaceholder(currentRecord)} />
                     </Form.Item>
                 </Form>
             </Modal>
