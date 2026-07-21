@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
 import { Resizable } from 'react-resizable';
@@ -25,11 +25,12 @@ const FileList = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const { error, contextHolder } = useMessage()
+    const { batchTrigger, clearBatchTrigger } = useOutletContext() || {}
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedRowKeys, setSelectedRowKeys] = useState([])
     const [selectedRows, setSelectedRows] = useState([])
-    const [batchType, setBatchType] = useState(null) // null | 'delete' | 'download'
+    const [batchType, setBatchType] = useState(null) // null | 'batch' | 'delete' | 'download'
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentRecord, setCurrentRecord] = useState(null)
@@ -173,24 +174,7 @@ const FileList = () => {
                                 }
                             }}
                         />
-                    ) : (
-                        <div className={style.batchBtns}>
-                            <span
-                                className={style.batchBtn}
-                                onClick={() => setBatchType('download')}
-                            >
-                                <DownloadOutlined />
-                                批量下载
-                            </span>
-                            <span
-                                className={style.batchBtn}
-                                onClick={() => setBatchType('delete')}
-                            >
-                                <DeleteOutlined />
-                                批量删除
-                            </span>
-                        </div>
-                    )}
+                    ) : null}
                 </div>
             ),
             key: 'operation',
@@ -549,6 +533,14 @@ const FileList = () => {
             if (param.id === undefined) getList()
             else getList(param.id)
     }, [location.state])
+
+    // 从 Home 页功能框触发批量模式
+    useEffect(() => {
+        if (batchTrigger) {
+            setBatchType(batchTrigger)
+            clearBatchTrigger?.()
+        }
+    }, [batchTrigger])
     return (
         <>
             <style>{`
@@ -576,22 +568,18 @@ const FileList = () => {
                                 </span>
                                 <div className={style.batchActions}>
                                     <span className={style.cancelBtn} onClick={clearSelection}>取消</span>
-                                    {batchType === 'download' && (
-                                        <span
-                                            className={style.confirmBtn}
-                                            onClick={selectedRowKeys.length > 0 && !downloading ? handleBatchDownload : undefined}
-                                        >
-                                            {downloading ? '下载中...' : '批量下载'}
-                                        </span>
-                                    )}
-                                    {batchType === 'delete' && (
-                                        <span
-                                            className={style.confirmBtn}
-                                            onClick={selectedRowKeys.length > 0 ? handleBatchDelete : undefined}
-                                        >
-                                            移入回收站
-                                        </span>
-                                    )}
+                                    <span
+                                        className={style.confirmBtn}
+                                        onClick={selectedRowKeys.length > 0 && !downloading ? handleBatchDownload : undefined}
+                                    >
+                                        {downloading ? '下载中...' : '批量下载'}
+                                    </span>
+                                    <span
+                                        className={style.confirmBtn}
+                                        onClick={selectedRowKeys.length > 0 ? handleBatchDelete : undefined}
+                                    >
+                                        移入回收站
+                                    </span>
                                 </div>
                             </div>
                         )}

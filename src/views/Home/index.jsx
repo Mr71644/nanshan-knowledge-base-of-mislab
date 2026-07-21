@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, RightOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, RightOutlined, SearchOutlined, SettingOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -119,6 +119,7 @@ const Home = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
+    const [batchTrigger, setBatchTrigger] = useState(null) // null | 'download' | 'delete'
 
     const { filteredMatchKeys, searchExpandedKeys } = useMemo(() => {
         const trimmed = searchText.trim().toLowerCase()
@@ -844,6 +845,14 @@ const Home = () => {
                                         fontSize: 'var(--action-btn-font-size)'
                                     }}>用户信息修改</span>
                                 </Button>
+                                <Button
+                                    className={style.authority}
+                                    onClick={() => setBatchTrigger('batch')}>
+                                    <DownloadOutlined />
+                                    <span style={{
+                                        fontSize: 'var(--action-btn-font-size)'
+                                    }}>批量操作</span>
+                                </Button>
                                 {
                                     userInfo.isAdministrator ?
                                         <Button
@@ -869,7 +878,7 @@ const Home = () => {
                         }}
                         className={style.fileList}
                     >
-                        <Outlet></Outlet>
+                        <Outlet context={{ batchTrigger, clearBatchTrigger: () => setBatchTrigger(null) }}></Outlet>
                     </div>
                 </Content>
             </Layout>

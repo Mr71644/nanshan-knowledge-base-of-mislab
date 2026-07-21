@@ -234,23 +234,26 @@
 
 .batchBtns {
     display: flex;
-    gap: 6px;
+    gap: 10px;
 }
 
 .batchBtn {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
+    justify-content: center;
+    gap: 4px;
+    width: 108px;
+    height: 44px;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--color-ink-secondary);
     background: @white;
-    border: 1.5px solid var(--color-border-table);
+    border: 1.5px solid var(--color-border-card);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    box-shadow: var(--shadow-card-lg);
     white-space: nowrap;
 
     &:hover {
@@ -262,8 +265,8 @@
     }
 
     svg {
-        width: 16px;
-        height: 16px;
+        width: 15px;
+        height: 15px;
         color: var(--color-ink-muted);
         transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     }
