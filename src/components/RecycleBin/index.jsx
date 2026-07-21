@@ -34,7 +34,7 @@ const transformFolderTree = (data) => {
         }))
 }
 
-export const RecycleBin = ({ open, onClose }) => {
+export const RecycleBin = ({ open, onClose, embedded = false }) => {
     const navigate = useNavigate()
     const location = useLocation()
     const { success, error, warn, contextHolder } = useMessage()
@@ -62,7 +62,7 @@ export const RecycleBin = ({ open, onClose }) => {
             const res = await getRecycleBinList({ current: page, pageSize: size, type: t, keyword: kw || undefined })
             if (res.code === 403) {
                 error({ content: '只有管理员可以操作回收站' })
-                onClose()
+                if (!embedded) onClose?.()
                 return
             }
             const data = res.data
@@ -71,7 +71,7 @@ export const RecycleBin = ({ open, onClose }) => {
         } catch (e) {
             if (e?.response?.status === 403) {
                 error({ content: '只有管理员可以操作回收站' })
-                onClose()
+                if (!embedded) onClose?.()
             } else {
                 error({ content: '回收站列表加载失败' })
             }
@@ -269,12 +269,16 @@ export const RecycleBin = ({ open, onClose }) => {
         setKeyword('')
         setCurrent(1)
         clearSelection()
-        onClose()
+        if (!embedded) onClose?.()
     }
 
     useEffect(() => {
-        if (open) fetchList(1, pageSize, type, keyword)
-    }, [open])
+        if (embedded) {
+            fetchList(1, pageSize, type, keyword)
+        } else if (open) {
+            fetchList(1, pageSize, type, keyword)
+        }
+    }, [open, embedded])
 
     const columns = [
         {
@@ -359,115 +363,123 @@ export const RecycleBin = ({ open, onClose }) => {
         }
     }
 
-    return (
+    const innerContent = (
         <>
             {contextHolder}
-            <Drawer
-                title="回收站"
-                placement="right"
-                width={960}
-                open={open}
-                onClose={handleDrawerClose}
-                destroyOnClose={true}
+            <div className={style.toolbar}>
+                <Space>
+                    <Select
+                        placeholder="全部类型"
+                        allowClear
+                        style={{ width: 140 }}
+                        value={type}
+                        onChange={(val) => {
+                            setType(val)
+                            setCurrent(1)
+                            fetchList(1, pageSize, val, keyword)
+                        }}
+                        options={typeOptions}
+                    />
+                    <Input.Search
+                        placeholder="搜索文件名"
+                        allowClear
+                        enterButton
+                        onSearch={(val) => {
+                            setKeyword(val)
+                            setCurrent(1)
+                            fetchList(1, pageSize, type, val)
+                        }}
+                        style={{ width: 200 }}
+                    />
+                </Space>
+                <Space>
+                    <Button
+                        onClick={handleBatchRestore}
+                        disabled={selectedRowKeys.length === 0}
+                    >
+                        批量还原
+                    </Button>
+                    <Button
+                        danger
+                        onClick={handleBatchPurge}
+                        disabled={selectedRowKeys.length === 0}
+                    >
+                        批量彻底删除
+                    </Button>
+                    <Popconfirm
+                        title="清空回收站"
+                        description="确定要清空回收站吗？所有资源将被彻底删除，不可恢复！"
+                        onConfirm={handleEmptyAll}
+                        okText="确认清空"
+                        cancelText="取消"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button danger type="primary">清空回收站</Button>
+                    </Popconfirm>
+                </Space>
+            </div>
+
+            <Table
+                rowSelection={rowSelection}
+                columns={columns}
+                dataSource={list}
+                rowKey={(record) => `${record.id}${record.status}`}
+                loading={loading}
+                pagination={{
+                    current,
+                    pageSize,
+                    total,
+                    showTotal: (t) => `共 ${t} 条`,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    pageSizeOptions: [10, 20, 50, 100],
+                    onChange: (page, size) => {
+                        setCurrent(page)
+                        setPageSize(size)
+                        fetchList(page, size, type, keyword)
+                    }
+                }}
+                scroll={{ y: embedded ? 'calc(100vh - 380px)' : 'calc(100vh - 320px)' }}
+            />
+
+            <Modal
+                title="选择还原目标文件夹"
+                open={folderPickerVisible}
+                onOk={handleFolderPickerConfirm}
+                onCancel={() => setFolderPickerVisible(false)}
+                okText="确认还原"
+                cancelText="取消"
+                confirmLoading={restoreLoading}
+                width={500}
             >
-                <div className={style.toolbar}>
-                    <Space>
-                        <Select
-                            placeholder="全部类型"
-                            allowClear
-                            style={{ width: 140 }}
-                            value={type}
-                            onChange={(val) => {
-                                setType(val)
-                                setCurrent(1)
-                                fetchList(1, pageSize, val, keyword)
-                            }}
-                            options={typeOptions}
-                        />
-                        <Input.Search
-                            placeholder="搜索文件名"
-                            allowClear
-                            enterButton
-                            onSearch={(val) => {
-                                setKeyword(val)
-                                setCurrent(1)
-                                fetchList(1, pageSize, type, val)
-                            }}
-                            style={{ width: 200 }}
-                        />
-                    </Space>
-                    <Space>
-                        <Button
-                            onClick={handleBatchRestore}
-                            disabled={selectedRowKeys.length === 0}
-                        >
-                            批量还原
-                        </Button>
-                        <Button
-                            danger
-                            onClick={handleBatchPurge}
-                            disabled={selectedRowKeys.length === 0}
-                        >
-                            批量彻底删除
-                        </Button>
-                        <Popconfirm
-                            title="清空回收站"
-                            description="确定要清空回收站吗？所有资源将被彻底删除，不可恢复！"
-                            onConfirm={handleEmptyAll}
-                            okText="确认清空"
-                            cancelText="取消"
-                            okButtonProps={{ danger: true }}
-                        >
-                            <Button danger type="primary">清空回收站</Button>
-                        </Popconfirm>
-                    </Space>
+                <div className={style.folderPickerTree}>
+                    <Tree
+                        defaultExpandAll
+                        treeData={folderTreeData}
+                        onSelect={(keys) => {
+                            if (keys.length > 0) setTargetFolderId(Number(keys[0]))
+                        }}
+                        selectedKeys={targetFolderId !== undefined && targetFolderId !== null && targetFolderId !== 0 ? [String(targetFolderId)] : []}
+                    />
                 </div>
-
-                <Table
-                    rowSelection={rowSelection}
-                    columns={columns}
-                    dataSource={list}
-                    rowKey={(record) => `${record.id}${record.status}`}
-                    loading={loading}
-                    pagination={{
-                        current,
-                        pageSize,
-                        total,
-                        showTotal: (t) => `共 ${t} 条`,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        pageSizeOptions: [10, 20, 50, 100],
-                        onChange: (page, size) => {
-                            setCurrent(page)
-                            setPageSize(size)
-                            fetchList(page, size, type, keyword)
-                        }
-                    }}
-                    scroll={{ y: 'calc(100vh - 320px)' }}
-                />
-
-                <Modal
-                    title="选择还原目标文件夹"
-                    open={folderPickerVisible}
-                    onOk={handleFolderPickerConfirm}
-                    onCancel={() => setFolderPickerVisible(false)}
-                    okText="确认还原"
-                    cancelText="取消"
-                    confirmLoading={restoreLoading}
-                    width={500}
-                >
-                    <div className={style.folderPickerTree}>
-                        <Tree
-                            defaultExpandAll
-                            treeData={folderTreeData}
-                            onSelect={(keys) => {
-                                if (keys.length > 0) setTargetFolderId(Number(keys[0]))
-                            }}
-                            selectedKeys={targetFolderId !== undefined && targetFolderId !== null && targetFolderId !== 0 ? [String(targetFolderId)] : []}
-                        />
-                    </div>
-                </Modal>
-            </Drawer>
+            </Modal>
         </>
+    )
+
+    if (embedded) {
+        return innerContent
+    }
+
+    return (
+        <Drawer
+            title="回收站"
+            placement="right"
+            width={960}
+            open={open}
+            onClose={handleDrawerClose}
+            destroyOnClose={true}
+        >
+            {innerContent}
+        </Drawer>
     )
 }

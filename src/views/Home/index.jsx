@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, UserOutlined, RightOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, RightOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -11,7 +11,6 @@ import { MemoAddNewFile } from '@/components/AddNewFile';
  * - 全局退出逻辑会清除 token 并重定向到 `/login`
  */
 import { UploadFile } from '@/components/UploadFile';
-import { RecycleBin } from '@/components/RecycleBin';
 import { useMessage } from '@/hooks/useMessage';
 import style from './index.module.less'
 import themeConfig from '#theme'
@@ -118,7 +117,6 @@ const Home = () => {
     });
     const isDragging = useRef(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [recycleBinOpen, setRecycleBinOpen] = useState(false);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
 
@@ -850,24 +848,14 @@ const Home = () => {
                                     userInfo.isAdministrator ?
                                         <Button
                                             className={style.authority}
-                                            onClick={() => navigate('/administrator')}>
-                                            <UserOutlined />
+                                            onClick={() => navigate('/management')}>
+                                            <SettingOutlined />
                                             <span style={{
                                                 fontSize: 'var(--action-btn-font-size)'
-                                            }}>权限管理入口</span>
+                                            }}>管理系统入口</span>
                                         </Button>
                                         : null
                                 }
-                                {userInfo.isAdministrator ? (
-                                    <Button
-                                        className={style.authority}
-                                        onClick={() => setRecycleBinOpen(true)}>
-                                        <DeleteOutlined />
-                                        <span style={{
-                                            fontSize: 'var(--action-btn-font-size)'
-                                        }}>回收站</span>
-                                    </Button>
-                                ) : null}
                             </div>
                           </div>
                           {/* Variants: insert below this line */}
@@ -885,7 +873,6 @@ const Home = () => {
                     </div>
                 </Content>
             </Layout>
-            <RecycleBin open={recycleBinOpen} onClose={() => setRecycleBinOpen(false)} />
         </Layout >
         </Fragment>
     );

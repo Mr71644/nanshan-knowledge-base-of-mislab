@@ -10,13 +10,18 @@ import themeConfig from '#theme'
 
 const { Content } = Layout
 
-const Administrator = () => {
+const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' }) => {
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
     const navigate = useNavigate()
     const { success, error, contextHolder } = useMessage()
-    const [activeTab, setActiveTab] = useState('users')
+    const [activeTab, setActiveTab] = useState(propActiveTab)
+
+    // 同步外部传入的 activeTab prop（用于 embedded 模式）
+    useEffect(() => {
+        setActiveTab(propActiveTab)
+    }, [propActiveTab])
 
     // 用户管理状态
     const [users, setUsers] = useState([])
@@ -1194,62 +1199,44 @@ const Administrator = () => {
         },
     ]
 
-    return (
+    // ---- 核心内容（Tabs + 所有 Modal）----
+    // 在 embedded 和非 embedded 模式下复用同一份内容
+    const innerContent = (
         <>
-            {contextHolder}
-            <Layout style={{ padding: 'var(--layout-padding)', height: '100vh' }}>
-                <Content
-                    className={style.adminContent}
-                    style={{
-                        paddingLeft: 'var(--layout-padding)',
-                        paddingRight: 'var(--layout-padding)',
-                        paddingBottom: 'var(--layout-padding)',
-                        paddingTop: 6,
-                        margin: 0,
-                        minHeight: 280,
-                        background: colorBgContainer,
-                        borderRadius: borderRadiusLG,
-                        overflow: 'hidden',
-                    }}
-                >
-                    <h2 style={{ marginBottom: 24 }}>
-                        <SafetyOutlined style={{ marginRight: 8 }} />
-                        权限管理系统
-                    </h2>
-                    <Tabs
-                        activeKey={activeTab}
-                        items={tabItems}
-                        onChange={setActiveTab}
-                        tabBarExtraContent={
-                            <Input.Search
-                                placeholder={activeTab === 'users' ? '根据用户名查找' : '根据角色名称查找'}
-                                value={activeTab === 'users' ? searchKeyword : roleSearchKeyword}
-                                onChange={(e) => {
-                                    if (activeTab === 'users') {
-                                        setSearchKeyword(e.target.value)
-                                    } else {
-                                        setRoleSearchKeyword(e.target.value)
-                                    }
-                                }}
-                                onSearch={(value) => {
-                                    if (activeTab === 'users') {
-                                        setSearchKeyword(value)
-                                        searchUsers(value)
-                                    } else {
-                                        setRoleSearchKeyword(value)
-                                        searchRoles(value)
-                                    }
-                                }}
-                                style={{ width: 250 }}
-                                enterButton="搜索"
-                                loading={activeTab === 'users' ? userSearchLoading : roleSearchLoading}
-                            />
-                        }
+            <Tabs
+                activeKey={activeTab}
+                items={tabItems}
+                onChange={setActiveTab}
+                tabBarStyle={embedded ? { display: 'none' } : undefined}
+                tabBarExtraContent={embedded ? undefined : (
+                    <Input.Search
+                        placeholder={activeTab === 'users' ? '根据用户名查找' : '根据角色名称查找'}
+                        value={activeTab === 'users' ? searchKeyword : roleSearchKeyword}
+                        onChange={(e) => {
+                            if (activeTab === 'users') {
+                                setSearchKeyword(e.target.value)
+                            } else {
+                                setRoleSearchKeyword(e.target.value)
+                            }
+                        }}
+                        onSearch={(value) => {
+                            if (activeTab === 'users') {
+                                setSearchKeyword(value)
+                                searchUsers(value)
+                            } else {
+                                setRoleSearchKeyword(value)
+                                searchRoles(value)
+                            }
+                        }}
+                        style={{ width: 250 }}
+                        enterButton="搜索"
+                        loading={activeTab === 'users' ? userSearchLoading : roleSearchLoading}
                     />
-                </Content>
+                )}
+            />
 
-                {/* 用户编辑/新建模态框 */}
-                <Modal
+            {/* 用户编辑/新建模态框 */}
+            <Modal
                     title={editingUser ? '编辑用户' : '新建用户'}
                     open={userModalVisible}
                     onOk={handleUserSubmit}
@@ -1690,21 +1677,71 @@ const Administrator = () => {
                     </Spin>
                 </Modal>
 
-                <Tooltip title="返回主页" placement="left">
-                    <FloatButton
-                        type="primary"
-                        icon={<RollbackOutlined />}
-                        onClick={() => navigate('/home')}
+                {!embedded && (
+                    <Tooltip title="返回主页" placement="left">
+                        <FloatButton
+                            type="primary"
+                            icon={<RollbackOutlined />}
+                            onClick={() => navigate('/home')}
+                            style={{
+                                insetInlineEnd: 24,
+                                bottom: 24,
+                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                            }}
+                        />
+                    </Tooltip>
+                )}
+            </>
+        )
+
+        if (embedded) {
+            return (
+                <>
+                    {contextHolder}
+                    {innerContent}
+                </>
+            )
+        }
+
+        return (
+            <>
+                {contextHolder}
+                <Layout style={{ padding: 'var(--layout-padding)', height: '100vh' }}>
+                    <Content
+                        className={style.adminContent}
                         style={{
-                            insetInlineEnd: 24,
-                            bottom: 24,
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                            paddingLeft: 'var(--layout-padding)',
+                            paddingRight: 'var(--layout-padding)',
+                            paddingBottom: 'var(--layout-padding)',
+                            paddingTop: 6,
+                            margin: 0,
+                            minHeight: 280,
+                            background: colorBgContainer,
+                            borderRadius: borderRadiusLG,
+                            overflow: 'hidden',
                         }}
-                    />
-                </Tooltip>
-            </Layout>
-        </>
-    )
-}
+                    >
+                        <h2 style={{ marginBottom: 24 }}>
+                            <SafetyOutlined style={{ marginRight: 8 }} />
+                            权限管理系统
+                        </h2>
+                        {innerContent}
+                    </Content>
+                    <Tooltip title="返回主页" placement="left">
+                        <FloatButton
+                            type="primary"
+                            icon={<RollbackOutlined />}
+                            onClick={() => navigate('/home')}
+                            style={{
+                                insetInlineEnd: 24,
+                                bottom: 24,
+                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                            }}
+                        />
+                    </Tooltip>
+                </Layout>
+            </>
+        )
+    }
 
 export const MemoAdministrator = memo(Administrator)

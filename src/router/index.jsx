@@ -8,6 +8,7 @@ import { MemoExcel } from '@/views/Excel'
 import { MemoAddContent } from '@/views/AddContent'
 import { MemoAddExcel } from '@/views/AddExcel'
 import { MemoAdministrator } from '@/views/Administrator'
+import { MemoManagement } from '@/views/Management'
 import { MemoPreview } from '@/views/Preview'
 import AdminRoute from './AdminRoute'
 
@@ -62,6 +63,14 @@ const router = createHashRouter([
         element: (
             <AdminRoute>
                 <MemoAdministrator />
+            </AdminRoute>
+        )
+    },
+    {
+        path: 'management',
+        element: (
+            <AdminRoute>
+                <MemoManagement />
             </AdminRoute>
         )
     },
