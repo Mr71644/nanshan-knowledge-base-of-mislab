@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox } from 'antd';
-import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
+import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty } from 'antd';
+import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
@@ -30,6 +30,7 @@ const FileList = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([])
     const [selectedRows, setSelectedRows] = useState([])
     const [batchType, setBatchType] = useState(null) // null | 'batch' | 'delete' | 'download'
+    const [ownerFilter, setOwnerFilter] = useState([]) // 选中的所有者名
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentRecord, setCurrentRecord] = useState(null)
@@ -105,6 +106,86 @@ const FileList = () => {
         </div>
     )
 
+    // ---------- 所有者筛选 ----------
+    // 从当前列表中提取去重的所有者选项
+    const ownerOptions = useMemo(() => {
+        const set = new Set()
+        list.forEach(item => { if (item.owner) set.add(item.owner) })
+        return Array.from(set)
+    }, [list])
+
+    // 应用所有者筛选后的列表
+    const filteredList = useMemo(() => {
+        if (ownerFilter.length === 0) return list
+        return list.filter(item => ownerFilter.includes(item.owner))
+    }, [list, ownerFilter])
+
+    // 所有者筛选浮层内容
+    const ownerFilterContent = (
+        <div className={style.ownerFilterPanel}>
+            <div className={style.ownerFilterHeader}>
+                <span>筛选所有者</span>
+                {ownerFilter.length > 0 && (
+                    <span className={style.ownerFilterClear} onClick={() => setOwnerFilter([])}>清除</span>
+                )}
+            </div>
+            {ownerOptions.length === 0 ? (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据" />
+            ) : (
+                <Checkbox.Group
+                    value={ownerFilter}
+                    onChange={(checked) => setOwnerFilter(checked)}
+                    className={style.ownerFilterGroup}
+                >
+                    {ownerOptions.map(name => (
+                        <Checkbox key={name} value={name} className={style.ownerFilterItem}>
+                            {name}
+                        </Checkbox>
+                    ))}
+                </Checkbox.Group>
+            )}
+        </div>
+    )
+
+    // 所有者列标题（带筛选图标）
+    const renderOwnerTitle = (colKey) => (
+        <div className={style.headerCell}>
+            <span className={style.ownerTitleText}>
+                所有者
+                <Popover
+                    content={ownerFilterContent}
+                    trigger="click"
+                    placement="bottomLeft"
+                    overlayClassName={style.ownerFilterPopover}
+                >
+                    <span
+                        className={`${style.filterIcon} ${ownerFilter.length > 0 ? style.filterIconActive : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {ownerFilter.length > 0 ? <FilterFilled /> : <FilterOutlined />}
+                        {ownerFilter.length > 0 && (
+                            <span className={style.filterBadge}>{ownerFilter.length}</span>
+                        )}
+                    </span>
+                </Popover>
+            </span>
+            <div
+                className={style.resizeHandle}
+                onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    resizeRef.current = {
+                        key: colKey,
+                        startX: e.clientX,
+                        startWidth: columnWidths[colKey],
+                    }
+                    document.body.style.cursor = 'col-resize'
+                    document.body.style.userSelect = 'none'
+                }}
+            />
+        </div>
+    )
+
     const getTypeStyle = (status) => {
         const map = {
             1: { cls: style.typeDoc,    icon: <EditOutlined /> },
@@ -142,7 +223,7 @@ const FileList = () => {
             }
         },
         {
-            title: renderTitle('所有者', 'owner'),
+            title: renderOwnerTitle('owner'),
             dataIndex: 'owner',
             key: 'owner',
             width: columnWidths.owner,
@@ -565,13 +646,18 @@ const FileList = () => {
         }
     }, [batchTrigger])
 
+    // 切换目录时清除所有者筛选
+    useEffect(() => {
+        setOwnerFilter([])
+    }, [param.id])
+
     // ---------- 搜索匹配 ----------
     const matchKeys = useMemo(() => {
         if (!searchKeyword) return []
-        return list
+        return filteredList
             .map(item => `${item.id}${item.status}`)
-            .filter((key, i) => list[i].name.toLowerCase().includes(searchKeyword))
-    }, [list, searchKeyword])
+            .filter((key, i) => filteredList[i].name.toLowerCase().includes(searchKeyword))
+    }, [filteredList, searchKeyword])
 
     const currentMatchKey = matchKeys.length > 0 && searchIndex < matchKeys.length
         ? matchKeys[searchIndex]
@@ -658,7 +744,7 @@ const FileList = () => {
                         )}
                         <Table
                             columns={columns}
-                            dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
+                            dataSource={filteredList.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
                             scroll={{ y: 'calc(100vh - 250px)', x: 'max-content' }}
                             rowClassName={(record) => {
