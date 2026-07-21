@@ -98,12 +98,21 @@ const FileList = () => {
             }),
             render: (text, record) => {
                 const iconStyle = getTypeStyle(record.status)
+                const clickable = !batchType
                 return (
                     <span style={{ display: 'inline-flex', alignItems: 'center', maxWidth: '100%' }}>
                         <span className={`${style.typeIcon} ${iconStyle.cls}`}>
                             {iconStyle.icon}
                         </span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
+                        <span
+                            className={`${style.nameText} ${clickable ? style.nameLink : ''}`}
+                            onClick={clickable ? (e) => {
+                                e.stopPropagation()
+                                handleClick(record)
+                            } : undefined}
+                        >
+                            {text}
+                        </span>
                     </span>
                 )
             }
@@ -141,10 +150,6 @@ const FileList = () => {
                 return (
                     <span
                         className={`${style.permissionTag} ${isEdit ? style.permissionEdit : style.permissionView}`}
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            if (!batchType) handleClick(record)
-                        }}
                     >
                         {isEdit ? '可编辑' : '可阅读'}
                     </span>

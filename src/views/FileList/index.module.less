@@ -316,7 +316,25 @@
 }
 
 // ============================================================
-//  权限标签
+//  文件名（点击进入详情）
+// ============================================================
+.nameText {
+    overflow: hidden;
+    textOverflow: ellipsis;
+    whiteSpace: nowrap;
+    transition: color 0.15s ease;
+}
+
+.nameLink {
+    cursor: pointer;
+
+    &:hover {
+        color: var(--color-accent);
+    }
+}
+
+// ============================================================
+//  权限标签（纯展示）
 // ============================================================
 .permissionTag {
     display: inline-block;
@@ -324,13 +342,7 @@
     border-radius: 12px;
     font-size: 13px;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        opacity: 0.8;
-        transform: scale(1.05);
-    }
+    cursor: default;
 }
 
 .permissionEdit {
