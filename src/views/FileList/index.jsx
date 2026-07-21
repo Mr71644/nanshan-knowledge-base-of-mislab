@@ -660,7 +660,7 @@ const FileList = () => {
                             columns={columns}
                             dataSource={list.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
-                            scroll={{ y: 'calc(100vh - 310px)', x: 'max-content' }}
+                            scroll={{ y: 'calc(100vh - 250px)', x: 'max-content' }}
                             rowClassName={(record) => {
                                 const key = `${record.id}${record.status}`
                                 const isPinned = record.pinned === true || record.pinned === 'true'

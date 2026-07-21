@@ -868,36 +868,36 @@ const Home = () => {
                                         </Button>
                                         : null
                                 }
+                                <div className={style.fileSearchBox}>
+                                    <Input
+                                        placeholder="搜索当前目录文件"
+                                        allowClear
+                                        prefix={<SearchOutlined className={style.searchPrefix} />}
+                                        value={fileSearchKeyword}
+                                        onChange={(e) => {
+                                            setFileSearchKeyword(e.target.value)
+                                            setFileSearchIndex(0)
+                                        }}
+                                        className={style.searchInput}
+                                    />
+                                    {matchedCount > 0 && (
+                                        <div className={style.searchNav}>
+                                            <span className={style.searchCount}>{fileSearchIndex + 1}<em> / {matchedCount}</em></span>
+                                            <div className={style.searchNavBtns}>
+                                                <Button size="small" type="text" icon={<UpOutlined />} disabled={matchedCount <= 1}
+                                                    onClick={() => setFileSearchIndex(i => Math.max(0, i - 1))} />
+                                                <Button size="small" type="text" icon={<DownOutlined />} disabled={matchedCount <= 1}
+                                                    onClick={() => setFileSearchIndex(i => Math.min(matchedCount - 1, i + 1))} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                           </div>
                           {/* Variants: insert below this line */}
                           {/* impeccable-variants-end 59ef42c8 */}
                         </div>
                     </ConfigProvider>
-                    <div className={style.fileSearchBox}>
-                        <Input
-                            placeholder="搜索当前目录文件"
-                            allowClear
-                            prefix={<SearchOutlined className={style.searchPrefix} />}
-                            value={fileSearchKeyword}
-                            onChange={(e) => {
-                                setFileSearchKeyword(e.target.value)
-                                setFileSearchIndex(0)
-                            }}
-                            className={style.searchInput}
-                        />
-                        {matchedCount > 0 && (
-                            <div className={style.searchNav}>
-                                <span className={style.searchCount}>{fileSearchIndex + 1}<em> / {matchedCount}</em></span>
-                                <div className={style.searchNavBtns}>
-                                    <Button size="small" type="text" icon={<UpOutlined />} disabled={matchedCount <= 1}
-                                        onClick={() => setFileSearchIndex(i => Math.max(0, i - 1))} />
-                                    <Button size="small" type="text" icon={<DownOutlined />} disabled={matchedCount <= 1}
-                                        onClick={() => setFileSearchIndex(i => Math.min(matchedCount - 1, i + 1))} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
                     <div
                         style={{
                             background: '#ffffff',
