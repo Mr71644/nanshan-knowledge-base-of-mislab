@@ -171,6 +171,120 @@
 }
 
 // ============================================================
+//  日期筛选
+// ============================================================
+.dateFilterPanel {
+    width: 260px;
+    padding: 4px 0;
+
+    :global {
+        .ant-picker-panel-container {
+            box-shadow: none;
+        }
+
+        .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+            background: var(--color-accent) !important;
+            border-color: var(--color-accent) !important;
+        }
+
+        .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+            border-color: var(--color-accent) !important;
+        }
+
+        .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+        .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+            background: var(--color-accent) !important;
+        }
+
+        .ant-picker-cell-in-view.ant-picker-cell-in-range::before {
+            background: rgba(var(--color-accent-rgb), 0.08) !important;
+        }
+
+        .ant-picker-cell-in-view.ant-picker-cell-in-range .ant-picker-cell-inner {
+            background: rgba(var(--color-accent-rgb), 0.06);
+        }
+
+        .ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end) .ant-picker-cell-inner {
+            background: rgba(var(--color-accent-rgb), 0.06) !important;
+        }
+
+        .ant-picker-header-view button:hover {
+            color: var(--color-accent) !important;
+        }
+
+        .ant-picker-header-super-prev-btn:hover,
+        .ant-picker-header-super-next-btn:hover,
+        .ant-picker-header-prev-btn:hover,
+        .ant-picker-header-next-btn:hover {
+            color: var(--color-accent) !important;
+        }
+
+        .ant-picker-today-btn {
+            color: var(--color-accent) !important;
+        }
+
+        .ant-picker-active-bar {
+            background: var(--color-accent) !important;
+        }
+
+        .ant-picker-range .ant-picker-active-bar {
+            background: var(--color-accent) !important;
+        }
+
+        .ant-picker-focused {
+            border-color: rgba(var(--color-accent-rgb), 0.4) !important;
+            box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb), 0.08) !important;
+        }
+
+        .ant-picker:hover {
+            border-color: var(--color-accent) !important;
+        }
+
+        .ant-btn-primary {
+            background: var(--color-accent) !important;
+            border-color: var(--color-accent) !important;
+
+            &:hover {
+                background: var(--color-accent-deep) !important;
+                border-color: var(--color-accent-deep) !important;
+            }
+        }
+
+        .ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+            background: var(--color-accent) !important;
+        }
+    }
+}
+
+.dateFilterHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--color-border-table);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.dateFilterClear {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+.dateFilterPicker {
+    width: 100%;
+}
+
+// ============================================================
 //  文件列表表格
 // ============================================================
 .fileList {

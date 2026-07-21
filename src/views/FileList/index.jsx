@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
-import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty } from 'antd';
+import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty, DatePicker } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
@@ -31,6 +31,7 @@ const FileList = () => {
     const [selectedRows, setSelectedRows] = useState([])
     const [batchType, setBatchType] = useState(null) // null | 'batch' | 'delete' | 'download'
     const [ownerFilter, setOwnerFilter] = useState([]) // 选中的所有者名
+    const [dateFilter, setDateFilter] = useState(null) // [dayjs, dayjs] | null
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentRecord, setCurrentRecord] = useState(null)
@@ -115,10 +116,22 @@ const FileList = () => {
     }, [list])
 
     // 应用所有者筛选后的列表
-    const filteredList = useMemo(() => {
+    const ownerFilteredList = useMemo(() => {
         if (ownerFilter.length === 0) return list
         return list.filter(item => ownerFilter.includes(item.owner))
     }, [list, ownerFilter])
+
+    // 叠加日期筛选
+    const filteredList = useMemo(() => {
+        if (!dateFilter || !dateFilter[0] || !dateFilter[1]) return ownerFilteredList
+        const [start, end] = dateFilter
+        const startDay = start.startOf('day')
+        const endDay = end.endOf('day')
+        return ownerFilteredList.filter(item => {
+            const t = new Date(item.updateTime)
+            return t >= startDay.toDate() && t <= endDay.toDate()
+        })
+    }, [ownerFilteredList, dateFilter])
 
     // 所有者筛选浮层内容
     const ownerFilterContent = (
@@ -186,6 +199,62 @@ const FileList = () => {
         </div>
     )
 
+    // 日期筛选内容
+    const dateFilterContent = (
+        <div className={style.dateFilterPanel}>
+            <div className={style.dateFilterHeader}>
+                <span>筛选日期范围</span>
+                {dateFilter && (
+                    <span className={style.dateFilterClear} onClick={() => setDateFilter(null)}>清除</span>
+                )}
+            </div>
+            <DatePicker.RangePicker
+                value={dateFilter}
+                onChange={(dates) => setDateFilter(dates?.[0] && dates?.[1] ? dates : null)}
+                allowClear
+                placeholder={['开始日期', '结束日期']}
+                className={style.dateFilterPicker}
+            />
+        </div>
+    )
+
+    // 修改时间列标题（带日期筛选图标）
+    const renderDateTitle = (colKey) => (
+        <div className={style.headerCell}>
+            <span className={style.ownerTitleText}>
+                修改时间
+                <Popover
+                    content={dateFilterContent}
+                    trigger="click"
+                    placement="bottomLeft"
+                    overlayClassName={style.dateFilterPopover}
+                >
+                    <span
+                        className={`${style.filterIcon} ${dateFilter ? style.filterIconActive : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {dateFilter ? <FilterFilled /> : <FilterOutlined />}
+                        {dateFilter && <span className={style.filterBadge}>1</span>}
+                    </span>
+                </Popover>
+            </span>
+            <div
+                className={style.resizeHandle}
+                onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    resizeRef.current = {
+                        key: colKey,
+                        startX: e.clientX,
+                        startWidth: columnWidths[colKey],
+                    }
+                    document.body.style.cursor = 'col-resize'
+                    document.body.style.userSelect = 'none'
+                }}
+            />
+        </div>
+    )
+
     const getTypeStyle = (status) => {
         const map = {
             1: { cls: style.typeDoc,    icon: <EditOutlined /> },
@@ -229,7 +298,7 @@ const FileList = () => {
             width: columnWidths.owner,
         },
         {
-            title: renderTitle('修改时间', 'updateTime'),
+            title: renderDateTitle('updateTime'),
             dataIndex: 'updateTime',
             key: 'updateTime',
             width: columnWidths.updateTime,
@@ -646,9 +715,10 @@ const FileList = () => {
         }
     }, [batchTrigger])
 
-    // 切换目录时清除所有者筛选
+    // 切换目录时清除筛选
     useEffect(() => {
         setOwnerFilter([])
+        setDateFilter(null)
     }, [param.id])
 
     // ---------- 搜索匹配 ----------
