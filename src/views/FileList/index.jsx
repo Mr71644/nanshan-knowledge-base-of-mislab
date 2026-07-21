@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty, DatePicker } from 'antd';
-import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled } from '@ant-design/icons';
+import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled, CaretDownOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
@@ -37,6 +37,7 @@ const FileList = () => {
     const [batchType, setBatchType] = useState(null) // null | 'batch' | 'delete' | 'download'
     const [ownerFilter, setOwnerFilter] = useState([]) // 选中的所有者名
     const [dateFilter, setDateFilter] = useState(null) // [dayjs, dayjs] | null
+    const [sortOrder, setSortOrder] = useState('desc') // 'desc'=最近→最早(默认) | 'asc'=最早→最近
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentRecord, setCurrentRecord] = useState(null)
@@ -157,6 +158,21 @@ const FileList = () => {
         })
     }, [ownerFilteredList, dateFilter])
 
+    // 排序：置顶项固定置顶且不参与排序，其余项按修改时间排序（默认最近→最早）
+    const displayList = useMemo(() => {
+        const pinned = []
+        const normal = []
+        filteredList.forEach(item => {
+            const isPinned = item.pinned === true || item.pinned === 'true'
+            ;(isPinned ? pinned : normal).push(item)
+        })
+        normal.sort((a, b) => {
+            const diff = new Date(a.updateTime) - new Date(b.updateTime)
+            return sortOrder === 'desc' ? -diff : diff
+        })
+        return [...pinned, ...normal]
+    }, [filteredList, sortOrder])
+
     // 所有者筛选浮层内容
     const ownerFilterContent = (
         <div className={style.ownerFilterPanel}>
@@ -242,11 +258,19 @@ const FileList = () => {
         </div>
     )
 
-    // 修改时间列标题（带日期筛选图标）
+    // 修改时间列标题（可点击切换排序 + 日期筛选图标）
     const renderDateTitle = (colKey) => (
         <div className={style.headerCell}>
             <span className={style.ownerTitleText}>
-                修改时间
+                <span
+                    className={style.sortLabel}
+                    onClick={() => setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'))}
+                >
+                    修改时间
+                    <span className={`${style.sortArrow} ${sortOrder === 'asc' ? style.sortArrowAsc : ''}`}>
+                        <CaretDownOutlined />
+                    </span>
+                </span>
                 <Popover
                     content={dateFilterContent}
                     trigger="click"
@@ -538,20 +562,8 @@ const FileList = () => {
         try {
             setLoading(true)
             const res = await getFileList(id)
-
-            // 排序：置顶项目排在前面，然后按修改时间降序
-            const sortedList = res.data.sort((a, b) => {
-                // 确保 pinned 字段存在且为 true
-                const aPinned = a.pinned === true || a.pinned === 'true'
-                const bPinned = b.pinned === true || b.pinned === 'true'
-
-                // 置顶项目排在前面
-                if (aPinned && !bPinned) return -1
-                if (!aPinned && bPinned) return 1
-                // 都置顶或都不置顶，按修改时间降序
-                return new Date(b.updateTime) - new Date(a.updateTime)
-            })
-            setList(sortedList)
+            // 排序交由 displayList 处理（按 sortOrder，置顶项不参与排序）
+            setList(res.data)
             setLoading(false)
         } catch (e) {
             error({
@@ -757,10 +769,10 @@ const FileList = () => {
     // ---------- 搜索匹配 ----------
     const matchKeys = useMemo(() => {
         if (!searchKeyword) return []
-        return filteredList
+        return displayList
             .map(item => `${item.id}${item.status}`)
-            .filter((key, i) => filteredList[i].name.toLowerCase().includes(searchKeyword))
-    }, [filteredList, searchKeyword])
+            .filter((key, i) => displayList[i].name.toLowerCase().includes(searchKeyword))
+    }, [displayList, searchKeyword])
 
     const currentMatchKey = matchKeys.length > 0 && searchIndex < matchKeys.length
         ? matchKeys[searchIndex]
@@ -847,7 +859,7 @@ const FileList = () => {
                         )}
                         <Table
                             columns={columns}
-                            dataSource={filteredList.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
+                            dataSource={displayList.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
                             scroll={{ y: 'calc(100vh - 250px)', x: totalWidth }}
                             rowClassName={(record) => {
