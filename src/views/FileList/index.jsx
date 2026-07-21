@@ -38,6 +38,7 @@ const FileList = () => {
     const [ownerFilter, setOwnerFilter] = useState([]) // 选中的所有者名
     const [dateFilter, setDateFilter] = useState(null) // [dayjs, dayjs] | null
     const [sortOrder, setSortOrder] = useState('desc') // 'desc'=最近→最早(默认) | 'asc'=最早→最近
+    const [permissionFilter, setPermissionFilter] = useState([]) // 选中的权限：'EDIT' | 'VIEW'
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
     const [currentRecord, setCurrentRecord] = useState(null)
@@ -146,17 +147,39 @@ const FileList = () => {
         return list.filter(item => ownerFilter.includes(item.owner))
     }, [list, ownerFilter])
 
+    // 权限筛选可选项（仅当前列表中实际存在的权限）
+    const permissionOptions = useMemo(() => {
+        const has = { EDIT: false, VIEW: false }
+        list.forEach(item => {
+            if (item.permissionType === 'EDIT') has.EDIT = true
+            else has.VIEW = true
+        })
+        const opts = []
+        if (has.EDIT) opts.push('EDIT')
+        if (has.VIEW) opts.push('VIEW')
+        return opts
+    }, [list])
+
+    // 叠加权限筛选
+    const permissionFilteredList = useMemo(() => {
+        if (permissionFilter.length === 0) return ownerFilteredList
+        return ownerFilteredList.filter(item => {
+            const p = item.permissionType === 'EDIT' ? 'EDIT' : 'VIEW'
+            return permissionFilter.includes(p)
+        })
+    }, [ownerFilteredList, permissionFilter])
+
     // 叠加日期筛选
     const filteredList = useMemo(() => {
-        if (!dateFilter || !dateFilter[0] || !dateFilter[1]) return ownerFilteredList
+        if (!dateFilter || !dateFilter[0] || !dateFilter[1]) return permissionFilteredList
         const [start, end] = dateFilter
         const startDay = start.startOf('day')
         const endDay = end.endOf('day')
-        return ownerFilteredList.filter(item => {
+        return permissionFilteredList.filter(item => {
             const t = new Date(item.updateTime)
             return t >= startDay.toDate() && t <= endDay.toDate()
         })
-    }, [ownerFilteredList, dateFilter])
+    }, [permissionFilteredList, dateFilter])
 
     // 排序：置顶项固定置顶且不参与排序，其余项按修改时间排序（默认最近→最早）
     const displayList = useMemo(() => {
@@ -303,6 +326,72 @@ const FileList = () => {
         </div>
     )
 
+    // 权限筛选浮层内容
+    const permissionFilterContent = (
+        <div className={style.ownerFilterPanel}>
+            <div className={style.ownerFilterHeader}>
+                <span>筛选权限</span>
+                {permissionFilter.length > 0 && (
+                    <span className={style.ownerFilterClear} onClick={() => setPermissionFilter([])}>清除</span>
+                )}
+            </div>
+            {permissionOptions.length === 0 ? (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据" />
+            ) : (
+                <Checkbox.Group
+                    value={permissionFilter}
+                    onChange={(checked) => setPermissionFilter(checked)}
+                    className={style.ownerFilterGroup}
+                >
+                    {permissionOptions.map(p => (
+                        <Checkbox key={p} value={p} className={style.ownerFilterItem}>
+                            {p === 'EDIT' ? '可编辑' : '可阅读'}
+                        </Checkbox>
+                    ))}
+                </Checkbox.Group>
+            )}
+        </div>
+    )
+
+    // 权限列标题（带筛选图标）
+    const renderPermissionTitle = (colKey) => (
+        <div className={style.headerCell}>
+            <span className={style.ownerTitleText}>
+                权限
+                <Popover
+                    content={permissionFilterContent}
+                    trigger="click"
+                    placement="bottomLeft"
+                    overlayClassName={style.ownerFilterPopover}
+                >
+                    <span
+                        className={`${style.filterIcon} ${permissionFilter.length > 0 ? style.filterIconActive : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {permissionFilter.length > 0 ? <FilterFilled /> : <FilterOutlined />}
+                        {permissionFilter.length > 0 && (
+                            <span className={style.filterBadge}>{permissionFilter.length}</span>
+                        )}
+                    </span>
+                </Popover>
+            </span>
+            <div
+                className={style.resizeHandle}
+                onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    resizeRef.current = {
+                        key: colKey,
+                        startX: e.clientX,
+                        startWidth: columnWidths[colKey],
+                    }
+                    document.body.style.cursor = 'col-resize'
+                    document.body.style.userSelect = 'none'
+                }}
+            />
+        </div>
+    )
+
     const getTypeStyle = (status) => {
         const map = {
             1: { cls: style.typeDoc,    icon: <EditOutlined /> },
@@ -361,7 +450,7 @@ const FileList = () => {
             ellipsis: { showTitle: false },
         },
         {
-            title: renderTitle('权限', 'permission'),
+            title: renderPermissionTitle('permission'),
             key: 'permission',
             width: columnWidths.permission,
             render: (text, record) => {
@@ -764,6 +853,7 @@ const FileList = () => {
     useEffect(() => {
         setOwnerFilter([])
         setDateFilter(null)
+        setPermissionFilter([])
     }, [param.id])
 
     // ---------- 搜索匹配 ----------
