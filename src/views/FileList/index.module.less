@@ -295,9 +295,12 @@
 
     :global {
         // 固定布局 — 列宽由 width 属性严格决定
+        // 禁用 rc-table 默认的 min-width:100%：让表格宽度 = 各列宽之和（scroll.x），
+        // 拖动某列只改变该列，其余列仅平移；内容超出可视区时横向滚动，可视区不再被撑大
         .ant-table-header table,
         .ant-table-body table {
             table-layout: fixed !important;
+            min-width: 0 !important;
         }
 
         // ---- 表格头 ----
@@ -569,6 +572,7 @@
     overflow: hidden;
     textOverflow: ellipsis;
     whiteSpace: nowrap;
+    min-width: 0;
     transition: color 0.15s ease;
 }
 

@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState, useRef, useMemo } from 'react';
+import React, { memo, useEffect, useLayoutEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty, DatePicker } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled } from '@ant-design/icons';
@@ -18,6 +18,11 @@ import style from './index.module.less'
  * - 操作（删除/重命名/预览/下载）会调用 `src/apis/delete.js`、`src/apis/folder.js` 和 `src/apis/file.js` 中的方法
  * - 点击行会基于 `status` 跳转到对应的详情页（content/excel 或进入文件夹）
  */
+
+// 每列默认宽度（初始显示，作为按比例分配容器宽度的基准）与最小宽度（拖拽下限）
+const COLUMN_DEFAULTS = { name: 360, owner: 100, updateTime: 160, permission: 80, operation: 60 }
+const COLUMN_MINS = { name: 120, owner: 80, updateTime: 120, permission: 70, operation: 52 }
+const DEFAULT_SUM = Object.values(COLUMN_DEFAULTS).reduce((a, b) => a + b, 0) // 760
 
 const FileList = () => {
     const param = useParams()
@@ -52,16 +57,12 @@ const FileList = () => {
         return record.name
     }
 
-    const [columnWidths, setColumnWidths] = useState({
-        name: 220,
-        owner: 100,
-        updateTime: 160,
-        permission: 80,
-        operation: 60,
-    })
+    const [columnWidths, setColumnWidths] = useState({ ...COLUMN_DEFAULTS })
 
     // ---------- 列宽拖拽 ----------
     const resizeRef = useRef(null)
+    const wrapperRef = useRef(null)
+    const initialWidthsApplied = useRef(false)
 
     useEffect(() => {
         const onMove = (e) => {
@@ -69,7 +70,7 @@ const FileList = () => {
             if (!r) return
             setColumnWidths(prev => ({
                 ...prev,
-                [r.key]: Math.max(60, r.startWidth + (e.clientX - r.startX)),
+                [r.key]: Math.max(COLUMN_MINS[r.key] ?? 60, r.startWidth + (e.clientX - r.startX)),
             }))
         }
         const onUp = () => {
@@ -86,6 +87,29 @@ const FileList = () => {
             document.removeEventListener('mouseup', onUp)
         }
     }, [])
+
+    // 初始宽度：首次加载完成后测量容器实际宽度，按各列默认比例分配给每一列，
+    // 保证每列都有初始宽度且整体铺满卡片（不留白、无横向滚动）。仅执行一次——
+    // 不随文件夹切换重置，用户拖拽结果会被保留。
+    useLayoutEffect(() => {
+        if (initialWidthsApplied.current || loading) return
+        const wrapper = wrapperRef.current
+        if (!wrapper) return
+        const body = wrapper.querySelector('.ant-table-body') || wrapper
+        const containerWidth = body.clientWidth
+        if (!containerWidth) return
+        const next = {}
+        let rest = containerWidth
+        // name 放最后吸收舍入差，使总和精确等于容器宽
+        ;['owner', 'updateTime', 'permission', 'operation'].forEach(k => {
+            const w = Math.max(COLUMN_MINS[k], Math.round(containerWidth * COLUMN_DEFAULTS[k] / DEFAULT_SUM))
+            next[k] = w
+            rest -= w
+        })
+        next.name = Math.max(COLUMN_MINS.name, rest)
+        setColumnWidths(next)
+        initialWidthsApplied.current = true
+    }, [loading])
 
     const renderTitle = (text, colKey) => (
         <div className={style.headerCell}>
@@ -264,6 +288,13 @@ const FileList = () => {
         }
         return map[status] || map[4]
     }
+
+    // 列宽总和 —— 作为 scroll.x，保证空数据时表头列宽不塌陷，拖拽时横向滚动区同步变化
+    const totalWidth = useMemo(
+        () => Object.values(columnWidths).reduce((a, b) => a + b, 0),
+        [columnWidths]
+    )
+
     const columns = [
         {
             title: renderTitle('名称', 'name'),
@@ -296,12 +327,14 @@ const FileList = () => {
             dataIndex: 'owner',
             key: 'owner',
             width: columnWidths.owner,
+            ellipsis: { showTitle: false },
         },
         {
             title: renderDateTitle('updateTime'),
             dataIndex: 'updateTime',
             key: 'updateTime',
             width: columnWidths.updateTime,
+            ellipsis: { showTitle: false },
         },
         {
             title: renderTitle('权限', 'permission'),
@@ -789,7 +822,7 @@ const FileList = () => {
             {
                 loading
                     ? <Spin size='large' className={style.spin} />
-                    : <div className={style.tableWrapper}>
+                    : <div className={style.tableWrapper} ref={wrapperRef}>
                         {batchType && (
                             <div className={style.batchBar}>
                                 <span className={style.batchText}>
@@ -816,7 +849,7 @@ const FileList = () => {
                             columns={columns}
                             dataSource={filteredList.map(item => ({ ...item, key: `${item.id}` + `${item.status}`, updateTime: formatDate(item.updateTime) }))}
                             pagination={false}
-                            scroll={{ y: 'calc(100vh - 250px)', x: 'max-content' }}
+                            scroll={{ y: 'calc(100vh - 250px)', x: totalWidth }}
                             rowClassName={(record) => {
                                 const key = `${record.id}${record.status}`
                                 const isPinned = record.pinned === true || record.pinned === 'true'
