@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, useCallback, useMemo, Fragment } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Tree, theme, ConfigProvider, Tooltip, Button, notification, Modal, Form, Input, Avatar } from 'antd';
-import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, RightOutlined, SearchOutlined, SettingOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { CloudOutlined, IdcardOutlined, LogoutOutlined, FolderOutlined, FolderOpenOutlined, EditOutlined, TableOutlined, FileOutlined, RightOutlined, SearchOutlined, SettingOutlined, DownloadOutlined, DeleteOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { MemoAddNewFile } from '@/components/AddNewFile';
 /**
  * Home 视图（布局）说明：
@@ -120,6 +120,9 @@ const Home = () => {
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('')
     const [batchTrigger, setBatchTrigger] = useState(null) // null | 'download' | 'delete'
+    const [fileSearchKeyword, setFileSearchKeyword] = useState('')
+    const [fileSearchIndex, setFileSearchIndex] = useState(0)
+    const [matchedCount, setMatchedCount] = useState(0)
 
     const { filteredMatchKeys, searchExpandedKeys } = useMemo(() => {
         const trimmed = searchText.trim().toLowerCase()
@@ -871,6 +874,30 @@ const Home = () => {
                           {/* impeccable-variants-end 59ef42c8 */}
                         </div>
                     </ConfigProvider>
+                    <div className={style.fileSearchBox}>
+                        <Input
+                            placeholder="搜索当前目录文件"
+                            allowClear
+                            prefix={<SearchOutlined className={style.searchPrefix} />}
+                            value={fileSearchKeyword}
+                            onChange={(e) => {
+                                setFileSearchKeyword(e.target.value)
+                                setFileSearchIndex(0)
+                            }}
+                            className={style.searchInput}
+                        />
+                        {matchedCount > 0 && (
+                            <div className={style.searchNav}>
+                                <span className={style.searchCount}>{fileSearchIndex + 1}<em> / {matchedCount}</em></span>
+                                <div className={style.searchNavBtns}>
+                                    <Button size="small" type="text" icon={<UpOutlined />} disabled={matchedCount <= 1}
+                                        onClick={() => setFileSearchIndex(i => Math.max(0, i - 1))} />
+                                    <Button size="small" type="text" icon={<DownOutlined />} disabled={matchedCount <= 1}
+                                        onClick={() => setFileSearchIndex(i => Math.min(matchedCount - 1, i + 1))} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <div
                         style={{
                             background: '#ffffff',
@@ -878,7 +905,7 @@ const Home = () => {
                         }}
                         className={style.fileList}
                     >
-                        <Outlet context={{ batchTrigger, clearBatchTrigger: () => setBatchTrigger(null) }}></Outlet>
+                        <Outlet context={{ batchTrigger, clearBatchTrigger: () => setBatchTrigger(null), searchKeyword: fileSearchKeyword.trim().toLowerCase(), searchIndex: fileSearchIndex, onMatchedCountChange: setMatchedCount }}></Outlet>
                     </div>
                 </Content>
             </Layout>

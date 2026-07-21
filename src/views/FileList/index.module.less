@@ -17,7 +17,6 @@
     box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--color-border-light);
     overflow: hidden;
-    margin-top: 60px;
 }
 
 // ============================================================
@@ -54,6 +53,23 @@
     &:hover::after {
         background: var(--color-accent);
         width: 4px;
+    }
+}
+
+// ============================================================
+//  搜索高亮 & 匹配行
+// ============================================================
+.searchHighlight {
+    background-color: rgba(var(--color-accent-rgb), 0.32);
+    color: inherit;
+    border-radius: 3px;
+    padding: 1px 3px;
+    font-weight: 600;
+}
+
+.matchRow {
+    td {
+        background: rgba(var(--color-accent-rgb), 0.06) !important;
     }
 }
 

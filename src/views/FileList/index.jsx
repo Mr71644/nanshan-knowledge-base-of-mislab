@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState, useRef } from 'react';
+import React, { memo, useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
@@ -24,7 +24,7 @@ const FileList = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const { error, contextHolder } = useMessage()
-    const { batchTrigger, clearBatchTrigger } = useOutletContext() || {}
+    const { batchTrigger, clearBatchTrigger, searchKeyword, searchIndex, onMatchedCountChange } = useOutletContext() || {}
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedRowKeys, setSelectedRowKeys] = useState([])
@@ -135,7 +135,7 @@ const FileList = () => {
                                 handleClick(record)
                             } : undefined}
                         >
-                            {text}
+                            {highlightName(text)}
                         </span>
                     </span>
                 )
@@ -564,6 +564,56 @@ const FileList = () => {
             clearBatchTrigger?.()
         }
     }, [batchTrigger])
+
+    // ---------- 搜索匹配 ----------
+    const matchKeys = useMemo(() => {
+        if (!searchKeyword) return []
+        return list
+            .map(item => `${item.id}${item.status}`)
+            .filter((key, i) => list[i].name.toLowerCase().includes(searchKeyword))
+    }, [list, searchKeyword])
+
+    const currentMatchKey = matchKeys.length > 0 && searchIndex < matchKeys.length
+        ? matchKeys[searchIndex]
+        : null
+
+    // 通知 Home matchedCount
+    useEffect(() => {
+        onMatchedCountChange?.(matchKeys.length)
+    }, [matchKeys.length])
+
+    // 滚动到当前匹配行
+    useEffect(() => {
+        if (currentMatchKey) {
+            // 等 DOM 更新后滚动
+            const timer = setTimeout(() => {
+                const row = document.querySelector('[data-match-row="true"]')
+                row?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+            }, 50)
+            return () => clearTimeout(timer)
+        }
+    }, [currentMatchKey])
+
+    // 高亮搜索关键词
+    const highlightName = (text) => {
+        if (!searchKeyword) return text
+        const lowerText = text.toLowerCase()
+        const lowerKw = searchKeyword
+        const idx = lowerText.indexOf(lowerKw)
+        if (idx === -1) return text
+        const parts = []
+        let lastIdx = 0
+        let i = idx
+        while (i !== -1) {
+            if (i > lastIdx) parts.push(text.slice(lastIdx, i))
+            parts.push(<span key={i} className={style.searchHighlight}>{text.slice(i, i + searchKeyword.length)}</span>)
+            lastIdx = i + searchKeyword.length
+            i = lowerText.indexOf(lowerKw, lastIdx)
+        }
+        if (lastIdx < text.length) parts.push(text.slice(lastIdx))
+        return parts
+    }
+
     return (
         <>
             <style>{`
@@ -612,8 +662,20 @@ const FileList = () => {
                             pagination={false}
                             scroll={{ y: 'calc(100vh - 310px)', x: 'max-content' }}
                             rowClassName={(record) => {
-                                const isPinned = record.pinned === true || record.pinned === 'true';
-                                return isPinned ? style.pinnedRow : '';
+                                const key = `${record.id}${record.status}`
+                                const isPinned = record.pinned === true || record.pinned === 'true'
+                                const isMatch = key === currentMatchKey
+                                const classes = []
+                                if (isPinned) classes.push(style.pinnedRow)
+                                if (isMatch) classes.push(style.matchRow)
+                                return classes.join(' ')
+                            }}
+                            onRow={(record) => {
+                                const key = `${record.id}${record.status}`
+                                if (key === currentMatchKey) {
+                                    return { 'data-match-row': true }
+                                }
+                                return {}
                             }}
                             className={style.fileList}
                         />
