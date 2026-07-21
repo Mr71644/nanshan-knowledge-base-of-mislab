@@ -17,33 +17,43 @@
     box-shadow: var(--shadow-card-lg);
     border: 1px solid var(--color-border-light);
     overflow: hidden;
+    margin-top: 60px;
 }
 
 // ============================================================
-//  列拖拽手柄 (react-resizable)
+//  列宽拖拽手柄
 // ============================================================
-:global {
-    .react-resizable {
-        position: relative;
-    }
-    .react-resizable-handle {
-        position: absolute;
-        right: -4px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 8px;
-        height: 60%;
-        cursor: col-resize;
-        z-index: 1;
-        border-radius: 2px;
-        transition: background 0.2s;
+.headerCell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
 
-        &:hover {
-            background: rgba(var(--color-accent-rgb), 0.3);
-        }
-        &:active {
-            background: rgba(var(--color-accent-rgb), 0.5);
-        }
+.resizeHandle {
+    position: absolute;
+    right: -8px;
+    top: 0;
+    bottom: 0;
+    width: 16px;
+    cursor: col-resize;
+    z-index: 1;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--color-border-table);
+        transition: background 0.15s, width 0.15s;
+    }
+
+    &:hover::after {
+        background: var(--color-accent);
+        width: 4px;
     }
 }
 
@@ -57,8 +67,15 @@
     -ms-user-select: none;
 
     :global {
+        // 固定布局 — 列宽由 width 属性严格决定
+        .ant-table-header table,
+        .ant-table-body table {
+            table-layout: fixed !important;
+        }
+
         // ---- 表格头 ----
         .ant-table-thead > tr > th {
+            position: relative;
             background: linear-gradient(180deg, var(--color-table-header-bg-start), transparent);
             border-bottom: 1.5px solid var(--color-border-table);
             font-weight: 600;
@@ -86,10 +103,10 @@
 
         // 第一列 & 最后一列无左边框
         .ant-table-tbody > tr > td:first-child {
-            padding-left: 24px;
+            padding-left: 20px;
         }
         .ant-table-thead > tr > th:first-child {
-            padding-left: 24px;
+            padding-left: 20px;
         }
         .ant-table-tbody > tr > td:last-child {
             padding-right: 16px;
@@ -99,7 +116,7 @@
         }
 
         // ---- 名称列 ----
-        .ant-table-cell:first-child {
+        .ant-table-tbody .ant-table-cell:first-child {
             font-weight: 500;
             color: var(--color-ink);
         }

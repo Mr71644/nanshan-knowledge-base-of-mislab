@@ -1,8 +1,7 @@
-import React, { memo, useEffect, useState, useRef, useCallback } from 'react';
+import React, { memo, useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom';
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined } from '@ant-design/icons';
-import { Resizable } from 'react-resizable';
 import { getFileList, togglePin } from '@/apis/fileList';
 import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
@@ -51,7 +50,6 @@ const FileList = () => {
         return record.name
     }
 
-    // 可拖拽列宽
     const [columnWidths, setColumnWidths] = useState({
         name: 220,
         owner: 100,
@@ -59,23 +57,53 @@ const FileList = () => {
         permission: 80,
         operation: 60,
     })
-    const handleResize = useCallback((key) => (e, { size }) => {
-        setColumnWidths(prev => ({ ...prev, [key]: Math.max(60, size.width) }))
+
+    // ---------- 列宽拖拽 ----------
+    const resizeRef = useRef(null)
+
+    useEffect(() => {
+        const onMove = (e) => {
+            const r = resizeRef.current
+            if (!r) return
+            setColumnWidths(prev => ({
+                ...prev,
+                [r.key]: Math.max(60, r.startWidth + (e.clientX - r.startX)),
+            }))
+        }
+        const onUp = () => {
+            if (resizeRef.current) {
+                resizeRef.current = null
+                document.body.style.cursor = ''
+                document.body.style.userSelect = ''
+            }
+        }
+        document.addEventListener('mousemove', onMove)
+        document.addEventListener('mouseup', onUp)
+        return () => {
+            document.removeEventListener('mousemove', onMove)
+            document.removeEventListener('mouseup', onUp)
+        }
     }, [])
-    const ResizableTitle = useCallback((props) => {
-        const { onResize, width, ...restProps } = props
-        if (!width) return <th {...restProps} />
-        return (
-            <Resizable
-                width={width}
-                height={0}
-                onResize={onResize}
-                draggableOpts={{ enableUserSelectHack: false }}
-            >
-                <th {...restProps} />
-            </Resizable>
-        )
-    }, [])
+
+    const renderTitle = (text, colKey) => (
+        <div className={style.headerCell}>
+            <span>{text}</span>
+            <div
+                className={style.resizeHandle}
+                onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    resizeRef.current = {
+                        key: colKey,
+                        startX: e.clientX,
+                        startWidth: columnWidths[colKey],
+                    }
+                    document.body.style.cursor = 'col-resize'
+                    document.body.style.userSelect = 'none'
+                }}
+            />
+        </div>
+    )
 
     const getTypeStyle = (status) => {
         const map = {
@@ -88,15 +116,10 @@ const FileList = () => {
     }
     const columns = [
         {
-            title: '名称',
+            title: renderTitle('名称', 'name'),
             dataIndex: 'name',
             key: 'name',
             width: columnWidths.name,
-            ellipsis: true,
-            onHeaderCell: (col) => ({
-                width: col.width,
-                onResize: handleResize('name'),
-            }),
             render: (text, record) => {
                 const iconStyle = getTypeStyle(record.status)
                 const clickable = !batchType
@@ -119,33 +142,21 @@ const FileList = () => {
             }
         },
         {
-            title: '所有者',
+            title: renderTitle('所有者', 'owner'),
             dataIndex: 'owner',
             key: 'owner',
             width: columnWidths.owner,
-            onHeaderCell: (col) => ({
-                width: col.width,
-                onResize: handleResize('owner'),
-            }),
         },
         {
-            title: '修改时间',
+            title: renderTitle('修改时间', 'updateTime'),
             dataIndex: 'updateTime',
             key: 'updateTime',
             width: columnWidths.updateTime,
-            onHeaderCell: (col) => ({
-                width: col.width,
-                onResize: handleResize('updateTime'),
-            }),
         },
         {
-            title: '权限',
+            title: renderTitle('权限', 'permission'),
             key: 'permission',
             width: columnWidths.permission,
-            onHeaderCell: (col) => ({
-                width: col.width,
-                onResize: handleResize('permission'),
-            }),
             render: (text, record) => {
                 const isEdit = record.permissionType === 'EDIT'
                 return (
@@ -159,30 +170,42 @@ const FileList = () => {
         },
         {
             title: (
-                <div className={style.batchHeader}>
+                <div className={style.headerCell}>
                     {batchType ? (
-                        <Checkbox
-                            checked={list.length > 0 && selectedRowKeys.length === list.length}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    setSelectedRowKeys(list.map(item => `${item.id}${item.status}`))
-                                    setSelectedRows([...list])
-                                } else {
-                                    setSelectedRowKeys([])
-                                    setSelectedRows([])
-                                }
-                            }}
-                        />
-                    ) : null}
+                        <div className={style.batchHeader}>
+                            <Checkbox
+                                checked={list.length > 0 && selectedRowKeys.length === list.length}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        setSelectedRowKeys(list.map(item => `${item.id}${item.status}`))
+                                        setSelectedRows([...list])
+                                    } else {
+                                        setSelectedRowKeys([])
+                                        setSelectedRows([])
+                                    }
+                                }}
+                            />
+                        </div>
+                    ) : <span>操作</span>}
+                    <div
+                        className={style.resizeHandle}
+                        onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            resizeRef.current = {
+                                key: 'operation',
+                                startX: e.clientX,
+                                startWidth: columnWidths.operation,
+                            }
+                            document.body.style.cursor = 'col-resize'
+                            document.body.style.userSelect = 'none'
+                        }}
+                    />
                 </div>
             ),
             key: 'operation',
             width: columnWidths.operation,
-            onHeaderCell: (col) => ({
-                width: col.width,
-                onResize: handleResize('operation'),
-            }),
             render: (text, record) => {
                 let menuItems = []
                 // 确保 pinned 字段存在且为 true
@@ -593,11 +616,6 @@ const FileList = () => {
                                 return isPinned ? style.pinnedRow : '';
                             }}
                             className={style.fileList}
-                            components={{
-                                header: {
-                                    cell: ResizableTitle,
-                                },
-                            }}
                         />
                     </div>
             }
