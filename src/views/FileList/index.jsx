@@ -277,6 +277,7 @@ const FileList = () => {
                 allowClear
                 placeholder={['开始日期', '结束日期']}
                 className={style.dateFilterPicker}
+                getPopupContainer={trigger => trigger.parentElement}
             />
         </div>
     )
@@ -695,7 +696,7 @@ const FileList = () => {
     const handleBatchDelete = () => {
         Modal.confirm({
             title: '确认删除',
-            content: `确定将选中的 ${selectedRows.length} 项移入回收站吗？`,
+            content: `确定将选中的 ${selectedRows.length} 项批量删除吗？`,
             okText: '确认',
             cancelText: '取消',
             onOk: async () => {
@@ -942,7 +943,7 @@ const FileList = () => {
                                         className={style.confirmBtn}
                                         onClick={selectedRowKeys.length > 0 ? handleBatchDelete : undefined}
                                     >
-                                        移入回收站
+                                        批量删除
                                     </span>
                                 </div>
                             </div>
