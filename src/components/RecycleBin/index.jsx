@@ -293,7 +293,7 @@ export const RecycleBin = ({ open, onClose, embedded = false }) => {
             title: '原始路径',
             dataIndex: 'originalPath',
             key: 'originalPath',
-            render: (text) => <span style={{ color: '#999' }}>{text}</span>
+            render: (text) => <span style={{ color: 'var(--color-ink-muted)' }}>{text}</span>
         },
         {
             title: '类型',

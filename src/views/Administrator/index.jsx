@@ -491,7 +491,16 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     }
 
     // 角色用户查看相关方法
-    const avatarColors = [themeConfig.colors.accent, themeConfig.colors.accentDeep, '#b8956e', '#a08060', '#8b6f4e', '#c4a060', '#ba8a50', '#a07040']
+    const avatarColors = [
+        themeConfig.colors.accent,
+        themeConfig.colors.accentDeep,
+        themeConfig.colors.accentHover,
+        themeConfig.colors.pageBg,
+        themeConfig.colors.loginAccent,
+        themeConfig.colors.loginAccentDeep,
+        themeConfig.colors.loginAccentHover,
+        themeConfig.colors.accent,
+    ]
     const getAvatarColor = (username) => {
         let hash = 0
         for (let i = 0; i < username.length; i++) {
@@ -1475,7 +1484,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             <h4 style={{ marginBottom: 12 }}>选择文件夹</h4>
                             <div
                                 className={style.scrollbar}
-                                style={{ border: '1px solid #d9d9d9', borderRadius: 4, padding: 8, flex: 1, overflow: 'auto' }}
+                                style={{ border: '1px solid var(--color-border-card)', borderRadius: 4, padding: 8, flex: 1, overflow: 'auto' }}
                             >
                                 <Tree
                                     checkable
@@ -1541,7 +1550,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             <h4 style={{ marginBottom: 12 }}>权限配置 ({folderPermissions.length})</h4>
                             <div className={style.scrollbar} style={{ flex: 1, overflow: 'auto' }}>
                                 {folderPermissions.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+                                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-ink-muted)' }}>
                                         请在左侧选择文件夹
                                     </div>
                                 ) : (
@@ -1549,7 +1558,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                         {folderPermissions
                                             .slice((folderPagination.current - 1) * folderPagination.pageSize, folderPagination.current * folderPagination.pageSize)
                                             .map(item => (
-                                                <div key={item.folderId} style={{ marginBottom: 12, padding: '8px', border: '1px solid #f0f0f0', borderRadius: 4 }}>
+                                                <div key={item.folderId} style={{ marginBottom: 12, padding: '8px', border: '1px solid var(--color-border-light)', borderRadius: 4 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                                                         <strong>{getFolderName(item.folderId, folderTreeData)}</strong>
                                                     </div>
@@ -1641,7 +1650,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         <div className={`${style.userList} ${style.scrollbar}`}>
                             {roleUsers.length === 0 && !roleUsersLoading ? (
                                 <div className={style.emptyState}>
-                                    <TeamOutlined style={{ fontSize: 48, color: '#d1d5db', marginBottom: 12, display: 'block' }} />
+                                    <TeamOutlined style={{ fontSize: 48, color: 'var(--color-ink-muted)', marginBottom: 12, display: 'block', opacity: 0.5 }} />
                                     该角色下暂无用户
                                 </div>
                             ) : (
@@ -1686,7 +1695,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             style={{
                                 insetInlineEnd: 24,
                                 bottom: 24,
-                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                                boxShadow: 'var(--shadow-float-btn)',
                             }}
                         />
                     </Tooltip>
@@ -1735,7 +1744,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             style={{
                                 insetInlineEnd: 24,
                                 bottom: 24,
-                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                                boxShadow: 'var(--shadow-float-btn)',
                             }}
                         />
                     </Tooltip>
