@@ -6,7 +6,7 @@ export default {
 
   brand: {
     name: '知邮南山',
-    subtitle: 'MISLab · 重庆邮电大学经济管理学院',
+    subtitle: 'MISLab · 信管工作室',
   },
 
   colors: {
