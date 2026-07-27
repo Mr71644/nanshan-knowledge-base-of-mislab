@@ -1,7 +1,7 @@
 /**
  * 权限判断工具模块
  *
- * 对应后端独立 DELETE 权限改造。后端返回的每个资源节点包含：
+ * 后端返回的每个资源节点包含：
  * - hasPermission: boolean        — 是否有查看权限
  * - permissionType: "VIEW"|"EDIT"|null — 兼容字段，表达查看/编辑能力
  * - canDelete: boolean            — 是否有独立删除权限
@@ -9,16 +9,7 @@
  * 规则：
  * - EDIT 与 DELETE 相互独立
  * - EDIT、DELETE 都自动获得只读能力（VIEW）
- * - 旧后端没有 canDelete 字段时，前端按 false 处理
  */
-
-/**
- * 安全读取 canDelete 字段。
- * 旧后端可能不返回该字段，此时默认禁止删除。
- */
-export function safeCanDelete(item) {
-  return item?.canDelete === true
-}
 
 /**
  * 是否有查看权限

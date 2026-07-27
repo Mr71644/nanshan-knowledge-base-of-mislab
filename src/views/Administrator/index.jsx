@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
 import { getRoleList, createRole, updateRole, deleteRole, getRoleFolderPermissions, assignRoleFolderPermissions, roleFolderTree, getPermissionTypes, removeRoleFolderPermissions } from '@/apis/role'
 import { getUserList, createUser, updateUser, deleteUser, assignUserRoles, getUserRoles, getUnassignedRoles } from '@/apis/user'
+import { diffPermissions } from '@/utils/permission'
 import style from './index.module.less'
 import themeConfig from '#theme'
 
@@ -85,6 +86,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     const [folderPermissions, setFolderPermissions] = useState([]) // 存储文件夹权限映射 {folderId, permission}
     const [originalFolderPermissions, setOriginalFolderPermissions] = useState([]) // 存储原始权限，用于对比变化
     const [folderPermissionLoading, setFolderPermissionLoading] = useState(false)
+    const [folderPermissionModalReadOnly, setFolderPermissionModalReadOnly] = useState(false) // 系统角色只读模式
     const [folderPagination, setFolderPagination] = useState({
         current: 1,
         pageSize: 10,
@@ -177,6 +179,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             const roleList = res.data.records.map(item => ({
                 id: item.id,
                 name: item.roleName,
+                roleType: item.roleType,
+                isDeletable: item.isDeletable,
                 description: item.description,
                 status: item.status,
                 userCount: item.userCount,
@@ -625,6 +629,10 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         setFolderPermissionModalVisible(true)
         setFolderPagination({ current: 1, pageSize: 10, total: 0 })
 
+        // 检测系统角色：roleType === 'SYSTEM' 且 isDeletable === 0
+        const isSystemRole = record.roleType === 'SYSTEM' && record.isDeletable === 0
+        setFolderPermissionModalReadOnly(isSystemRole)
+
         try {
             // 如果文件夹树还未加载，先加载文件夹树
             if (!folderTreeData || folderTreeData.length === 0) {
@@ -669,78 +677,39 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         if (folderPermissionLoading) return
         setFolderPermissionLoading(true)
         try {
-            // 对比原始数据和当前数据，找出新增和删除的权限
-            const addedPermissions = []
-            const removedPermissions = []
-
-            // 创建原始数据的 Map 以便快速查找
-            const originalMap = new Map()
-            originalFolderPermissions.forEach(item => {
-                originalMap.set(item.folderId, new Set(item.permissions))
-            })
-
-            // 创建当前数据的 Map
-            const currentMap = new Map()
-            folderPermissions.forEach(item => {
-                currentMap.set(item.folderId, new Set(item.permissions))
-            })
-
-            // 检查每个文件夹的权限变化
-            // 1. 找出新增的权限
-            folderPermissions.forEach(item => {
-                const originalPerms = originalMap.get(item.folderId) || new Set()
-                item.permissions.forEach(permission => {
-                    if (!originalPerms.has(permission)) {
-                        addedPermissions.push({
-                            folderId: item.folderId,
-                            permissionType: permission
-                        })
-                    }
-                })
-            })
-
-            // 2. 找出删除的权限
-            originalFolderPermissions.forEach(item => {
-                const currentPerms = currentMap.get(item.folderId) || new Set()
-                item.permissions.forEach(permission => {
-                    if (!currentPerms.has(permission)) {
-                        removedPermissions.push({
-                            folderId: item.folderId,
-                            permissionType: permission
-                        })
-                    }
-                })
-            })
-
-            // 3. 处理完全删除的文件夹（原来有，现在没有）
-            originalFolderPermissions.forEach(item => {
-                if (!currentMap.has(item.folderId)) {
-                    item.permissions.forEach(permission => {
-                        removedPermissions.push({
-                            folderId: item.folderId,
-                            permissionType: permission
-                        })
+            // 将 folderPermissions 和 originalFolderPermissions 展开为扁平 (folderId, permissionType) 数组
+            const toFlatPairs = (arr) => {
+                const pairs = []
+                arr.forEach(item => {
+                    item.permissions.forEach(p => {
+                        pairs.push({ folderId: item.folderId, permissionType: p })
                     })
-                }
-            })
+                })
+                return pairs
+            }
+
+            const previousPairs = toFlatPairs(originalFolderPermissions)
+            const nextPairs = toFlatPairs(folderPermissions)
+
+            const { additions, removals } = diffPermissions(previousPairs, nextPairs)
 
             // 执行删除操作
-            if (removedPermissions.length > 0) {
+            if (removals.length > 0) {
                 await removeRoleFolderPermissions({
                     roleId: selectedRole.id,
-                    folderPermissions: removedPermissions
+                    folderPermissions: removals
                 })
             }
 
             // 执行新增操作
-            if (addedPermissions.length > 0) {
+            if (additions.length > 0) {
                 await assignRoleFolderPermissions({
                     roleId: selectedRole.id,
-                    folderPermissions: addedPermissions
+                    folderPermissions: additions
                 })
             }
 
-            if (addedPermissions.length === 0 && removedPermissions.length === 0) {
+            if (additions.length === 0 && removals.length === 0) {
                 success({
                     content: '没有权限变化'
                 })
@@ -750,7 +719,24 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                 })
             }
 
-            setFolderPermissionModalVisible(false)
+            // 保存成功后重新加载权限（后端可能级联写入子文件夹）
+            const refreshed = await getRoleFolderPermissions(selectedRole.id)
+            const rawPermissions = refreshed.data || []
+            const permissionMap = new Map()
+            rawPermissions.forEach(item => {
+                const folderId = item.folderId
+                if (!permissionMap.has(folderId)) {
+                    permissionMap.set(folderId, [])
+                }
+                permissionMap.get(folderId).push(item.permissionType)
+            })
+            const permissions = Array.from(permissionMap.entries()).map(([folderId, permissions]) => ({
+                folderId,
+                permissions
+            }))
+            setFolderPermissions(permissions)
+            setOriginalFolderPermissions(JSON.parse(JSON.stringify(permissions)))
+            setFolderPagination(prev => ({ ...prev, total: permissions.length, current: 1 }))
         } catch (e) {
             error({
                 content: e.response?.data?.message || '文件夹权限分配失败'
@@ -763,20 +749,22 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
 
     // 处理权限级别变更（支持多选）
+    // 规则：EDIT 或 DELETE 勾选时自动勾选 VIEW（由 EDIT/DELETE 自动获得只读能力）
+    // EDIT 和 DELETE 相互独立，不互相自动勾选
     const handlePermissionChange = (folderId, permissions) => {
+        const hasEditOrDelete = permissions.includes('EDIT') || permissions.includes('DELETE')
+        // 自动添加 VIEW（若 EDIT 或 DELETE 被勾选）
+        let effectivePermissions = permissions
+        if (hasEditOrDelete && !effectivePermissions.includes('VIEW')) {
+            effectivePermissions = ['VIEW', ...effectivePermissions]
+        }
+
         setFolderPermissions(prev => {
             const exists = prev.find(p => p.folderId === folderId)
-            let newPermissions
-
-            // 如果权限数组为空，保留该文件夹但权限为空数组（不删除）
             if (exists) {
-                newPermissions = prev.map(p => p.folderId === folderId ? { ...p, permissions } : p)
-            } else {
-                newPermissions = [...prev, { folderId, permissions }]
+                return prev.map(p => p.folderId === folderId ? { ...p, permissions: effectivePermissions } : p)
             }
-
-            // 不需要同步更新分页total，因为文件夹数量没有变化
-            return newPermissions
+            return [...prev, { folderId, permissions: effectivePermissions }]
         })
     }
 
@@ -1466,13 +1454,14 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
                 {/* 文件夹权限管理模态框 */}
                 <Modal
-                    title={`管理角色「${selectedRole?.name}」的文件夹权限`}
+                    title={`管理角色「${selectedRole?.name}」的文件夹权限${folderPermissionModalReadOnly ? '（只读）' : ''}`}
                     open={folderPermissionModalVisible}
                     onOk={handleFolderPermissionSubmit}
                     onCancel={() => setFolderPermissionModalVisible(false)}
                     okText="确定"
                     cancelText="取消"
                     confirmLoading={folderPermissionLoading}
+                    okButtonProps={folderPermissionModalReadOnly ? { style: { display: 'none' } } : {}}
                     width="90%"
                     style={{ top: 25 }}
                     destroyOnClose
@@ -1487,7 +1476,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                 style={{ border: '1px solid var(--color-border-card)', borderRadius: 4, padding: 8, flex: 1, overflow: 'auto' }}
                             >
                                 <Tree
-                                    checkable
+                                    checkable={!folderPermissionModalReadOnly}
                                     checkStrictly
                                     defaultExpandAll
                                     checkedKeys={folderPermissions.map(p => String(p.folderId))}
@@ -1514,15 +1503,22 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                         // 添加新权限（使用数组存储）
                                         newIds.forEach(id => handlePermissionChange(Number(id), [defaultPermission]))
 
-                                        // 移除权限（直接从状态删除，不调用API）
+                                        // 移除权限时，同时移除所有子节点的权限
                                         if (removedIds.length > 0) {
+                                            // 收集所有被移除节点及其子节点的 ID
+                                            let allRemovedIds = [...removedIds]
+                                            removedIds.forEach(id => {
+                                                const childKeys = getAllChildKeys(id, folderTreeData)
+                                                allRemovedIds = [...allRemovedIds, ...childKeys]
+                                            })
+                                            const removedSet = new Set(allRemovedIds.map(String))
                                             setFolderPermissions(prev => {
-                                                const newPermissions = prev.filter(p => !removedIds.includes(String(p.folderId)))
+                                                const newPermissions = prev.filter(p => !removedSet.has(String(p.folderId)))
                                                 return newPermissions
                                             })
                                             // 移除后更新分页和总数
                                             setFolderPagination(prev => {
-                                                const newTotal = prev.total - removedIds.length
+                                                const newTotal = prev.total - removedSet.size
                                                 const maxPage = Math.ceil(newTotal / prev.pageSize) || 1
                                                 return {
                                                     ...prev,
@@ -1568,28 +1564,39 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                                         style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}
                                                     >
                                                         {permissionTypes.length > 0 ? (
-                                                            permissionTypes.map(type => (
-                                                                <Checkbox key={type.code} value={type.code}>
-                                                                    {type.name}
-                                                                </Checkbox>
-                                                            ))
+                                                            permissionTypes.map(type => {
+                                                                const isView = type.code === 'VIEW'
+                                                                const hasEditOrDelete = item.permissions.includes('EDIT') || item.permissions.includes('DELETE')
+                                                                // VIEW 在 EDIT 或 DELETE 勾选时禁用（由上级权限自动获得）
+                                                                const disabled = (isView && hasEditOrDelete) || folderPermissionModalReadOnly
+                                                                return (
+                                                                    <Tooltip key={type.code} title={isView && hasEditOrDelete ? `${type.name}（由可编辑/可删除权限自动获得）` : type.name}>
+                                                                        <Checkbox value={type.code} disabled={disabled}>
+                                                                            {type.name}
+                                                                        </Checkbox>
+                                                                    </Tooltip>
+                                                                )
+                                                            })
                                                         ) : (
                                                             // 默认fallback选项
                                                             <>
-                                                                <Checkbox value="VIEW">可阅读</Checkbox>
-                                                                <Checkbox value="EDIT">可编辑</Checkbox>
+                                                                <Checkbox value="VIEW" disabled={folderPermissionModalReadOnly}>可阅读</Checkbox>
+                                                                <Checkbox value="EDIT" disabled={folderPermissionModalReadOnly}>可编辑</Checkbox>
+                                                                <Checkbox value="DELETE" disabled={folderPermissionModalReadOnly}>可删除</Checkbox>
                                                             </>
                                                         )}
-                                                        <Button
-                                                            type="link"
-                                                            danger
-                                                            size="small"
-                                                            icon={<DeleteOutlined />}
-                                                            onClick={() => handleRemovePermission(item.folderId)}
-                                                            style={{ marginLeft: 'auto' }}
-                                                        >
-                                                            删除
-                                                        </Button>
+                                                        {!folderPermissionModalReadOnly && (
+                                                            <Button
+                                                                type="link"
+                                                                danger
+                                                                size="small"
+                                                                icon={<DeleteOutlined />}
+                                                                onClick={() => handleRemovePermission(item.folderId)}
+                                                                style={{ marginLeft: 'auto' }}
+                                                            >
+                                                                删除
+                                                            </Button>
+                                                        )}
                                                     </Checkbox.Group>
                                                 </div>
                                             ))}

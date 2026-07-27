@@ -615,25 +615,44 @@
 }
 
 // ============================================================
-//  权限标签（纯展示）
+//  权限标签 — 统一样式，等大标签，不撑高行
 // ============================================================
-.permissionTag {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: default;
+.permBadges {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
 }
 
-.permissionEdit {
-    background: rgba(var(--color-accent-rgb), 0.08);
+.permBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    min-width: 34px;
+    padding: 0 7px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: default;
+    flex-shrink: 0;
+}
+
+.permEdit {
+    background: rgba(var(--color-accent-rgb), 0.1);
     color: var(--color-accent-deep);
 }
 
-.permissionView {
-    background: rgba(141, 149, 163, 0.07);
+.permView {
+    background: rgba(141, 149, 163, 0.09);
     color: #6b7280;
+}
+
+.permDelete {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
 }
 
 // ============================================================

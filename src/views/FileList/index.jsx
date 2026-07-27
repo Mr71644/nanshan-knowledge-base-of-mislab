@@ -3,11 +3,12 @@ import { useParams, useNavigate, useLocation, useOutletContext } from 'react-rou
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty, DatePicker } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled, CaretDownOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
-import { delContent, delExcel, delFolder, delFile, delBatch } from '@/apis/delete';
+import { delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
 import { renameResource } from '@/apis/file'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
+import { canDelete } from '@/utils/permission';
 import style from './index.module.less'
 
 /**
@@ -20,8 +21,8 @@ import style from './index.module.less'
  */
 
 // 每列默认宽度（初始显示，作为按比例分配容器宽度的基准）与最小宽度（拖拽下限）
-const COLUMN_DEFAULTS = { name: 360, owner: 100, updateTime: 160, permission: 80, operation: 60 }
-const COLUMN_MINS = { name: 120, owner: 80, updateTime: 120, permission: 70, operation: 52 }
+const COLUMN_DEFAULTS = { name: 360, owner: 100, updateTime: 160, permission: 110, operation: 60 }
+const COLUMN_MINS = { name: 120, owner: 80, updateTime: 120, permission: 100, operation: 52 }
 const DEFAULT_SUM = Object.values(COLUMN_DEFAULTS).reduce((a, b) => a + b, 0) // 760
 
 const FileList = () => {
@@ -456,13 +457,19 @@ const FileList = () => {
             width: columnWidths.permission,
             render: (text, record) => {
                 const isEdit = record.permissionType === 'EDIT'
-                return (
-                    <span
-                        className={`${style.permissionTag} ${isEdit ? style.permissionEdit : style.permissionView}`}
-                    >
-                        {isEdit ? '可编辑' : '可阅读'}
+                const hasDelete = canDelete(record)
+                const badges = []
+                badges.push(
+                    <span key="main" className={`${style.permBadge} ${isEdit ? style.permEdit : style.permView}`}>
+                        {isEdit ? '编辑' : '阅读'}
                     </span>
                 )
+                if (hasDelete) {
+                    badges.push(
+                        <span key="del" className={`${style.permBadge} ${style.permDelete}`}>删除</span>
+                    )
+                }
+                return <span className={style.permBadges}>{badges}</span>
             }
         },
         {
@@ -539,6 +546,7 @@ const FileList = () => {
                         key: 'delete',
                         icon: <DeleteOutlined />,
                         label: (<span className={style.menuItemLabel}>删除</span>),
+                        disabled: !record.canDelete,
                         onClick: () => handleMenuClick('delete', record),
                     },
                 ]
@@ -573,6 +581,7 @@ const FileList = () => {
                         key: 'delete',
                         icon: <DeleteOutlined />,
                         label: (<span className={style.menuItemLabel}>删除</span>),
+                        disabled: !record.canDelete,
                         onClick: () => handleMenuClick('delete', record),
                     },
                 ]
@@ -607,6 +616,7 @@ const FileList = () => {
                             key: 'delete',
                             icon: <DeleteOutlined />,
                             label: (<span className={style.menuItemLabel}>删除</span>),
+                            disabled: !record.canDelete,
                             onClick: () => handleMenuClick('delete', record),
                         },
                     ]
@@ -694,6 +704,11 @@ const FileList = () => {
         setBatchType(null)
     }
     const handleBatchDelete = () => {
+        const allCanDelete = selectedRows.every(r => r.canDelete)
+        if (!allCanDelete) {
+            error({ content: '部分选中项没有删除权限，已禁止批量删除' })
+            return
+        }
         Modal.confirm({
             title: '确认删除',
             content: `确定将选中的 ${selectedRows.length} 项批量删除吗？`,
@@ -707,10 +722,16 @@ const FileList = () => {
                     clearSelection()
                     refreshUrl()
                 } catch (e) {
-                    error({ content: '批量删除失败' })
+                    if (e?.response?.status === 403 || e?.response?.data?.code === 403) {
+                        error({ content: e?.response?.data?.message || '无删除权限' })
+                    } else {
+                        error({ content: '批量删除失败' })
+                    }
+                } finally {
+                    setLoading(false)
+                    if (param.id === undefined) getList()
+                    else getList(param.id)
                 }
-                if (param.id === undefined) getList()
-                else getList(param.id)
             }
         })
     }
@@ -719,31 +740,20 @@ const FileList = () => {
             handleSingleDownload(record)
         } else if (action === 'delete') {
             try {
-                if (record.status === 1) {
-                    setLoading(true)
-                    await delContent(record.id)
-                }
-                if (record.status === 2) {
-                    setLoading(true)
-                    await delFolder(record.id)
-                }
-                if (record.status === 3) {
-                    setLoading(true)
-                    await delExcel(record.id)
-                }
-                if (record.status === 4) {
-                    setLoading(true)
-                    await delFile(record.id)
-                }
+                setLoading(true)
+                await delBatch([{ id: record.id, status: record.status }])
                 refreshUrl()
             } catch (e) {
-                error({
-                    content: '删除失败',
-                    callBack: () => setLoading(false)
-                })
+                if (e?.response?.status === 403 || e?.response?.data?.code === 403) {
+                    error({ content: e?.response?.data?.message || '无删除权限' })
+                } else {
+                    error({ content: '删除失败' })
+                }
+            } finally {
+                setLoading(false)
+                if (param.id === undefined) getList()
+                else getList(param.id)
             }
-            if (param.id === undefined) getList()
-            else getList(param.id)
         } else if (action === 'update') {
             setCurrentRecord(record);
             newName.current = getRenameDisplayName(record);
@@ -941,7 +951,8 @@ const FileList = () => {
                                     </span>
                                     <span
                                         className={style.confirmBtn}
-                                        onClick={selectedRowKeys.length > 0 ? handleBatchDelete : undefined}
+                                        onClick={selectedRowKeys.length > 0 && selectedRows.every(r => r.canDelete) ? handleBatchDelete : undefined}
+                                        style={selectedRowKeys.length > 0 && !selectedRows.every(r => r.canDelete) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                     >
                                         批量删除
                                     </span>

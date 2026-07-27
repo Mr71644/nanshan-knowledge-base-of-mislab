@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeftOutlined, GithubOutlined, MailOutlined, TeamOutlined, CrownOutlined, StarFilled } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import themeConfig from '#theme'
+import { MemoBrandMarquee } from '@/components/BrandMarquee'
 import style from './index.module.less'
 
 /**
@@ -242,6 +243,11 @@ const About = () => {
             </div>
           </div>
         </Reveal>
+
+        {/* ============================================================
+            MISLAB 花式品牌字
+            ============================================================ */}
+        <MemoBrandMarquee />
 
         {/* ============================================================
             项目负责人
