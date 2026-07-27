@@ -10,6 +10,7 @@ import { MemoAddExcel } from '@/views/AddExcel'
 import { MemoAdministrator } from '@/views/Administrator'
 import { MemoManagement } from '@/views/Management'
 import { MemoPreview } from '@/views/Preview'
+import { MemoAbout } from '@/views/About'
 import AdminRoute from './AdminRoute'
 
 // 路由约定说明：
@@ -57,6 +58,10 @@ const router = createHashRouter([
     {
         path: 'preview',
         element: <MemoPreview />
+    },
+    {
+        path: 'about',
+        element: <MemoAbout />
     },
     {
         path: 'administrator',

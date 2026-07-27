@@ -247,6 +247,8 @@ const Login = () => {
                             </Form>
                             <div className={style.switchLink}>
                                 <span onClick={() => switchMode('reset')}>忘记密码？</span>
+                                <span className={style.switchLinkSep}>·</span>
+                                <span onClick={() => navigate('/about')}>关于我们</span>
                             </div>
                         </div>
                     )}
