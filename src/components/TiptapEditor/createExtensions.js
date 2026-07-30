@@ -13,6 +13,7 @@ import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import MinioImage from './extensions/MinioImage'
 import CodeBlockWithToolbar from './extensions/CodeBlockWithToolbar'
+import { FontSize } from './extensions/FontSize'
 
 /**
  * 共享扩展工厂 — React 编辑器和 Headless 迁移引擎共用
@@ -44,5 +45,6 @@ export function createBaseExtensions({ lowlight }) {
         TextStyle,
         Color,
         Highlight.configure({ multicolor: true }),
+        FontSize,
     ]
 }

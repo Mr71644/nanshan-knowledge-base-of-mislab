@@ -19,6 +19,26 @@ const FONT_FAMILIES = [
     { label: 'Courier New', value: 'Courier New, monospace' },
 ]
 
+// 仿 Word 字号列表（中文对应字号）
+const FONT_SIZES = [
+    { label: '八号', value: '5pt' },
+    { label: '七号', value: '5.5pt' },
+    { label: '小六', value: '6.5pt' },
+    { label: '六号', value: '7.5pt' },
+    { label: '小五', value: '9pt' },
+    { label: '五号', value: '10.5pt' },
+    { label: '小四', value: '12pt' },
+    { label: '四号', value: '14pt' },
+    { label: '小三', value: '15pt' },
+    { label: '三号', value: '16pt' },
+    { label: '小二', value: '18pt' },
+    { label: '二号', value: '22pt' },
+    { label: '小一', value: '24pt' },
+    { label: '一号', value: '26pt' },
+    { label: '小初', value: '36pt' },
+    { label: '初号', value: '42pt' },
+]
+
 const PRESET_COLORS = [
     '#000000', '#333333', '#666666', '#999999', '#cccccc', '#ffffff',
     '#e60000', '#ff4d4f', '#fa8c16', '#fadb14', '#52c41a', '#13c2c2',
@@ -44,6 +64,7 @@ const toolbarButtons = [
     { icon: 'H3', command: 'heading3', title: '标题3' },
     { type: 'divider' },
     { type: 'fontFamily', title: '字体' },
+    { type: 'fontSize', title: '字号' },
     { type: 'textColor', title: '文字颜色' },
     { type: 'highlight', title: '高亮' },
 ]
@@ -214,6 +235,24 @@ const EditorToolbar = ({ editor }) => {
                                 style={{ width: 110 }}
                                 options={FONT_FAMILIES}
                                 placeholder="字体"
+                                className={style.toolbarFontSelect}
+                            />
+                        )
+                    }
+                    if (button.type === 'fontSize') {
+                        const currentSize = editor.getAttributes('textStyle').fontSize || ''
+                        return (
+                            <Select
+                                key={index}
+                                size="small"
+                                value={currentSize || undefined}
+                                onChange={(val) => {
+                                    if (val) editor.chain().focus().setFontSize(val).run()
+                                    else editor.chain().focus().unsetFontSize().run()
+                                }}
+                                style={{ width: 72 }}
+                                options={FONT_SIZES}
+                                placeholder="字号"
                                 className={style.toolbarFontSelect}
                             />
                         )
