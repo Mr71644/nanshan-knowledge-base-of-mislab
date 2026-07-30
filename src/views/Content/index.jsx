@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
+import { convertJSONToMarkdown } from '@/utils/migrationEngine';
 import TiptapEditor from '@/components/TiptapEditor'
 import themeConfig from '#theme'
 import style from './index.module.less'
@@ -22,6 +23,7 @@ const Area = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const [showBackTop, setShowBackTop] = useState(false)
+    const [docContentType, setDocContentType] = useState('markdown') // 文档原始格式，编辑不会改变它
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
@@ -37,10 +39,6 @@ const Area = () => {
         }
     }
 
-    const processMarkdown = (text) => {
-        return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
-    }
-
     const getDetail = async (id) => {
         const currentId = id || param.id
         const res = await getContentDetail(currentId)
@@ -51,12 +49,28 @@ const Area = () => {
             createTime: formatDate(detail.createTime),
             updateTime: formatDate(detail.updateTime)
         }
+        const ct = detail.contentType || 'markdown'
+        setDocContentType(ct)
         setValue(detail.content)
     }
     const edit = async ({ title, author, content, id }) => {
         const currentId = id || param.id
-        const processedContent = processMarkdown(content)
-        await editContent({ title, author, content: processedContent, id: currentId })
+        let processedContent = content
+        let saveContentType = docContentType
+
+        // 旧 Markdown 文档编辑后的内容仍然是 ProseMirror JSON，
+        // 需要转回 Markdown 保存，避免单文档被意外迁移
+        if (docContentType === 'markdown') {
+            try {
+                processedContent = convertJSONToMarkdown(content)
+            } catch {
+                // JSON 解析失败则保持原内容不变
+                processedContent = content
+            }
+            saveContentType = 'markdown'
+        }
+
+        await editContent({ title, author, content: processedContent, id: currentId, contentType: saveContentType })
         getDetail(currentId)
     }
     const ChangeIsEdit = async () => {
@@ -102,12 +116,24 @@ const Area = () => {
 
         const timer = setTimeout(async () => {
             try {
-                const processedContent = processMarkdown(value)
+                let processedContent = value
+                let saveContentType = docContentType
+
+                if (docContentType === 'markdown') {
+                    try {
+                        processedContent = convertJSONToMarkdown(value)
+                    } catch {
+                        processedContent = value
+                    }
+                    saveContentType = 'markdown'
+                }
+
                 await editContent({
                     title: title.current,
                     author: author.current,
                     content: processedContent,
-                    id: param.id
+                    id: param.id,
+                    contentType: saveContentType
                 });
             } catch (e) {
                 error({
@@ -118,7 +144,7 @@ const Area = () => {
         }, 2000);
 
         return () => clearTimeout(timer);
-    }, [value, isEdit]);
+    }, [value, isEdit, docContentType]);
 
     // 监听文档区域滚动，控制回到顶部按钮显示
     useEffect(() => {
@@ -244,8 +270,11 @@ const Area = () => {
                                             <TiptapEditor
                                                 key="edit"
                                                 content={value}
+                                                contentType={docContentType}
                                                 editable={true}
-                                                onChange={setValue}
+                                                onChange={(v) => {
+                                                    setValue(v)
+                                                }}
                                                 folderId={param.folder}
                                                 onError={(msg) => error({ content: msg, delayTime: 3000 })}
                                                 onUploading={handleUploading}
@@ -261,7 +290,7 @@ const Area = () => {
                                             <h3>创建时间：{time.current.createTime}&nbsp;&nbsp;&nbsp;&nbsp;更新时间：{time.current.updateTime}</h3>
                                         </div>
                                         <div className={style.contentPreview}>
-                                            <TiptapEditor key="preview" content={value} editable={false} folderId={param.folder} fullHeight />
+                                            <TiptapEditor key="preview" content={value} contentType={docContentType} editable={false} folderId={param.folder} fullHeight />
                                         </div>
                                     </div>
 

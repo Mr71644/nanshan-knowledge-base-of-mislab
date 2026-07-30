@@ -7,12 +7,13 @@ const getContentDetail = (id) => {
     })
 }
 
-const editContent = ({ title, author, content, id } = {}) => {
+const editContent = ({ title, author, content, id, contentType = 'markdown' } = {}) => {
     const data = {
         title,
         author,
         content,
-        id
+        id,
+        contentType,
     }
     return request({
         url: 'text/update',
@@ -21,12 +22,13 @@ const editContent = ({ title, author, content, id } = {}) => {
     })
 }
 
-const addContent = ({ title, author, content, folderId } = {}) => {
+const addContent = ({ title, author, content, folderId, contentType = 'markdown' } = {}) => {
     const data = {
         title,
         author,
         content,
-        folderId
+        folderId,
+        contentType,
     }
     return request({
         url: '/text/add',

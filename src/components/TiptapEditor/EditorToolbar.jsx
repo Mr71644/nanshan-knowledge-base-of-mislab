@@ -1,11 +1,29 @@
 import { useState, useEffect, useRef } from 'react'
-import { Button, Space, Tooltip } from 'antd'
+import { Button, Space, Tooltip, Select, ColorPicker } from 'antd'
 import {
     BoldOutlined, ItalicOutlined, LinkOutlined,
     OrderedListOutlined, UnorderedListOutlined, PictureOutlined,
     CodeOutlined, TableOutlined, MessageOutlined, CodeSandboxOutlined,
+    FontColorsOutlined, HighlightOutlined,
 } from '@ant-design/icons'
 import style from './index.module.css'
+
+const FONT_FAMILIES = [
+    { label: '默认字体', value: '' },
+    { label: '宋体', value: 'SimSun, serif' },
+    { label: '黑体', value: 'SimHei, sans-serif' },
+    { label: '楷体', value: 'KaiTi, serif' },
+    { label: '微软雅黑', value: 'Microsoft YaHei, sans-serif' },
+    { label: 'Arial', value: 'Arial, sans-serif' },
+    { label: 'Times New Roman', value: 'Times New Roman, serif' },
+    { label: 'Courier New', value: 'Courier New, monospace' },
+]
+
+const PRESET_COLORS = [
+    '#000000', '#333333', '#666666', '#999999', '#cccccc', '#ffffff',
+    '#e60000', '#ff4d4f', '#fa8c16', '#fadb14', '#52c41a', '#13c2c2',
+    '#1677ff', '#2f54eb', '#722ed1', '#eb2f96',
+]
 
 const toolbarButtons = [
     { icon: <BoldOutlined />, command: 'bold', title: '粗体' },
@@ -24,6 +42,10 @@ const toolbarButtons = [
     { icon: 'H1', command: 'heading1', title: '标题1' },
     { icon: 'H2', command: 'heading2', title: '标题2' },
     { icon: 'H3', command: 'heading3', title: '标题3' },
+    { type: 'divider' },
+    { type: 'fontFamily', title: '字体' },
+    { type: 'textColor', title: '文字颜色' },
+    { type: 'highlight', title: '高亮' },
 ]
 
 const EditorToolbar = ({ editor }) => {
@@ -121,6 +143,7 @@ const EditorToolbar = ({ editor }) => {
             case 'heading1': return editor.isActive('heading', { level: 1 })
             case 'heading2': return editor.isActive('heading', { level: 2 })
             case 'heading3': return editor.isActive('heading', { level: 3 })
+            case 'highlight': return editor.isActive('highlight')
             default: return false
         }
     }
@@ -175,6 +198,63 @@ const EditorToolbar = ({ editor }) => {
                                     )}
                                 </div>
                             </Tooltip>
+                        )
+                    }
+                    if (button.type === 'fontFamily') {
+                        const currentFont = editor.getAttributes('textStyle').fontFamily || ''
+                        return (
+                            <Select
+                                key={index}
+                                size="small"
+                                value={currentFont || undefined}
+                                onChange={(val) => {
+                                    if (val) editor.chain().focus().setFontFamily(val).run()
+                                    else editor.chain().focus().unsetFontFamily().run()
+                                }}
+                                style={{ width: 110 }}
+                                options={FONT_FAMILIES}
+                                placeholder="字体"
+                                className={style.toolbarFontSelect}
+                            />
+                        )
+                    }
+                    if (button.type === 'textColor') {
+                        return (
+                            <ColorPicker
+                                key={index}
+                                size="small"
+                                value={editor.getAttributes('textStyle').color || '#000000'}
+                                onChange={(color) => editor.chain().focus().setColor(color.toHexString()).run()}
+                                presets={[{ label: '预设', colors: PRESET_COLORS }]}
+                            >
+                                <Tooltip title="文字颜色">
+                                    <Button type="text" size="small" className={style.toolbarButton}>
+                                        <FontColorsOutlined style={{ color: editor.getAttributes('textStyle').color || '#000' }} />
+                                    </Button>
+                                </Tooltip>
+                            </ColorPicker>
+                        )
+                    }
+                    if (button.type === 'highlight') {
+                        const isHighlightActive = editor.isActive('highlight')
+                        return (
+                            <ColorPicker
+                                key={index}
+                                size="small"
+                                value={editor.getAttributes('highlight').color || '#ffff00'}
+                                onChange={(color) => editor.chain().focus().toggleHighlight({ color: color.toHexString() }).run()}
+                                presets={[{ label: '预设', colors: PRESET_COLORS }]}
+                            >
+                                <Tooltip title="高亮">
+                                    <Button
+                                        type={isHighlightActive ? 'primary' : 'text'}
+                                        size="small"
+                                        className={`${style.toolbarButton} ${isHighlightActive ? style.toolbarButtonActive : ''}`}
+                                    >
+                                        <HighlightOutlined />
+                                    </Button>
+                                </Tooltip>
+                            </ColorPicker>
                         )
                     }
                     return (

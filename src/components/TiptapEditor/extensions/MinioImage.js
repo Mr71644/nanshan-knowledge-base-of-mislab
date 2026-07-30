@@ -2,10 +2,6 @@ import { Image } from '@tiptap/extension-image'
 import { ResizableNodeView } from '@tiptap/core'
 import { urlCache, setCache, enqueuePreview, CACHE_TTL } from '@/utils/imageCache'
 
-function escapeAttr(str) {
-    return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
 const MinioImage = Image.extend({
     addOptions() {
         return {
@@ -77,17 +73,6 @@ const MinioImage = Image.extend({
             }]
         }
         return ['img', { src, alt, ...(width ? { width } : {}), ...(height ? { height } : {}) }]
-    },
-
-    renderMarkdown(node) {
-        const src = node.attrs?.src ?? ''
-        const alt = node.attrs?.alt ?? '图片'
-        const width = node.attrs?.width
-        if (width) {
-            const attrs = [`src="${escapeAttr(src)}"`, `alt="${escapeAttr(alt)}"`, `width="${escapeAttr(width)}"`]
-            return `<img ${attrs.join(' ')}>`
-        }
-        return `![${alt}](${src})`
     },
 })
 

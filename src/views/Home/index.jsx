@@ -23,6 +23,7 @@ import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
 import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
 import { previewFile } from '@/apis/file';
+import MigrationTestPanel from '@/components/MigrationTestPanel';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
 
@@ -910,6 +911,7 @@ const Home = () => {
                 </Content>
             </Layout>
         </Layout >
+        <MigrationTestPanel />
         </Fragment>
     );
 }

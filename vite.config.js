@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
         server: {
             proxy: {
                 '/api': {
-                    target: 'http://101.43.146.27/new-app/api',
+                    target: 'http://101.43.146.27/test-app/api',
                     changeOrigin: true,
                     rewrite: (path) => path.replace(/^\/api/, '')
                 }
@@ -37,3 +37,4 @@ export default defineConfig(({ mode }) => {
         }
     }
 })
+    

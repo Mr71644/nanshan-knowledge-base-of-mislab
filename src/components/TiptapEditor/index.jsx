@@ -1,25 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-import { StarterKit } from '@tiptap/starter-kit'
-import { Link } from '@tiptap/extension-link'
-import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
-import { Placeholder } from '@tiptap/extension-placeholder'
-import { Underline } from '@tiptap/extension-underline'
 import { Markdown } from '@tiptap/markdown'
 import { common, createLowlight } from 'lowlight'
-import MinioImage from './extensions/MinioImage'
+import { createBaseExtensions } from './createExtensions'
 import ImageUpload from './extensions/ImageUpload'
-import CodeBlockWithToolbar from './extensions/CodeBlockWithToolbar'
 import EditorToolbar from './EditorToolbar'
 import { previewMarkdownImage } from '@/apis/image'
 import style from './index.module.css'
 
 const lowlight = createLowlight(common)
 
-const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight }) => {
+const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight, contentType: initialContentType = 'markdown' }) => {
     const lastEditorMd = useRef(content)
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange
+    const contentTypeRef = useRef(initialContentType)
     const [contextMenu, setContextMenu] = useState(null)
     const menuRef = useRef(null)
     const [headings, setHeadings] = useState([])
@@ -32,33 +27,20 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
 
     const editor = useEditor({
         extensions: [
-            StarterKit.configure({
-                heading: { levels: [1, 2, 3] },
-                link: false,
-                codeBlock: false,
-                underline: false,
-            }),
-            CodeBlockWithToolbar.configure({
-                lowlight,
-            }),
-            Underline,
-            Link.configure({ openOnClick: false }),
-            MinioImage,
-            Table.configure({ resizable: true }),
-            TableRow,
-            TableCell,
-            TableHeader,
-            Placeholder.configure({ placeholder: '在这里输入内容...' }),
-            Markdown,
+            ...createBaseExtensions({ lowlight }),
             ImageUpload.configure({ folderId, onError, onUploading }),
         ],
-        content: content || '',
-        contentType: 'markdown',
+        content: initialContentType === 'prosemirror'
+            ? (content ? JSON.parse(content) : { type: 'doc', content: [] })
+            : (content || ''),
+        contentType: initialContentType === 'prosemirror' ? 'json' : 'markdown',
         editable,
         onUpdate: ({ editor }) => {
-            const md = editor.getMarkdown()
-            lastEditorMd.current = md
-            onChangeRef.current?.(md)
+            const json = editor.getJSON()
+            const jsonStr = JSON.stringify(json)
+            lastEditorMd.current = jsonStr
+            contentTypeRef.current = 'prosemirror'
+            onChangeRef.current?.(jsonStr, 'prosemirror')
         },
         editorProps: {
             attributes: {
@@ -69,10 +51,15 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
 
     useEffect(() => {
         if (editor && content !== lastEditorMd.current) {
-            editor.commands.setContent(content || '', { contentType: 'markdown' })
+            contentTypeRef.current = initialContentType
+            if (initialContentType === 'prosemirror') {
+                editor.commands.setContent(content ? JSON.parse(content) : { type: 'doc', content: [] })
+            } else {
+                editor.commands.setContent(content || '', { contentType: 'markdown' })
+            }
             lastEditorMd.current = content
         }
-    }, [content, editor])
+    }, [content, editor, initialContentType])
 
     useEffect(() => {
         if (editor) {

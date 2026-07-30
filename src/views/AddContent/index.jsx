@@ -38,21 +38,17 @@ const AddContent = () => {
         }
     }
 
-    const processMarkdown = (text) => {
-        return text.replace(/^(-\s+)(\d+)\s*\./gm, '$1$2\. ')
-    }
-
     const add = async () => {
         try {
             setPageLoading(true)
             let folder = ''
             if (param.folder !== 'main') folder = param.folder
-            const processedContent = processMarkdown(value)
             await addContent({
                 title: title.current,
                 author: author.current,
-                content: processedContent,
-                folderId: folder
+                content: value,
+                folderId: folder,
+                contentType: 'prosemirror'
             })
             if (param.folder === 'main') navigate('/home')
             else navigate(`/home/list/${param.folder}`)
@@ -130,8 +126,9 @@ const AddContent = () => {
                                 <div className={style.editContent}>
                                     <TiptapEditor
                                         content={value}
+                                        contentType="prosemirror"
                                         editable={true}
-                                        onChange={setValue}
+                                        onChange={(v) => setValue(v)}
                                         folderId={param.folder}
                                         onError={(msg) => error({ content: msg, delayTime: 3000 })}
                                         onUploading={handleUploading}
