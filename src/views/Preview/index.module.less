@@ -94,3 +94,39 @@
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+/** Office 转换状态 & 错误状态 */
+.statusContainer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+}
+
+.officeProcessing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.statusText {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.statusHint {
+    margin: 0;
+    font-size: 13px;
+    color: #999;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}

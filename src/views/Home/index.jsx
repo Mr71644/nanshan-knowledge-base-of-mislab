@@ -22,7 +22,6 @@ import { clearUserInfo } from '@/store/modules/user';
 import { useParams } from 'react-router-dom';
 import { getLayer, getFolderTree } from '@/apis/folder'
 import { sortTreeItems, moveTreeItem } from '@/apis/fileList'
-import { previewFile } from '@/apis/file';
 import { getUserInfo, userProfileUpdate } from '@/apis/user';
 const { Content, Sider } = Layout;
 
@@ -213,15 +212,12 @@ const Home = () => {
             })
         }
     }
-    const preview = async (id) => {
-        try {
-            const res = await previewFile(id)
-            window.open(res.data, '_blank')
-        } catch (e) {
-            error({
-                content: e.response?.data?.message || '文件预览失败，请检查网络'
-            })
-        }
+    const preview = (id, name) => {
+        const encodedName = encodeURIComponent(name || '')
+        window.open(
+            `${window.location.origin}${window.location.pathname}#/preview?from=${id}&name=${encodedName}`,
+            '_blank'
+        )
     }
     const handleOpenChange = (nextOpenKeys) => {
         setOpenKeys(nextOpenKeys)
@@ -333,7 +329,8 @@ const Home = () => {
     const handleTreeNodeClick = (node) => {
         const key = node.key
         if (key.slice(0, 4) === 'file') {
-            preview(key.slice(4))
+            const fileName = node.rawData?.name || ''
+            preview(key.slice(4), fileName)
         } else if (key.startsWith('/content/') || key.startsWith('/excel/')) {
             window.open(`${window.location.origin}${window.location.pathname}#${key}`, '_blank')
         } else {
