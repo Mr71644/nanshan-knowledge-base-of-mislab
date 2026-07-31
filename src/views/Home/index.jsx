@@ -177,7 +177,7 @@ const Home = () => {
     const getUserInfomation = async () => {
         try {
             const res = await getUserInfo()
-            setUserInfo(res.data)
+            setUserInfo(res.data ?? res)
         } catch (e) {
             error({
                 content: e.response?.data?.message || '用户信息获取失败，请检查网络'
