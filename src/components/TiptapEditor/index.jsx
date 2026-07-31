@@ -10,7 +10,7 @@ import style from './index.module.css'
 
 const lowlight = createLowlight(common)
 
-const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight, contentType: initialContentType = 'markdown' }) => {
+const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight, contentType: initialContentType = 'prosemirror' }) => {
     const lastEditorMd = useRef(content)
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange

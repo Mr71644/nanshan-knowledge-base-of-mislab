@@ -5,7 +5,6 @@ import { useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
 import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
-import { convertJSONToMarkdown } from '@/utils/migrationEngine';
 import TiptapEditor from '@/components/TiptapEditor'
 import themeConfig from '#theme'
 import style from './index.module.less'
@@ -23,7 +22,7 @@ const Area = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const [showBackTop, setShowBackTop] = useState(false)
-    const [docContentType, setDocContentType] = useState('markdown') // 文档原始格式，编辑不会改变它
+    const [docContentType, setDocContentType] = useState('prosemirror')
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
@@ -49,28 +48,13 @@ const Area = () => {
             createTime: formatDate(detail.createTime),
             updateTime: formatDate(detail.updateTime)
         }
-        const ct = detail.contentType || 'markdown'
+        const ct = detail.contentType || 'prosemirror'
         setDocContentType(ct)
         setValue(detail.content)
     }
     const edit = async ({ title, author, content, id }) => {
         const currentId = id || param.id
-        let processedContent = content
-        let saveContentType = docContentType
-
-        // 旧 Markdown 文档编辑后的内容仍然是 ProseMirror JSON，
-        // 需要转回 Markdown 保存，避免单文档被意外迁移
-        if (docContentType === 'markdown') {
-            try {
-                processedContent = convertJSONToMarkdown(content)
-            } catch {
-                // JSON 解析失败则保持原内容不变
-                processedContent = content
-            }
-            saveContentType = 'markdown'
-        }
-
-        await editContent({ title, author, content: processedContent, id: currentId, contentType: saveContentType })
+        await editContent({ title, author, content, id: currentId, contentType: 'prosemirror' })
         getDetail(currentId)
     }
     const ChangeIsEdit = async () => {
@@ -116,24 +100,12 @@ const Area = () => {
 
         const timer = setTimeout(async () => {
             try {
-                let processedContent = value
-                let saveContentType = docContentType
-
-                if (docContentType === 'markdown') {
-                    try {
-                        processedContent = convertJSONToMarkdown(value)
-                    } catch {
-                        processedContent = value
-                    }
-                    saveContentType = 'markdown'
-                }
-
                 await editContent({
                     title: title.current,
                     author: author.current,
-                    content: processedContent,
+                    content: value,
                     id: param.id,
-                    contentType: saveContentType
+                    contentType: 'prosemirror'
                 });
             } catch (e) {
                 error({
@@ -144,7 +116,7 @@ const Area = () => {
         }, 2000);
 
         return () => clearTimeout(timer);
-    }, [value, isEdit, docContentType]);
+    }, [value, isEdit]);
 
     // 监听文档区域滚动，控制回到顶部按钮显示
     useEffect(() => {

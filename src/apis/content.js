@@ -7,7 +7,7 @@ const getContentDetail = (id) => {
     })
 }
 
-const editContent = ({ title, author, content, id, contentType = 'markdown' } = {}) => {
+const editContent = ({ title, author, content, id, contentType = 'prosemirror' } = {}) => {
     const data = {
         title,
         author,
@@ -22,7 +22,7 @@ const editContent = ({ title, author, content, id, contentType = 'markdown' } = 
     })
 }
 
-const addContent = ({ title, author, content, folderId, contentType = 'markdown' } = {}) => {
+const addContent = ({ title, author, content, folderId, contentType = 'prosemirror' } = {}) => {
     const data = {
         title,
         author,
