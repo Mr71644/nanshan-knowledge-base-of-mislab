@@ -11,11 +11,9 @@ import { runSilentMigration } from '@/utils/migrationScheduler'
 import style from './index.module.css'
 
 /**
- * 迁移测试面板 — 仅开发/测试阶段使用
+ * 迁移面板 — 将旧 Markdown 文档转换为 ProseMirror JSON 格式
  *
- * 通过 VITE_MIGRATION_TEST 环境变量控制显示：
- *   .env.development → VITE_MIGRATION_TEST=true  → 显示
- *   .env.production  → VITE_MIGRATION_TEST=false → 完全静默
+ * 始终显示，仅支持手动点击开始迁移
  */
 const MigrationTestPanel = () => {
     const [collapsed, setCollapsed] = useState(false)
@@ -88,8 +86,6 @@ const MigrationTestPanel = () => {
     const successCount = logs.filter(l => l.type === 'success').length
     const failedCount = logs.filter(l => l.type === 'failed').length
     const percent = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0
-
-    if (import.meta.env.VITE_MIGRATION_TEST !== 'true') return null
 
     return (
         <div className={`${style.panel} ${collapsed ? style.panelCollapsed : ''} ${fading ? style.panelFading : ''}`}>

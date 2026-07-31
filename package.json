@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:gxu": "cross-env VITE_THEME=gxu vite",
     "build": "vite build",
-    "build:gxu": "cross-env VITE_THEME=gxu vite build",
+    "build:gxu": "cross-env VITE_API_BASE_URL=/recommend-api VITE_THEME=gxu vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
