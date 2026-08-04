@@ -8,7 +8,7 @@ import { downloadSingle, downloadBatch } from '@/utils/download'
 import { renameResource } from '@/apis/file'
 import { useMessage } from '@/hooks/useMessage';
 import { formatDate } from '@/utils';
-import { canDelete } from '@/utils/permission';
+import { canEdit, canDelete } from '@/utils/permission';
 import style from './index.module.less'
 
 /**
@@ -160,26 +160,37 @@ const FileList = () => {
         return list.filter(item => ownerFilter.includes(item.owner))
     }, [list, ownerFilter])
 
-    // 权限筛选可选项（仅当前列表中实际存在的权限）
+    /**
+     * 权限类型组合键：'VIEW' | 'EDIT' | 'DELETE' | 'EDIT_DELETE'
+     * 使用 canEdit / canDelete 而非 permissionType，与权限列展示逻辑一致
+     */
+    const getPermissionCombo = (item) => {
+        const edit = canEdit(item)
+        const del = canDelete(item)
+        if (edit && del) return 'EDIT_DELETE'
+        if (edit) return 'EDIT'
+        if (del) return 'DELETE'
+        return 'VIEW'
+    }
+
+    const PERMISSION_LABELS = {
+        VIEW: '阅读',
+        EDIT: '编辑',
+        DELETE: '删除',
+        EDIT_DELETE: '编辑+删除',
+    }
+
+    // 权限筛选可选项（基于 canEdit/canDelete）
     const permissionOptions = useMemo(() => {
-        const has = { EDIT: false, VIEW: false }
-        list.forEach(item => {
-            if (item.permissionType === 'EDIT') has.EDIT = true
-            else has.VIEW = true
-        })
-        const opts = []
-        if (has.EDIT) opts.push('EDIT')
-        if (has.VIEW) opts.push('VIEW')
-        return opts
+        const has = {}
+        list.forEach(item => { has[getPermissionCombo(item)] = true })
+        return Object.keys(has)
     }, [list])
 
     // 叠加权限筛选
     const permissionFilteredList = useMemo(() => {
         if (permissionFilter.length === 0) return ownerFilteredList
-        return ownerFilteredList.filter(item => {
-            const p = item.permissionType === 'EDIT' ? 'EDIT' : 'VIEW'
-            return permissionFilter.includes(p)
-        })
+        return ownerFilteredList.filter(item => permissionFilter.includes(getPermissionCombo(item)))
     }, [ownerFilteredList, permissionFilter])
 
     // 叠加日期筛选
@@ -431,7 +442,7 @@ const FileList = () => {
                 >
                     {permissionOptions.map(p => (
                         <Checkbox key={p} value={p} className={style.ownerFilterItem}>
-                            {p === 'EDIT' ? '可编辑' : '可阅读'}
+                            {PERMISSION_LABELS[p] || p}
                         </Checkbox>
                     ))}
                 </Checkbox.Group>
@@ -540,17 +551,22 @@ const FileList = () => {
             key: 'permission',
             width: columnWidths.permission,
             render: (text, record) => {
-                const isEdit = record.permissionType === 'EDIT'
+                const isEdit = canEdit(record)
                 const hasDelete = canDelete(record)
                 const badges = []
-                badges.push(
-                    <span key="main" className={`${style.permBadge} ${isEdit ? style.permEdit : style.permView}`}>
-                        {isEdit ? '编辑' : '阅读'}
-                    </span>
-                )
+                if (isEdit) {
+                    badges.push(
+                        <span key="edit" className={`${style.permBadge} ${style.permEdit}`}>编辑</span>
+                    )
+                }
                 if (hasDelete) {
                     badges.push(
                         <span key="del" className={`${style.permBadge} ${style.permDelete}`}>删除</span>
+                    )
+                }
+                if (!isEdit && !hasDelete) {
+                    badges.push(
+                        <span key="view" className={`${style.permBadge} ${style.permView}`}>阅读</span>
                     )
                 }
                 return <span className={style.permBadges}>{badges}</span>
