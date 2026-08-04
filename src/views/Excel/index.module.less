@@ -27,7 +27,72 @@
     cursor: default;
 }
 
-.fileName {
-    font-weight: 500;
-    text-align: center;
+.excelContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.titleBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px 0 24px;
+    height: 48px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--color-border-light);
+    box-shadow: 0 1px 4px rgba(var(--color-accent-rgb), 0.06);
+    flex-shrink: 0;
+}
+
+.titleBarText {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    margin-right: 16px;
+}
+
+.savingIndicator {
+    font-size: 12px;
+    color: var(--color-accent);
+    white-space: nowrap;
+    animation: savingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes savingPulse {
+    0%, 100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+}
+
+.titleBarActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.titleBarBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-border-table);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--color-ink-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: #ffffff;
+    }
 }

@@ -1,8 +1,8 @@
 import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Drawer, Form, Input, Spin, FloatButton, Space, Modal, Tooltip, notification, Tree, Empty } from 'antd';
-import { RollbackOutlined, SaveOutlined, VerticalAlignBottomOutlined, UpOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined } from '@ant-design/icons'
+import { useParams } from 'react-router-dom'
+import { Drawer, Form, Input, Spin, Modal, Tooltip, Tree, Empty } from 'antd';
+import { SaveOutlined, VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined } from '@ant-design/icons'
 import { MemoSheet } from '@/components/UniverSheet';
 /**
  * Excel 视图说明
@@ -57,15 +57,9 @@ const Excel = () => {
     const clickTimeoutRef = useRef(null)
     const excelName = useRef('')
     const { success, error, contextHolder } = useMessage()
-    const [api, contextHolderNotification] = notification.useNotification({
-        maxCount: 1,
-        placement: 'bottom'
-    })
     const [data, setData] = useState(false);
     const [title, setTitle] = useState('')
     const [loading, setLoading] = useState(true)
-    const [btnLoading, setBtnLoading] = useState(false)
-    const [open, setOpen] = useState(false);
     const [fileDrawerOpen, setFileDrawerOpen] = useState(false)
     const [fileKeyword, setFileKeyword] = useState('')
     const [searchedKeyword, setSearchedKeyword] = useState('')
@@ -73,7 +67,7 @@ const Excel = () => {
     const [fileLoading, setFileLoading] = useState(false)
     const [expandedKeys, setExpandedKeys] = useState([])
     const [autoExpandParent, setAutoExpandParent] = useState(true)
-    const navigate = useNavigate()
+    const [saving, setSaving] = useState(false)
     // 初始化逻辑
     const getDetail = async (id = param.id) => {
         const res = await getExcelDetail(id)
@@ -83,20 +77,9 @@ const Excel = () => {
         setTitle(title)
         setLoading(false)
     }
-    const back = () => {
-        if (param.folder === 'main') navigate('/home')
-        else navigate(`/home/list/${param.folder}`)
-    }
-    // 更新逻辑
-    const showDrawer = () => {
-        setOpen(true);
-    };
-    const onClose = () => {
-        setOpen(false);
-    };
-    const finishEdit = async () => {
+    // 保存逻辑
+    const handleSave = async () => {
         try {
-            setBtnLoading(true)
             const currentData = univerRef.current?.getData();
             if (!currentData) {
                 throw new Error('无法获取工作簿数据');
@@ -106,20 +89,9 @@ const Excel = () => {
                 url: JSON.stringify(currentData),
                 id: param.id
             })
-            success({
-                content: '更新Excel成功！',
-                callBack: () => {
-                    setBtnLoading(false)
-                    onClose()
-                }
-            })
+            success({ content: '保存成功' })
         } catch (e) {
-            error({
-                content: '更新Excel失败',
-                callBack: () => {
-                    setBtnLoading(false)
-                }
-            })
+            error({ content: '保存失败' })
         }
     }
     // 导出逻辑
@@ -282,14 +254,6 @@ const Excel = () => {
         }
     }, [])
     useEffect(() => {
-        if (title) {
-            api.open({
-                message: `当前文档：${title}`,
-                duration: false,
-            })
-        }
-    }, [title])
-    useEffect(() => {
         const isSearching = Boolean(searchedKeyword)
         if (isSearching) {
             setExpandedKeys(allTreeKeys)
@@ -310,8 +274,10 @@ const Excel = () => {
 
         saveTimeoutRef.current = setTimeout(async () => {
             try {
+                setSaving(true)
                 const currentData = univerRef.current?.getData();
                 if (!currentData) {
+                    setSaving(false)
                     return;
                 }
 
@@ -320,12 +286,13 @@ const Excel = () => {
                     url: JSON.stringify(currentData),
                     id: param.id
                 });
-                // 静默保存，不显示成功提示
             } catch (e) {
                 error({
                     content: e.response?.data?.message || '自动保存失败',
                     delayTime: 2000
                 });
+            } finally {
+                setSaving(false)
             }
         }, 1000); // 1秒防抖
     };
@@ -350,86 +317,36 @@ const Excel = () => {
     return (
         <>
             {contextHolder}
-            {contextHolderNotification}
             {
                 loading
                     ? <Spin size='large' className={style.spin} />
                     : (
-                        <>
+                        <div className={style.excelContainer}>
+                            <div className={style.titleBar}>
+                                <span className={style.titleBarText}>{title || '未命名表格'}{saving && <span className={style.savingIndicator}> 自动保存中...</span>}</span>
+                                <div className={style.titleBarActions}>
+                                    <Tooltip title="保存表格">
+                                        <button className={style.titleBarBtn} onClick={handleSave}>
+                                            <SaveOutlined />
+                                        </button>
+                                    </Tooltip>
+                                    <Tooltip title="导出表格">
+                                        <button className={style.titleBarBtn} onClick={showModal}>
+                                            <VerticalAlignBottomOutlined />
+                                        </button>
+                                    </Tooltip>
+                                    <Tooltip title="插入文件链接">
+                                        <button className={style.titleBarBtn} onClick={handleOpenFileDrawer}>
+                                            <LinkOutlined />
+                                        </button>
+                                    </Tooltip>
+                                </div>
+                            </div>
                             <MemoSheet style={{ flex: 1 }} ref={univerRef} data={data} onChange={handleChange} />
-                            <FloatButton.Group
-                                shape="circle"
-                                trigger="hover"
-                                icon={<UpOutlined />}
-                                style={{
-                                    insetInlineEnd: 24,
-                                    bottom: 24,
-                                }}
-                            >
-                                <Tooltip title="保存 Excel" placement="left">
-                                    <FloatButton
-                                        type="primary"
-                                        icon={<SaveOutlined />}
-                                        onClick={showDrawer}
-                                        style={{
-                                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
-                                        }}
-                                    />
-                                </Tooltip>
-                                <Tooltip title="导出 Excel" placement="left">
-                                    <FloatButton
-                                        icon={<VerticalAlignBottomOutlined />}
-                                        onClick={showModal}
-                                        style={{
-                                            color: '#fff',
-                                            boxShadow: '0 4px 12px rgba(82, 196, 26, 0.3)',
-                                        }}
-                                    />
-                                </Tooltip>
-                                <Tooltip title="插入文件链接" placement="left">
-                                    <FloatButton
-                                        icon={<LinkOutlined />}
-                                        onClick={handleOpenFileDrawer}
-                                    />
-                                </Tooltip>
-                                <Tooltip title="返回" placement="left">
-                                    <FloatButton
-                                        icon={<RollbackOutlined />}
-                                        onClick={back}
-                                        style={{
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                                        }}
-                                    />
-                                </Tooltip>
-                            </FloatButton.Group>
-                        </>
+                        </div>
                     )
             }
-            <Drawer
-                title="请输入Excel名称"
-                placement={'right'}
-                closable={false}
-                onClose={onClose}
-                open={open}
-            >
-                <Form validateTrigger='onChange' initialValues={{ excel: title }}>
-                    <Form.Item name={'excel'}
-                        rules={[() => ({
-                            validator(_, value) {
-                                excelName.current = value
-                                return Promise.resolve()
-                            }
-                        })]}
-                    >
-                        <Input />
-                    </Form.Item>
-                </Form>
-                <Space size={130} style={{ width: '100%' }}>
-                    <Button onClick={finishEdit} type='primary' style={{ width: 100 }} loading={btnLoading}>确认</Button>
-                    <Button onClick={onClose} danger style={{ width: 100 }}>取消</Button>
-                </Space>
-            </Drawer>
-            <Modal title="请输入下载 Excel 文件的名称：" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
+            <Modal title="请输入导出 Excel 文件的名称：" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
                 <Form validateTrigger='onChange' initialValues={{ excel: title }}>
                     <Form.Item name={'excel'}
                         rules={[() => ({
