@@ -615,7 +615,7 @@ const FileList = () => {
                 // 确保 pinned 字段存在且为 true
                 const isPinned = record.pinned === true || record.pinned === 'true';
 
-                if (record.status === 1 || record.status === 3) menuItems = [
+                if (record.status === 1) menuItems = [
                     {
                         key: 'update',
                         icon: <SwapOutlined />,
@@ -623,10 +623,39 @@ const FileList = () => {
                         onClick: () => handleMenuClick('update', record),
                     },
                     {
-                        key: 'export',
+                        key: 'exportWord',
                         icon: <ExportOutlined />,
-                        label: (<span className={style.menuItemLabel}>导出</span>),
-                        onClick: () => handleMenuClick('export', record),
+                        label: (<span className={style.menuItemLabel}>导出 Word</span>),
+                        onClick: () => handleMenuClick('exportWord', record),
+                    },
+                    {
+                        key: 'exportPdf',
+                        icon: <ExportOutlined />,
+                        label: (<span className={style.menuItemLabel}>导出 PDF</span>),
+                        onClick: () => handleMenuClick('exportPdf', record),
+                    },
+                    { type: 'divider' },
+                    {
+                        key: isPinned ? 'unpin' : 'pin',
+                        icon: <PushpinOutlined />,
+                        label: (<span className={style.menuItemLabel}>{isPinned ? '取消置顶' : '置顶'}</span>),
+                        onClick: () => handleMenuClick(isPinned ? 'unpin' : 'pin', record),
+                    },
+                    { type: 'divider' },
+                    {
+                        key: 'delete',
+                        icon: <DeleteOutlined />,
+                        label: (<span className={style.menuItemLabel}>删除</span>),
+                        disabled: !record.canDelete,
+                        onClick: () => handleMenuClick('delete', record),
+                    },
+                ]
+                if (record.status === 3) menuItems = [
+                    {
+                        key: 'update',
+                        icon: <SwapOutlined />,
+                        label: (<span className={style.menuItemLabel}>重命名</span>),
+                        onClick: () => handleMenuClick('update', record),
                     },
                     { type: 'divider' },
                     {
@@ -657,12 +686,6 @@ const FileList = () => {
                         label: (<span className={style.menuItemLabel}>重命名</span>),
                         onClick: () => handleMenuClick('update', record),
                     },
-                    {
-                        key: 'export',
-                        icon: <ExportOutlined />,
-                        label: (<span className={style.menuItemLabel}>导出</span>),
-                        onClick: () => handleMenuClick('export', record),
-                    },
                     { type: 'divider' },
                     {
                         key: isPinned ? 'unpin' : 'pin',
@@ -692,12 +715,6 @@ const FileList = () => {
                             icon: <SwapOutlined />,
                             label: (<span className={style.menuItemLabel}>重命名</span>),
                             onClick: () => handleMenuClick('update', record),
-                        },
-                        {
-                            key: 'export',
-                            icon: <ExportOutlined />,
-                            label: (<span className={style.menuItemLabel}>导出</span>),
-                            onClick: () => handleMenuClick('export', record),
                         },
                         {
                             key: 'download',
@@ -772,10 +789,10 @@ const FileList = () => {
             setLoading(false)
         }
     }
-    const handleSingleDownload = async (record) => {
+    const handleSingleDownload = async (record, format) => {
         try {
             setDownloading(true)
-            await downloadSingle(record.status, record.id, record.name)
+            await downloadSingle(record.status, record.id, record.name, format)
         } catch (e) {
             error({ content: '下载失败，请检查网络' })
         } finally {
@@ -836,7 +853,11 @@ const FileList = () => {
         })
     }
     const handleMenuClick = async (action, record) => {
-        if (action === 'export') {
+        if (action === 'exportWord') {
+            handleSingleDownload(record, 'docx')
+        } else if (action === 'exportPdf') {
+            handleSingleDownload(record, 'pdf')
+        } else if (action === 'download') {
             handleSingleDownload(record)
         } else if (action === 'delete') {
             try {
@@ -858,8 +879,6 @@ const FileList = () => {
             setCurrentRecord(record);
             newName.current = getRenameDisplayName(record);
             setIsModalOpen(true);
-        } else if (action === 'download') {
-            handleSingleDownload(record)
         } else if (action === 'pin' || action === 'unpin') {
             try {
                 setLoading(true)

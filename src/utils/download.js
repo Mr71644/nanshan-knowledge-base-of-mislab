@@ -11,9 +11,13 @@ function triggerBrowserDownload(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export async function downloadSingle(status, id, name) {
+export async function downloadSingle(status, id, name, format) {
+    let url = `/document/download/${status}/${id}`
+    if (format) {
+        url += `?format=${format}`
+    }
     const blob = await request({
-        url: `/document/download/${status}/${id}`,
+        url,
         method: 'GET',
         responseType: 'blob',
     })
