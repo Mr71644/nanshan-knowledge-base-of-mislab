@@ -23,6 +23,7 @@ const Area = () => {
     const [headerCollapsed, setHeaderCollapsed] = useState(false)
     const [showBackTop, setShowBackTop] = useState(false)
     const [docContentType, setDocContentType] = useState('prosemirror')
+    const [saving, setSaving] = useState(false)
     const title = useRef('')
     const author = useRef('')
     const time = useRef({})
@@ -100,6 +101,7 @@ const Area = () => {
 
         const timer = setTimeout(async () => {
             try {
+                setSaving(true)
                 await editContent({
                     title: title.current,
                     author: author.current,
@@ -112,6 +114,8 @@ const Area = () => {
                     content: '自动保存失败，请手动保存',
                     delayTime: 2000
                 });
+            } finally {
+                setSaving(false)
             }
         }, 2000);
 
@@ -198,12 +202,15 @@ const Area = () => {
                                 isEdit ?
                                     <div className={style.editLayout}>
                                         <div className={style.editHeader}>
-                                            <div
-                                                className={style.editHeaderToggle}
-                                                onClick={() => setHeaderCollapsed(c => !c)}
-                                            >
-                                                {headerCollapsed ? <DownOutlined /> : <UpOutlined />}
-                                                <span>{headerCollapsed ? '展开信息' : '收起信息'}</span>
+                                            <div className={style.editHeaderRow}>
+                                                <div
+                                                    className={style.editHeaderToggle}
+                                                    onClick={() => setHeaderCollapsed(c => !c)}
+                                                >
+                                                    {headerCollapsed ? <DownOutlined /> : <UpOutlined />}
+                                                    <span>{headerCollapsed ? '展开信息' : '收起信息'}</span>
+                                                </div>
+                                                {saving && <span className={style.savingIndicator}>自动保存中...</span>}
                                             </div>
                                             {!headerCollapsed && (
                                                 <Form
@@ -213,7 +220,7 @@ const Area = () => {
                                                 >
                                                     <Form.Item
                                                         name='title'
-                                                        label='文章名称'
+                                                        label='题目'
                                                         rules={[() => ({
                                                             validator(_, value) {
                                                                 title.current = value
@@ -225,7 +232,7 @@ const Area = () => {
                                                     </Form.Item>
                                                     <Form.Item
                                                         name='author'
-                                                        label='文章作者'
+                                                        label='作者'
                                                         rules={[() => ({
                                                             validator(_, value) {
                                                                 author.current = value

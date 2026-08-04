@@ -19,6 +19,11 @@
   flex-shrink: 0;
 }
 
+.editHeaderRow {
+  display: flex;
+  align-items: center;
+}
+
 .editHeaderToggle {
   display: flex;
   align-items: center;
@@ -36,6 +41,20 @@
     color: var(--color-accent, #d4a84c);
     background: var(--color-accent-06, rgba(212, 168, 76, 0.06));
   }
+}
+
+.savingIndicator {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent, #d4a84c);
+  white-space: nowrap;
+  margin-left: 12px;
+  animation: savingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes savingPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 
 .editBox {
