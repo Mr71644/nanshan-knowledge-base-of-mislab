@@ -5,9 +5,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title></title>
+  <style>
+    #app-loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    #app-loading.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .app-spinner {
+      width: 32px;
+      height: 32px;
+      position: relative;
+    }
+    .app-spinner i {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #d4a84c;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: app-dot-pulse 1s ease-in-out infinite alternate;
+    }
+    .app-spinner i:nth-child(1) { top: 0;  left: calc(50% - 7px); animation-delay: 0s; }
+    .app-spinner i:nth-child(2) { top: calc(50% - 7px); right: 0;  animation-delay: 0.25s; }
+    .app-spinner i:nth-child(3) { bottom: 0; left: calc(50% - 7px); animation-delay: 0.5s; }
+    .app-spinner i:nth-child(4) { top: calc(50% - 7px); left: 0;   animation-delay: 0.75s; }
+    @keyframes app-dot-pulse {
+      from { opacity: 0.3; transform: scale(0.75); }
+      to   { opacity: 1;   transform: scale(1); }
+    }
+  </style>
 </head>
 
 <body>
+  <div id="app-loading"><div class="app-spinner"><i></i><i></i><i></i><i></i></div></div>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

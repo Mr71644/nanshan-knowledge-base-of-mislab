@@ -23,3 +23,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <RouterProvider router={router}></RouterProvider>
     </Provider>
 )
+
+// 移除首屏加载动画
+const loader = document.getElementById('app-loading')
+if (loader) {
+    loader.classList.add('fade-out')
+    setTimeout(() => loader.remove(), 350)
+}
