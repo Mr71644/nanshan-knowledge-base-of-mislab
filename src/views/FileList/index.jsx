@@ -38,7 +38,7 @@ const FileList = () => {
     const [batchType, setBatchType] = useState(null) // null | 'batch' | 'delete' | 'download'
     const [ownerFilter, setOwnerFilter] = useState([]) // 选中的所有者名
     const [dateFilter, setDateFilter] = useState(null) // [dayjs, dayjs] | null
-    const [sortOrder, setSortOrder] = useState('desc') // 'desc'=最近→最早(默认) | 'asc'=最早→最近
+    const [sortConfig, setSortConfig] = useState({ key: 'updateTime', order: 'desc' }) // { key: 'name'|'owner'|'updateTime', order: 'asc'|'desc' }
     const [permissionFilter, setPermissionFilter] = useState([]) // 选中的权限：'EDIT' | 'VIEW'
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalLoding, setModalLoading] = useState(false)
@@ -58,6 +58,18 @@ const FileList = () => {
             return lastDot > 0 ? record.name.substring(0, lastDot) : record.name
         }
         return record.name
+    }
+
+    /**
+     * 切换列排序：点击相同列 → 切换升降序；点击不同列 → 切换为升序
+     */
+    const handleSortChange = (colKey) => {
+        setSortConfig(prev => {
+            if (prev.key === colKey) {
+                return { key: colKey, order: prev.order === 'asc' ? 'desc' : 'asc' }
+            }
+            return { key: colKey, order: 'asc' }
+        })
     }
 
     const [columnWidths, setColumnWidths] = useState({ ...COLUMN_DEFAULTS })
@@ -182,7 +194,30 @@ const FileList = () => {
         })
     }, [permissionFilteredList, dateFilter])
 
-    // 排序：置顶项固定置顶且不参与排序，其余项按修改时间排序（默认最近→最早）
+    /**
+     * 取字符串首字符的排序类别，用于按 数字→英文→中文→特殊字符 分组排序
+     * 返回 [类别序号, 首字符] 用于 localeCompare
+     */
+    const getFirstCharSortKey = (str) => {
+        if (!str) return [3, ''] // 空值排最后
+        const first = str.charAt(0)
+        if (/\d/.test(first)) return [0, first]                    // 数字
+        if (/[a-zA-Z]/.test(first)) return [1, first.toLowerCase()] // 英文
+        if (/[一-鿿㐀-䶿]/.test(first)) return [2, first] // 中文
+        return [3, first] // 特殊字符
+    }
+
+    /**
+     * 按首字符排序：数字→英文→中文→特殊字符，同类内按首字符 localeCompare
+     */
+    const compareByFirstChar = (strA, strB) => {
+        const [catA, chA] = getFirstCharSortKey(strA)
+        const [catB, chB] = getFirstCharSortKey(strB)
+        if (catA !== catB) return catA - catB
+        return String(chA).localeCompare(String(chB), 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+    }
+
+    // 排序：置顶项固定置顶且不参与排序，其余项按 sortConfig 排序
     const displayList = useMemo(() => {
         const pinned = []
         const normal = []
@@ -190,12 +225,21 @@ const FileList = () => {
             const isPinned = item.pinned === true || item.pinned === 'true'
             ;(isPinned ? pinned : normal).push(item)
         })
+        const { key, order } = sortConfig
+        const dir = order === 'asc' ? 1 : -1
         normal.sort((a, b) => {
+            if (key === 'name') {
+                return dir * compareByFirstChar(a.name, b.name)
+            }
+            if (key === 'owner') {
+                return dir * compareByFirstChar(a.owner || '', b.owner || '')
+            }
+            // 默认按修改时间排序
             const diff = new Date(a.updateTime) - new Date(b.updateTime)
-            return sortOrder === 'desc' ? -diff : diff
+            return dir * diff
         })
         return [...pinned, ...normal]
-    }, [filteredList, sortOrder])
+    }, [filteredList, sortConfig])
 
     // 所有者筛选浮层内容
     const ownerFilterContent = (
@@ -224,11 +268,47 @@ const FileList = () => {
         </div>
     )
 
-    // 所有者列标题（带筛选图标）
-    const renderOwnerTitle = (colKey) => (
+    // 名称列标题（可点击切换排序）
+    const renderNameTitle = (colKey) => {
+        const isActive = sortConfig.key === 'name'
+        return (
+        <div className={style.headerCell}>
+            <span className={style.sortLabel} onClick={() => handleSortChange('name')}>
+                名称
+                <span className={`${style.sortArrow} ${isActive ? style.sortArrowActive : ''} ${isActive && sortConfig.order === 'asc' ? style.sortArrowAsc : ''}`}>
+                    <CaretDownOutlined />
+                </span>
+            </span>
+            <div
+                className={style.resizeHandle}
+                onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    resizeRef.current = {
+                        key: colKey,
+                        startX: e.clientX,
+                        startWidth: columnWidths[colKey],
+                    }
+                    document.body.style.cursor = 'col-resize'
+                    document.body.style.userSelect = 'none'
+                }}
+            />
+        </div>
+        )
+    }
+
+    // 所有者列标题（可点击切换排序 + 筛选图标）
+    const renderOwnerTitle = (colKey) => {
+        const isActive = sortConfig.key === 'owner'
+        return (
         <div className={style.headerCell}>
             <span className={style.ownerTitleText}>
-                所有者
+                <span className={style.sortLabel} onClick={() => handleSortChange('owner')}>
+                    所有者
+                    <span className={`${style.sortArrow} ${isActive ? style.sortArrowActive : ''} ${isActive && sortConfig.order === 'asc' ? style.sortArrowAsc : ''}`}>
+                        <CaretDownOutlined />
+                    </span>
+                </span>
                 <Popover
                     content={ownerFilterContent}
                     trigger="click"
@@ -262,6 +342,7 @@ const FileList = () => {
             />
         </div>
     )
+    }
 
     // 日期筛选内容
     const dateFilterContent = (
@@ -284,15 +365,17 @@ const FileList = () => {
     )
 
     // 修改时间列标题（可点击切换排序 + 日期筛选图标）
-    const renderDateTitle = (colKey) => (
+    const renderDateTitle = (colKey) => {
+        const isActive = sortConfig.key === 'updateTime'
+        return (
         <div className={style.headerCell}>
             <span className={style.ownerTitleText}>
                 <span
                     className={style.sortLabel}
-                    onClick={() => setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'))}
+                    onClick={() => handleSortChange('updateTime')}
                 >
                     修改时间
-                    <span className={`${style.sortArrow} ${sortOrder === 'asc' ? style.sortArrowAsc : ''}`}>
+                    <span className={`${style.sortArrow} ${isActive ? style.sortArrowActive : ''} ${isActive && sortConfig.order === 'asc' ? style.sortArrowAsc : ''}`}>
                         <CaretDownOutlined />
                     </span>
                 </span>
@@ -327,6 +410,7 @@ const FileList = () => {
             />
         </div>
     )
+    }
 
     // 权限筛选浮层内容
     const permissionFilterContent = (
@@ -412,7 +496,7 @@ const FileList = () => {
 
     const columns = [
         {
-            title: renderTitle('名称', 'name'),
+            title: renderNameTitle('name'),
             dataIndex: 'name',
             key: 'name',
             width: columnWidths.name,
