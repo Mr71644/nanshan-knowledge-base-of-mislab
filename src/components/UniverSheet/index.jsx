@@ -2,6 +2,7 @@ import '@univerjs/preset-sheets-core/lib/index.css';
 import '@univerjs/preset-sheets-hyper-link/lib/index.css';
 import '@univerjs/find-replace/lib/index.css';
 import '@univerjs/preset-sheets-filter/lib/index.css';
+import '@univerjs/sheets-sort-ui/lib/index.css';
 import style from './index.module.less';
 
 import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets';
@@ -9,10 +10,12 @@ import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
 import { UniverSheetsHyperLinkPreset } from '@univerjs/preset-sheets-hyper-link';
 import { UniverSheetsFindReplacePreset } from '@univerjs/preset-sheets-find-replace';
 import { UniverSheetsFilterPreset } from '@univerjs/preset-sheets-filter';
+import { UniverSheetsSortPreset } from '@univerjs/preset-sheets-sort';
 import UniverPresetSheetsCoreZhCN from '@univerjs/preset-sheets-core/locales/zh-CN';
 import UniverPresetSheetsHyperLinkZhCN from '@univerjs/preset-sheets-hyper-link/locales/zh-CN';
 import UniverPresetSheetsFindReplaceZhCN from '@univerjs/preset-sheets-find-replace/locales/zh-CN';
 import UniverPresetSheetsFilterZhCN from '@univerjs/preset-sheets-filter/locales/zh-CN';
+import UniverPresetSheetsSortZhCN from '@univerjs/preset-sheets-sort/locales/zh-CN';
 import { OpenFindDialogOperation } from '@univerjs/find-replace';
 import { SmartToggleSheetsFilterCommand } from '@univerjs/sheets-filter';
 import { forwardRef, useEffect, useImperativeHandle, useRef, memo } from 'react';
@@ -65,7 +68,8 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
                     UniverPresetSheetsCoreZhCN,
                     UniverPresetSheetsHyperLinkZhCN,
                     UniverPresetSheetsFindReplaceZhCN,
-                    UniverPresetSheetsFilterZhCN
+                    UniverPresetSheetsFilterZhCN,
+                    UniverPresetSheetsSortZhCN
                 ),
             },
             presets: [
@@ -79,6 +83,8 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
                 UniverSheetsFindReplacePreset(),
                 // 筛选预设
                 UniverSheetsFilterPreset(),
+                // 排序预设
+                UniverSheetsSortPreset(),
             ],
         });
 
