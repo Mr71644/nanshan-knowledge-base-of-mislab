@@ -26,23 +26,28 @@
       width: 32px;
       height: 32px;
       position: relative;
+      animation: app-spin-rotate 1.2s linear infinite;
     }
     .app-spinner i {
       position: absolute;
-      width: 14px;
-      height: 14px;
+      display: block;
+      width: 8px;
+      height: 8px;
       background: #d4a84c;
       border-radius: 50%;
       opacity: 0.3;
-      animation: app-dot-pulse 1s ease-in-out infinite alternate;
+      animation: app-spin-dot 1.2s ease-in-out infinite alternate;
     }
-    .app-spinner i:nth-child(1) { top: 0;  left: calc(50% - 7px); animation-delay: 0s; }
-    .app-spinner i:nth-child(2) { top: calc(50% - 7px); right: 0;  animation-delay: 0.25s; }
-    .app-spinner i:nth-child(3) { bottom: 0; left: calc(50% - 7px); animation-delay: 0.5s; }
-    .app-spinner i:nth-child(4) { top: calc(50% - 7px); left: 0;   animation-delay: 0.75s; }
-    @keyframes app-dot-pulse {
-      from { opacity: 0.3; transform: scale(0.75); }
-      to   { opacity: 1;   transform: scale(1); }
+    .app-spinner i:nth-child(1) { top: 0; left: 50%; margin-left: -4px; animation-delay: 0s; }
+    .app-spinner i:nth-child(2) { top: 50%; right: 0; margin-top: -4px; animation-delay: 0.3s; }
+    .app-spinner i:nth-child(3) { bottom: 0; left: 50%; margin-left: -4px; animation-delay: 0.6s; }
+    .app-spinner i:nth-child(4) { top: 50%; left: 0; margin-top: -4px; animation-delay: 0.9s; }
+    @keyframes app-spin-rotate {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes app-spin-dot {
+      0%   { opacity: 0.2; transform: scale(0.75); }
+      100% { opacity: 1;   transform: scale(1); }
     }
   </style>
 </head>
