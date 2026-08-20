@@ -84,6 +84,26 @@ const batchDeleteUsers = ({ ids }) => {
     })
 }
 
+// 批量导入用户（multipart/form-data）
+const importUsers = (file) => {
+    const data = new FormData()
+    data.append('file', file)
+    return request({
+        url: '/user/import',
+        method: 'POST',
+        data
+    })
+}
+
+// 下载用户导入模板（空表头 xlsx）
+const downloadUserTemplate = () => {
+    return request({
+        url: '/user/import/template',
+        method: 'GET',
+        responseType: 'blob'
+    })
+}
+
 // 获取用户已分配的角色
 const getUserRoles = (userId) => {
     return request({
@@ -147,6 +167,8 @@ export {
     assignUserRoles,
     batchAssignUserRoles,
     batchDeleteUsers,
+    importUsers,
+    downloadUserTemplate,
     getUserRoles,
     getUnassignedRoles,
     getUserInfo,

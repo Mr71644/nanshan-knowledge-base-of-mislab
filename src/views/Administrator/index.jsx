@@ -1,10 +1,11 @@
 import { memo, useState, useEffect } from 'react'
-import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar } from 'antd'
-import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined } from '@ant-design/icons'
+import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar, TreeSelect } from 'antd'
+import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined, ImportOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
-import { getRoleList, createRole, updateRole, deleteRole, batchDeleteRoles, getRoleFolderPermissions, assignRoleFolderPermissions, roleFolderTree, getPermissionTypes, removeRoleFolderPermissions, batchAssignRoleFolderPermissions, getRoleFolderIntersection } from '@/apis/role'
-import { getUserList, createUser, updateUser, deleteUser, batchDeleteUsers, assignUserRoles, batchAssignUserRoles, getUserRoles, getUnassignedRoles } from '@/apis/user'
+import { getRoleList, createRole, updateRole, deleteRole, batchDeleteRoles, getRoleFolderPermissions, assignRoleFolderPermissions, roleFolderTree, getPermissionTypes, removeRoleFolderPermissions, batchAssignRoleFolderPermissions, getRoleFolderIntersection, importRoles, downloadRoleTemplate } from '@/apis/role'
+import { getUserList, createUser, updateUser, deleteUser, batchDeleteUsers, assignUserRoles, batchAssignUserRoles, getUserRoles, getUnassignedRoles, importUsers, downloadUserTemplate } from '@/apis/user'
+import { ImportModal } from '@/components/ImportModal'
 import { diffPermissions } from '@/utils/permission'
 import style from './index.module.less'
 import themeConfig from '#theme'
@@ -106,6 +107,11 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         pageSize: 10,
         total: 0
     })
+
+    // 导入弹窗状态
+    const [importUserModalVisible, setImportUserModalVisible] = useState(false)
+    const [importRoleModalVisible, setImportRoleModalVisible] = useState(false)
+    const [importRoleParentId, setImportRoleParentId] = useState(null) // 角色导入的上级文件夹 id（可选）
 
     // 数据初始化
     useEffect(() => {
@@ -1304,6 +1310,13 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                 批量删除
                             </Button>
                         </Popconfirm>
+                        <Button
+                            icon={<ImportOutlined />}
+                            onClick={() => setImportUserModalVisible(true)}
+                            style={{ marginLeft: 8 }}
+                        >
+                            批量导入
+                        </Button>
                     </div>
                     <Table
                         columns={userColumns}
@@ -1387,6 +1400,13 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                 批量删除
                             </Button>
                         </Popconfirm>
+                        <Button
+                            icon={<ImportOutlined />}
+                            onClick={() => setImportRoleModalVisible(true)}
+                            style={{ marginLeft: 8 }}
+                        >
+                            批量导入
+                        </Button>
                     </div>
                     <Table
                         columns={roleColumns}
@@ -1962,6 +1982,48 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         </div>
                     </div>
                 </Modal>
+
+                {/* 用户批量导入模态框 */}
+                <ImportModal
+                    open={importUserModalVisible}
+                    title="批量导入用户"
+                    onCancel={() => setImportUserModalVisible(false)}
+                    downloadTemplate={downloadUserTemplate}
+                    onImport={importUsers}
+                    onSuccess={() => {
+                        loadUsers(userPagination.current, userPagination.pageSize)
+                        // 同时刷新角色列表，因为角色列表显示用户数量
+                        loadRoles(rolePagination.current, rolePagination.pageSize)
+                    }}
+                />
+
+                {/* 角色批量导入模态框 */}
+                <ImportModal
+                    open={importRoleModalVisible}
+                    title="批量导入角色"
+                    onCancel={() => setImportRoleModalVisible(false)}
+                    downloadTemplate={downloadRoleTemplate}
+                    onImport={(file) => importRoles({ file, parentFolderId: importRoleParentId })}
+                    onSuccess={() => {
+                        loadRoles(rolePagination.current, rolePagination.pageSize)
+                        // 同时刷新用户列表，因为用户列表中显示角色信息
+                        loadUsers(userPagination.current, userPagination.pageSize)
+                    }}
+                    extraFields={(
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <span style={{ fontWeight: 500 }}>上级文件夹（可选）</span>
+                            <TreeSelect
+                                allowClear
+                                placeholder="留空则仅导入角色（或由 Excel「上级文件夹」列指定）"
+                                treeData={folderTreeData}
+                                fieldNames={{ label: 'title', value: 'key', children: 'children' }}
+                                treeDefaultExpandAll
+                                onChange={(v) => setImportRoleParentId(v ? Number(v) : null)}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                    )}
+                />
 
                 {/* 角色用户查看模态框 */}
                 <Modal

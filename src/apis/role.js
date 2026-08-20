@@ -84,6 +84,27 @@ const getRoleFolderIntersection = ({ roleIds }) => {
     })
 }
 
+// 批量导入角色（multipart/form-data），parentFolderId 为可选参数（整数）
+const importRoles = ({ file, parentFolderId }) => {
+    const data = new FormData()
+    data.append('file', file)
+    return request({
+        url: '/role/import',
+        method: 'POST',
+        params: parentFolderId !== undefined && parentFolderId !== null ? { parentFolderId } : {},
+        data
+    })
+}
+
+// 下载角色导入模板（空表头 xlsx）
+const downloadRoleTemplate = () => {
+    return request({
+        url: '/role/import/template',
+        method: 'GET',
+        responseType: 'blob'
+    })
+}
+
 // 获取角色详情
 const getRoleDetail = (id) => {
     return request({
@@ -150,5 +171,7 @@ export {
     getPermissionTypes,
     removeRoleFolderPermissions,
     batchAssignRoleFolderPermissions,
-    getRoleFolderIntersection
+    getRoleFolderIntersection,
+    importRoles,
+    downloadRoleTemplate
 }
