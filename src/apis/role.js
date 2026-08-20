@@ -49,6 +49,41 @@ const deleteRole = (id) => {
     })
 }
 
+// 批量删除角色
+const batchDeleteRoles = ({ ids }) => {
+    return request({
+        url: '/role/delete/batch',
+        method: 'DELETE',
+        data: {
+            ids
+        }
+    })
+}
+
+// 批量分配文件夹权限给多个角色
+// folderPermissions: [{ folderId, permissionType }]
+const batchAssignRoleFolderPermissions = ({ roleIds, folderPermissions }) => {
+    return request({
+        url: '/role/folder/batch-assign',
+        method: 'POST',
+        data: {
+            roleIds,
+            folderPermissions
+        }
+    })
+}
+
+// 获取多角色文件夹权限的交集（批量编辑回显）
+const getRoleFolderIntersection = ({ roleIds }) => {
+    return request({
+        url: '/role/folder/intersection',
+        method: 'POST',
+        data: {
+            roleIds
+        }
+    })
+}
+
 // 获取角色详情
 const getRoleDetail = (id) => {
     return request({
@@ -107,10 +142,13 @@ export {
     createRole,
     updateRole,
     deleteRole,
+    batchDeleteRoles,
     getRoleDetail,
     getRoleFolderPermissions,
     assignRoleFolderPermissions,
     roleFolderTree,
     getPermissionTypes,
-    removeRoleFolderPermissions
+    removeRoleFolderPermissions,
+    batchAssignRoleFolderPermissions,
+    getRoleFolderIntersection
 }

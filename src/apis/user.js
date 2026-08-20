@@ -62,13 +62,24 @@ const assignUserRoles = ({ userId, roleIds }) => {
 }
 
 // 批量为多个用户分配角色
-const batchAssignUserRoles = ({ userIds, roleIds }) => {
+// users: [{ userId, roleIds }] —— 每个用户可分配不同的角色
+const batchAssignUserRoles = ({ users }) => {
     return request({
         url: '/user/batch-assign-roles',
         method: 'POST',
         data: {
-            userIds,
-            roleIds
+            users
+        }
+    })
+}
+
+// 批量删除用户
+const batchDeleteUsers = ({ ids }) => {
+    return request({
+        url: '/user/delete/batch',
+        method: 'DELETE',
+        data: {
+            ids
         }
     })
 }
@@ -135,6 +146,7 @@ export {
     deleteUser,
     assignUserRoles,
     batchAssignUserRoles,
+    batchDeleteUsers,
     getUserRoles,
     getUnassignedRoles,
     getUserInfo,
