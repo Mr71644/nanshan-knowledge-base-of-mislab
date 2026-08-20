@@ -1,13 +1,14 @@
 import { request } from "@/utils";
 
-// 分页查询角色列表
-const getRoleList = ({ current, pageSize = 8 }) => {
+// 分页查询角色列表（支持角色名模糊搜索）
+const getRoleList = ({ current, pageSize = 10, roleName }) => {
     return request({
         url: '/role/list',
         method: 'POST',
         data: {
             current,
-            pageSize
+            pageSize,
+            roleName
         }
     })
 }

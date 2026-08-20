@@ -1,13 +1,16 @@
 import { request } from "@/utils";
 
-// 分页查询用户列表
-const getUserList = ({ current, pageSize = 10 }) => {
+// 分页查询用户列表（支持用户名/邮箱模糊搜索、状态筛选）
+const getUserList = ({ current, pageSize = 10, username, email, status }) => {
     return request({
         url: '/user/list',
         method: 'POST',
         data: {
             current,
-            pageSize
+            pageSize,
+            username,
+            email,
+            status
         }
     })
 }

@@ -37,9 +37,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         total: 0
     })
     const [searchKeyword, setSearchKeyword] = useState('') // 搜索关键词
-    const [allUsers, setAllUsers] = useState([]) // 存储所有用户数据
+    const [userStatusFilter, setUserStatusFilter] = useState(null) // 用户状态筛选：null=全部, 1=启用, 0=禁用
     const [selectedUserIds, setSelectedUserIds] = useState([]) // 存储选中的用户 ID
-    const [userSearchLoading, setUserSearchLoading] = useState(false) // 用户搜索加载状态
 
     // 角色管理状态
     const [roles, setRoles] = useState([])
@@ -53,8 +52,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         total: 0
     })
     const [roleSearchKeyword, setRoleSearchKeyword] = useState('')
-    const [allRoles, setAllRoles] = useState([])
-    const [roleSearchLoading, setRoleSearchLoading] = useState(false) // 角色搜索加载状态
     const [selectedRoleIds, setSelectedRoleIds] = useState([]) // 存储选中的角色 ID
 
     // 角色用户查看状态
@@ -121,13 +118,18 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         loadPermissionTypes()
     }, [])
 
-    // 加载所有用户数据
-    const loadUsers = async (page = userPagination.current, pageSize = userPagination.pageSize) => {
+    // 加载用户列表（服务端分页，支持用户名模糊搜索 + 状态筛选）
+    // filters 用于搜索/筛选时显式传入新值（避免 setState 异步导致的闭包旧值）
+    const loadUsers = async (page = userPagination.current, pageSize = userPagination.pageSize, filters = {}) => {
         setUserLoading(true)
         try {
+            const username = (filters.username !== undefined ? filters.username : searchKeyword) || undefined
+            const status = (filters.status !== undefined ? filters.status : userStatusFilter) ?? undefined
             const res = await getUserList({
                 current: page,
-                pageSize: pageSize
+                pageSize: pageSize,
+                username,
+                status
             })
             // 将后端返回的数据格式转换为前端需要的格式
             const userList = res.data.records.map(item => ({
@@ -139,13 +141,12 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                 updateTime: item.updateTime
             }))
             setUsers(userList)
-            setAllUsers(userList) // 存储所有用户数据
             setUserPagination({
                 current: page,
                 pageSize: pageSize,
                 total: res.data.total
             })
-        } catch (e) {
+        } catch {
             error({
                 content: '加载用户列表失败'
             })
@@ -154,47 +155,26 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         }
     }
 
-    // 搜索用户
-    const searchUsers = (keyword) => {
-        setUserSearchLoading(true)
-        setTimeout(() => {
-            try {
-                if (keyword.trim()) {
-                    // 前端搜索：根据用户名过滤用户列表
-                    const filteredUsers = allUsers.filter(user =>
-                        user.username.toLowerCase().includes(keyword.toLowerCase())
-                    )
-                    setUsers(filteredUsers)
-                    setUserPagination({
-                        ...userPagination,
-                        total: filteredUsers.length,
-                        current: 1 // 重置到第一页
-                    })
-                } else {
-                    // 如果搜索关键词为空，显示所有用户
-                    setUsers(allUsers)
-                    setUserPagination({
-                        ...userPagination,
-                        total: allUsers.length,
-                        current: 1 // 重置到第一页
-                    })
-                }
-            } catch (e) {
-                error({
-                    content: '搜索用户失败'
-                })
-            } finally {
-                setUserSearchLoading(false)
-            }
-        }, 300)
+    // 服务端搜索用户（按用户名模糊搜索）
+    const handleUserSearch = (keyword) => {
+        const kw = (keyword || '').trim()
+        setSearchKeyword(kw)
+        loadUsers(1, userPagination.pageSize, { username: kw || undefined })
     }
 
-    const loadRoles = async (page = rolePagination.current, pageSize = rolePagination.pageSize) => {
+    // 服务端按状态筛选用户
+    const handleUserStatusFilter = (status) => {
+        setUserStatusFilter(status ?? null)
+        loadUsers(1, userPagination.pageSize, { status: status ?? undefined })
+    }
+
+    const loadRoles = async (page = rolePagination.current, pageSize = rolePagination.pageSize, filters = {}) => {
         setRoleLoading(true)
 
         try {
-            const res = await getRoleList({ current: page, pageSize: pageSize })
-            // 将后端返回的数据格式转换为前端需要的格式   
+            const roleName = (filters.roleName !== undefined ? filters.roleName : roleSearchKeyword) || undefined
+            const res = await getRoleList({ current: page, pageSize: pageSize, roleName })
+            // 将后端返回的数据格式转换为前端需要的格式
             const roleList = res.data.records.map(item => ({
                 id: item.id,
                 name: item.roleName,
@@ -207,13 +187,12 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                 updateTime: item.updateTime
             }))
             setRoles(roleList)
-            setAllRoles(roleList) // 存储所有角色数据
             setRolePagination({
                 current: page,
                 pageSize: pageSize,
                 total: res.data.total
             })
-        } catch (e) {
+        } catch {
             error({
                 content: '加载角色列表失败'
             })
@@ -222,39 +201,11 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         }
     }
 
-    // 搜索角色
-    const searchRoles = (keyword) => {
-        setRoleSearchLoading(true)
-        setTimeout(() => {
-            try {
-                if (keyword.trim()) {
-                    // 前端搜索：根据角色名称过滤角色列表
-                    const filteredRoles = allRoles.filter(role =>
-                        role.name.toLowerCase().includes(keyword.toLowerCase())
-                    )
-                    setRoles(filteredRoles)
-                    setRolePagination({
-                        ...rolePagination,
-                        total: filteredRoles.length,
-                        current: 1 // 重置到第一页
-                    })
-                } else {
-                    // 如果搜索关键词为空，显示所有角色
-                    setRoles(allRoles)
-                    setRolePagination({
-                        ...rolePagination,
-                        total: allRoles.length,
-                        current: 1 // 重置到第一页
-                    })
-                }
-            } catch (e) {
-                error({
-                    content: '搜索角色失败'
-                })
-            } finally {
-                setRoleSearchLoading(false)
-            }
-        }, 300)
+    // 服务端搜索角色（按角色名模糊搜索）
+    const handleRoleSearch = (keyword) => {
+        const kw = (keyword || '').trim()
+        setRoleSearchKeyword(kw)
+        loadRoles(1, rolePagination.pageSize, { roleName: kw || undefined })
     }
 
     // 加载文件夹树
@@ -1023,26 +974,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     // 用户表格列定义
     const userColumns = [
         {
-            title: '选择',
-            dataIndex: 'select',
-            key: 'select',
-            width: 60,
-            align: 'center',
-            render: (_, record) => (
-                <input
-                    type='checkbox'
-                    checked={selectedUserIds.includes(record.id)}
-                    onChange={(e) => {
-                        if (e.target.checked) {
-                            setSelectedUserIds([...selectedUserIds, record.id])
-                        } else {
-                            setSelectedUserIds(selectedUserIds.filter(id => id !== record.id))
-                        }
-                    }}
-                />
-            )
-        },
-        {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
@@ -1132,26 +1063,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
     // 角色表格列定义
     const roleColumns = [
-        {
-            title: '选择',
-            dataIndex: 'select',
-            key: 'select',
-            width: 60,
-            align: 'center',
-            render: (_, record) => (
-                <input
-                    type='checkbox'
-                    checked={selectedRoleIds.includes(record.id)}
-                    onChange={(e) => {
-                        if (e.target.checked) {
-                            setSelectedRoleIds([...selectedRoleIds, record.id])
-                        } else {
-                            setSelectedRoleIds(selectedRoleIds.filter(id => id !== record.id))
-                        }
-                    }}
-                />
-            )
-        },
         {
             title: 'ID',
             dataIndex: 'id',
@@ -1270,6 +1181,62 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         },
     ]
 
+    // 搜索/筛选控件：用户页（状态下拉 + 用户名搜索）；角色页（角色名搜索）
+    const searchControls = (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {activeTab === 'users' && (
+                <>
+                    <Select
+                        allowClear
+                        placeholder="全部状态"
+                        value={userStatusFilter}
+                        onChange={handleUserStatusFilter}
+                        style={{ width: 100 }}
+                        options={[
+                            { value: 1, label: '启用' },
+                            { value: 0, label: '禁用' }
+                        ]}
+                    />
+                    <div style={{ width: 1, height: 18, background: 'var(--color-border-card)' }} />
+                </>
+            )}
+            <Input.Search
+                placeholder={activeTab === 'users' ? '根据用户名查找' : '根据角色名称查找'}
+                value={activeTab === 'users' ? searchKeyword : roleSearchKeyword}
+                onChange={(e) => {
+                    if (activeTab === 'users') {
+                        setSearchKeyword(e.target.value)
+                    } else {
+                        setRoleSearchKeyword(e.target.value)
+                    }
+                }}
+                onSearch={(value) => {
+                    if (activeTab === 'users') {
+                        handleUserSearch(value)
+                    } else {
+                        handleRoleSearch(value)
+                    }
+                }}
+                style={{ width: 240 }}
+                enterButton="搜索"
+                loading={activeTab === 'users' ? userLoading : roleLoading}
+            />
+        </div>
+    )
+
+    // 工具栏统一样式：暖色浅底 Dock，把左侧操作按钮和右侧搜索/筛选放在同一行
+    const toolbarStyle = {
+        marginBottom: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap',
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: 'linear-gradient(180deg, rgba(var(--color-accent-rgb), 0.06) 0%, rgba(var(--color-accent-rgb), 0.015) 100%)',
+        border: '1px solid var(--color-border-card)',
+    }
+
     const tabItems = [
         {
             key: 'users',
@@ -1281,8 +1248,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             ),
             children: (
                 <>
-                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddUser} style={{ marginRight: 8 }}>
+                    <div style={toolbarStyle}>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddUser}>
                             新建用户
                         </Button>
                         <Button
@@ -1290,7 +1257,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             icon={<SafetyOutlined />}
                             onClick={handleBatchAssignPermission}
                             disabled={selectedUserIds.length === 0}
-                            style={{ marginRight: 8 }}
                         >
                             批量分配角色
                         </Button>
@@ -1313,16 +1279,21 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         <Button
                             icon={<ImportOutlined />}
                             onClick={() => setImportUserModalVisible(true)}
-                            style={{ marginLeft: 8 }}
                         >
                             批量导入
                         </Button>
+                        <div style={{ flex: 1 }} />
+                        {searchControls}
                     </div>
                     <Table
                         columns={userColumns}
                         dataSource={users}
                         rowKey="id"
-                        loading={userLoading || userSearchLoading}
+                        rowSelection={{
+                            selectedRowKeys: selectedUserIds,
+                            onChange: (keys) => setSelectedUserIds(keys),
+                        }}
+                        loading={userLoading}
                         tableLayout="fixed"
                         scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
                         rowClassName={(record) => selectedUserIds.includes(record.id) ? style.selectedRow : ''}
@@ -1341,20 +1312,11 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                                 page: '页'
                             },
                             onChange: (page, pageSize) => {
-                                // 分页时保持搜索状态
-                                if (searchKeyword.trim()) {
-                                    searchUsers(searchKeyword)
-                                } else {
-                                    loadUsers(page, pageSize)
-                                }
+                                // 分页时保持搜索/筛选条件（loadUsers 内部读取当前 searchKeyword / userStatusFilter）
+                                loadUsers(page, pageSize)
                             },
                             onShowSizeChange: (current, size) => {
-                                // 改变每页大小时保持搜索状态
-                                if (searchKeyword.trim()) {
-                                    searchUsers(searchKeyword)
-                                } else {
-                                    loadUsers(1, size)
-                                }
+                                loadUsers(1, size)
                             }
                         }}
                     />
@@ -1371,8 +1333,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             ),
             children: (
                 <>
-                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRole} style={{ marginRight: 8 }}>
+                    <div style={toolbarStyle}>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRole}>
                             新建角色
                         </Button>
                         <Button
@@ -1380,7 +1342,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             icon={<FolderOutlined />}
                             onClick={openBatchFolderPermission}
                             disabled={selectedRoleIds.length === 0}
-                            style={{ marginRight: 8 }}
                         >
                             批量分配文件夹权限
                         </Button>
@@ -1403,16 +1364,21 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         <Button
                             icon={<ImportOutlined />}
                             onClick={() => setImportRoleModalVisible(true)}
-                            style={{ marginLeft: 8 }}
                         >
                             批量导入
                         </Button>
+                        <div style={{ flex: 1 }} />
+                        {searchControls}
                     </div>
                     <Table
                         columns={roleColumns}
                         dataSource={roles}
                         rowKey="id"
-                        loading={roleLoading || roleSearchLoading}
+                        rowSelection={{
+                            selectedRowKeys: selectedRoleIds,
+                            onChange: (keys) => setSelectedRoleIds(keys),
+                        }}
+                        loading={roleLoading}
                         tableLayout="fixed"
                         scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
                         rowClassName={(record) => selectedRoleIds.includes(record.id) ? style.selectedRow : ''}
@@ -1452,31 +1418,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                 items={tabItems}
                 onChange={setActiveTab}
                 tabBarStyle={embedded ? { display: 'none' } : undefined}
-                tabBarExtraContent={embedded ? undefined : (
-                    <Input.Search
-                        placeholder={activeTab === 'users' ? '根据用户名查找' : '根据角色名称查找'}
-                        value={activeTab === 'users' ? searchKeyword : roleSearchKeyword}
-                        onChange={(e) => {
-                            if (activeTab === 'users') {
-                                setSearchKeyword(e.target.value)
-                            } else {
-                                setRoleSearchKeyword(e.target.value)
-                            }
-                        }}
-                        onSearch={(value) => {
-                            if (activeTab === 'users') {
-                                setSearchKeyword(value)
-                                searchUsers(value)
-                            } else {
-                                setRoleSearchKeyword(value)
-                                searchRoles(value)
-                            }
-                        }}
-                        style={{ width: 250 }}
-                        enterButton="搜索"
-                        loading={activeTab === 'users' ? userSearchLoading : roleSearchLoading}
-                    />
-                )}
             />
 
             {/* 用户编辑/新建模态框 */}
