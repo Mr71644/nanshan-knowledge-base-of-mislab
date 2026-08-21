@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from 'react'
+import { memo, useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar, TreeSelect } from 'antd'
 import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined, ImportOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -104,6 +104,41 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     const [importUserModalVisible, setImportUserModalVisible] = useState(false)
     const [importRoleModalVisible, setImportRoleModalVisible] = useState(false)
     const [importRoleParentId, setImportRoleParentId] = useState(null) // 角色导入的上级文件夹 id（可选）
+
+    // 表格高度自适应：测量当前激活 tab 表格的可用高度，使其铺满卡片避免下方留白
+    const usersTableWrapRef = useRef(null)
+    const rolesTableWrapRef = useRef(null)
+    const [tableHeights, setTableHeights] = useState({ users: null, roles: null })
+
+    const measureTable = (key) => {
+        const wrap = key === 'users' ? usersTableWrapRef.current : rolesTableWrapRef.current
+        if (!wrap) return
+        const top = wrap.getBoundingClientRect().top
+        const header = wrap.querySelector('.ant-table-header')
+        const pagination = wrap.querySelector('.ant-pagination')
+        const headerH = header ? header.offsetHeight : 0
+        const pagH = pagination ? pagination.offsetHeight : 0
+        // 视口高度 - 表格顶部 - 表头 - 分页 - 底部留白
+        const h = Math.floor(window.innerHeight - top - headerH - pagH - 24)
+        if (h > 120) {
+            setTableHeights(prev => (prev[key] === h ? prev : { ...prev, [key]: h }))
+        }
+    }
+
+    useLayoutEffect(() => {
+        // 挂载 / 切换 tab / 数据加载完成后重新测量当前可见表格
+        if (activeTab === 'users') measureTable('users')
+        else if (activeTab === 'roles') measureTable('roles')
+    }, [activeTab, userLoading, roleLoading])
+
+    useEffect(() => {
+        const onResize = () => {
+            if (activeTab === 'users') measureTable('users')
+            else if (activeTab === 'roles') measureTable('roles')
+        }
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [activeTab])
 
     // 数据初始化
     useEffect(() => {
@@ -1329,6 +1364,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         <div style={{ flex: 1 }} />
                         {searchControls}
                     </div>
+                    <div ref={usersTableWrapRef}>
                     <Table
                         columns={userColumns}
                         dataSource={users}
@@ -1339,7 +1375,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         }}
                         loading={userLoading}
                         tableLayout="fixed"
-                        scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
+                        scroll={{ y: tableHeights.users || 'calc(100vh - 340px)', x: 1000 }}
                         rowClassName={(record) => selectedUserIds.includes(record.id) ? style.selectedRow : ''}
                         pagination={{
                             current: userPagination.current,
@@ -1364,6 +1400,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             }
                         }}
                     />
+                    </div>
                 </>
             ),
         },
@@ -1414,6 +1451,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         <div style={{ flex: 1 }} />
                         {searchControls}
                     </div>
+                    <div ref={rolesTableWrapRef}>
                     <Table
                         columns={roleColumns}
                         dataSource={roles}
@@ -1424,7 +1462,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                         }}
                         loading={roleLoading}
                         tableLayout="fixed"
-                        scroll={{ y: 'calc(100vh - 340px)', x: 1000 }}
+                        scroll={{ y: tableHeights.roles || 'calc(100vh - 340px)', x: 1000 }}
                         rowClassName={(record) => selectedRoleIds.includes(record.id) ? style.selectedRow : ''}
                         pagination={{
                             current: rolePagination.current,
@@ -1448,6 +1486,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                             }
                         }}
                     />
+                    </div>
                 </>
             ),
         },

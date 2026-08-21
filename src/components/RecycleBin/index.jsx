@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Drawer, Table, Button, Space, Select, Input, Modal, Tree, Popconfirm, Dropdown } from 'antd';
 import { EditOutlined, FolderOutlined, TableOutlined, FileOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -55,6 +55,36 @@ export const RecycleBin = ({ open, onClose, embedded = false }) => {
     const [targetFolderId, setTargetFolderId] = useState(undefined)
     const [pendingRestoreItems, setPendingRestoreItems] = useState([])
     const [restoreLoading, setRestoreLoading] = useState(false)
+
+    // 表格高度自适应：测量表格可用高度，铺满容器避免下方留白
+    const tableWrapRef = useRef(null)
+    const [tableHeight, setTableHeight] = useState(null)
+
+    const measureTable = () => {
+        const wrap = tableWrapRef.current
+        if (!wrap) return
+        const top = wrap.getBoundingClientRect().top
+        const header = wrap.querySelector('.ant-table-header')
+        const pagination = wrap.querySelector('.ant-pagination')
+        const headerH = header ? header.offsetHeight : 0
+        const pagH = pagination ? pagination.offsetHeight : 0
+        // 视口高度 - 表格顶部 - 表头 - 分页 - 底部留白
+        const h = Math.floor(window.innerHeight - top - headerH - pagH - 24)
+        if (h > 120) {
+            setTableHeight(prev => (prev === h ? prev : h))
+        }
+    }
+
+    useLayoutEffect(() => {
+        // 挂载 / 数据加载完成 / 打开抽屉 / 切换内嵌模式后测量
+        measureTable()
+    }, [loading, embedded, open])
+
+    useEffect(() => {
+        const onResize = () => measureTable()
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+    }, [])
 
     const fetchList = async (page = current, size = pageSize, t = type, kw = keyword) => {
         try {
@@ -419,6 +449,7 @@ export const RecycleBin = ({ open, onClose, embedded = false }) => {
                 </Space>
             </div>
 
+            <div ref={tableWrapRef}>
             <Table
                 rowSelection={rowSelection}
                 columns={columns}
@@ -439,8 +470,9 @@ export const RecycleBin = ({ open, onClose, embedded = false }) => {
                         fetchList(page, size, type, keyword)
                     }
                 }}
-                scroll={{ y: embedded ? 'calc(100vh - 380px)' : 'calc(100vh - 320px)' }}
+                scroll={{ y: tableHeight || (embedded ? 'calc(100vh - 380px)' : 'calc(100vh - 320px)') }}
             />
+            </div>
 
             <Modal
                 title="选择还原目标文件夹"
