@@ -247,3 +247,127 @@
         transform: translateY(0);
     }
 }
+
+/* ========== 文件夹权限树（行内权限） ========== */
+.permTreeWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: calc(85vh - 140px);
+}
+
+.permHint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--color-ink-muted);
+    background: linear-gradient(180deg, rgba(var(--color-accent-rgb), 0.06) 0%, rgba(var(--color-accent-rgb), 0.015) 100%);
+    border: 1px solid var(--color-border-card);
+    flex-shrink: 0;
+
+    :global {
+        .anticon {
+            color: var(--color-accent);
+            margin-top: 3px;
+        }
+    }
+}
+
+.permTreeBody {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--color-border-card);
+    border-radius: 12px;
+    padding: 12px 10px;
+
+    :global {
+        .ant-tree {
+            background: transparent;
+
+            .ant-tree-node-content-wrapper {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .ant-tree-treenode {
+                padding: 2px 0;
+            }
+
+            .ant-tree-title {
+                display: block;
+                min-width: 0;
+            }
+        }
+    }
+}
+
+.permNode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 3px 8px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: rgba(var(--color-accent-rgb), 0.05);
+    }
+}
+
+.permNodeIcon {
+    color: var(--color-accent);
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.permNodeName {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.permNodeToggles {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+
+    :global {
+        .ant-checkbox-wrapper {
+            padding: 2px 9px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-size: 12.5px;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+
+            &:hover {
+                background: rgba(var(--color-accent-rgb), 0.06);
+            }
+        }
+
+        .ant-checkbox-wrapper-checked {
+            background: rgba(var(--color-accent-rgb), 0.10);
+            border-color: rgba(var(--color-accent-rgb), 0.28);
+            color: var(--color-accent);
+        }
+
+        .ant-checkbox-wrapper-disabled.ant-checkbox-wrapper-checked {
+            opacity: 0.72;
+        }
+
+        .ant-checkbox-inner {
+            border-radius: 4px;
+        }
+    }
+}

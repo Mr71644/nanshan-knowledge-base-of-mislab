@@ -1,6 +1,6 @@
 import { memo, useState, useEffect } from 'react'
 import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar, TreeSelect } from 'antd'
-import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined, ImportOutlined } from '@ant-design/icons'
+import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined, ImportOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
 import { getRoleList, createRole, updateRole, deleteRole, batchDeleteRoles, getRoleFolderPermissions, assignRoleFolderPermissions, roleFolderTree, getPermissionTypes, removeRoleFolderPermissions, batchAssignRoleFolderPermissions, getRoleFolderIntersection, importRoles, downloadRoleTemplate } from '@/apis/role'
@@ -86,11 +86,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     const [originalFolderPermissions, setOriginalFolderPermissions] = useState([]) // 存储原始权限，用于对比变化
     const [folderPermissionLoading, setFolderPermissionLoading] = useState(false)
     const [folderPermissionModalReadOnly, setFolderPermissionModalReadOnly] = useState(false) // 系统角色只读模式
-    const [folderPagination, setFolderPagination] = useState({
-        current: 1,
-        pageSize: 10,
-        total: 0
-    })
     const [permissionTypes, setPermissionTypes] = useState([]) // 存储权限类型列表
 
     // 多角色批量文件夹权限状态
@@ -650,7 +645,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         setSelectedRole(record)
         setFolderPermissionLoading(true)
         setFolderPermissionModalVisible(true)
-        setFolderPagination({ current: 1, pageSize: 10, total: 0 })
 
         // 检测系统角色：roleType === 'SYSTEM' 且 isDeletable === 0
         const isSystemRole = record.roleType === 'SYSTEM' && record.isDeletable === 0
@@ -671,7 +665,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             setFolderPermissions(permissions)
             // 保存原始数据用于对比
             setOriginalFolderPermissions(JSON.parse(JSON.stringify(permissions)))
-            setFolderPagination(prev => ({ ...prev, total: permissions.length }))
         } catch (e) {
             error({
                 content: e.response?.data?.message || '获取文件夹权限失败'
@@ -733,7 +726,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             const permissions = groupFolderPermissions(refreshed.data || [])
             setFolderPermissions(permissions)
             setOriginalFolderPermissions(JSON.parse(JSON.stringify(permissions)))
-            setFolderPagination(prev => ({ ...prev, total: permissions.length, current: 1 }))
         } catch (e) {
             error({
                 content: e.response?.data?.message || '文件夹权限分配失败'
@@ -766,52 +758,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         })
     }
 
-    const handlePermissionChange = (folderId, permissions) => {
-        updateFolderPermissions(setFolderPermissions, folderId, permissions)
-    }
-
     const handleBatchFolderPermissionChange = (folderId, permissions) => {
         updateFolderPermissions(setBatchFolderPermissions, folderId, permissions)
-    }
-
-    // 移除文件夹权限
-    const handleRemovePermission = async (folderId) => {
-        try {
-            // 获取要删除的文件夹的所有权限
-            const folderToRemove = folderPermissions.find(p => p.folderId === folderId)
-            if (!folderToRemove) return
-
-            // 调用后端API删除权限
-            await removeRoleFolderPermissions({
-                roleId: selectedRole.id,
-                folderPermissions: folderToRemove.permissions.map(permission => ({
-                    folderId,
-                    permissionType: permission
-                }))
-            })
-
-            // 从前端状态中移除
-            setFolderPermissions(prev => prev.filter(p => p.folderId !== folderId))
-
-            // 更新分页，确保当前页不会超出范围
-            setFolderPagination(prev => {
-                const newTotal = prev.total - 1
-                const maxPage = Math.ceil(newTotal / prev.pageSize) || 1
-                return {
-                    ...prev,
-                    total: newTotal,
-                    current: prev.current > maxPage ? maxPage : prev.current
-                }
-            })
-
-            success({
-                content: '删除权限成功'
-            })
-        } catch (e) {
-            error({
-                content: e.response?.data?.message || '删除权限失败'
-            })
-        }
     }
 
     // 递归获取所有子节点的key
@@ -854,6 +802,102 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             }
         }
         return '未知文件夹'
+    }
+
+    // ---- 文件夹权限树（行内权限） ----
+
+    // 在某个文件夹上勾选/取消权限，级联应用到其所有子文件夹
+    // （与后端“父权限级联写入子文件夹”及文档要求的“取消父权限时同步取消子权限”一致）
+    const handleInlinePermissionChange = (folderId, code, checked) => {
+        const added = checked ? [code] : []
+        const removed = checked ? [] : [code]
+
+        setFolderPermissions(prev => {
+            const targetKeys = [String(folderId), ...getAllChildKeys(folderId, folderTreeData)]
+            const targetSet = new Set(targetKeys.map(String))
+
+            // 对单个文件夹应用权限差异，并处理隐含只读（EDIT/DELETE 自动获得 VIEW）
+            const applyDelta = (perms) => {
+                let result = [...perms]
+                added.forEach(c => { if (!result.includes(c)) result.push(c) })
+                removed.forEach(c => { result = result.filter(x => x !== c) })
+                const hasEditOrDelete = result.includes('EDIT') || result.includes('DELETE')
+                if (hasEditOrDelete && !result.includes('VIEW')) {
+                    result = ['VIEW', ...result]
+                }
+                return result
+            }
+
+            // 更新已存在记录的目标文件夹
+            const updated = prev.map(p =>
+                targetSet.has(String(p.folderId))
+                    ? { folderId: p.folderId, permissions: applyDelta(p.permissions) }
+                    : p
+            )
+
+            // 为原本没有记录、但级联后获得权限的目标文件夹补充记录
+            targetKeys.forEach(k => {
+                if (!updated.some(p => String(p.folderId) === k)) {
+                    const perms = applyDelta([])
+                    if (perms.length > 0) {
+                        updated.push({ folderId: Number(k), permissions: perms })
+                    }
+                }
+            })
+
+            return updated
+        })
+    }
+
+    // 渲染单个文件夹的行内权限复选框
+    const renderInlinePermissions = (folderId, readOnly) => {
+        const perms = folderPermissions.find(p => String(p.folderId) === String(folderId))?.permissions || []
+        const hasEditOrDelete = perms.includes('EDIT') || perms.includes('DELETE')
+        const types = permissionTypes.length > 0 ? permissionTypes : [
+            { code: 'VIEW', name: '可阅读' },
+            { code: 'EDIT', name: '可编辑' },
+            { code: 'DELETE', name: '可删除' }
+        ]
+
+        return types.map(type => {
+            const isView = type.code === 'VIEW'
+            const checked = isView ? (perms.includes('VIEW') || hasEditOrDelete) : perms.includes(type.code)
+            const disabled = (isView && hasEditOrDelete) || readOnly
+            return (
+                <Tooltip
+                    key={type.code}
+                    title={isView && hasEditOrDelete ? `${type.name}（由可编辑/可删除权限自动获得）` : type.name}
+                >
+                    <Checkbox
+                        checked={checked}
+                        disabled={disabled}
+                        onChange={(e) => handleInlinePermissionChange(folderId, type.code, e.target.checked)}
+                    >
+                        {type.name}
+                    </Checkbox>
+                </Tooltip>
+            )
+        })
+    }
+
+    // 将文件夹树转换为携带行内权限控件的树数据
+    const renderPermissionTreeData = (nodes, readOnly) => {
+        if (!nodes || !Array.isArray(nodes)) return []
+        return nodes.map(node => ({
+            key: node.key,
+            title: (
+                <div className={style.permNode}>
+                    <FolderOutlined className={style.permNodeIcon} />
+                    <span className={style.permNodeName} title={node.title}>{node.title}</span>
+                    <div className={style.permNodeToggles} onClick={(e) => e.stopPropagation()}>
+                        {renderInlinePermissions(node.key, readOnly)}
+                    </div>
+                </div>
+            ),
+            children: node.children && node.children.length > 0
+                ? renderPermissionTreeData(node.children, readOnly)
+                : undefined
+        }))
     }
 
     // ---- 多角色批量文件夹权限 ----
@@ -1650,168 +1694,24 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                     cancelText="取消"
                     confirmLoading={folderPermissionLoading}
                     okButtonProps={folderPermissionModalReadOnly ? { style: { display: 'none' } } : {}}
-                    width="90%"
+                    width={960}
                     style={{ top: 25 }}
                     destroyOnClose
                 >
-                    {/* 横向布局：左侧文件夹树，右侧权限配置 */}
-                    <div style={{ display: 'flex', gap: 24, height: 'calc(88vh - 80px)' }}>
-                        {/* 左侧：选择文件夹 */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <h4 style={{ marginBottom: 12 }}>选择文件夹</h4>
-                            <div
-                                className={style.scrollbar}
-                                style={{ border: '1px solid var(--color-border-card)', borderRadius: 4, padding: 8, flex: 1, overflow: 'auto' }}
-                            >
-                                <Tree
-                                    checkable={!folderPermissionModalReadOnly}
-                                    checkStrictly
-                                    defaultExpandAll
-                                    checkedKeys={folderPermissions.map(p => String(p.folderId))}
-                                    onCheck={(checkedKeysObj, e) => {
-                                        // checkStrictly为true时，checkedKeysObj是{checked: [], halfChecked: []}
-                                        const checkedKeys = checkedKeysObj.checked || []
-                                        const currentIds = folderPermissions.map(p => String(p.folderId))
-
-                                        // 找出新增的ID
-                                        let newIds = checkedKeys.filter(key => !currentIds.includes(String(key)))
-                                        // 找出移除的ID
-                                        const removedIds = currentIds.filter(id => !checkedKeys.includes(String(id)))
-
-                                        // 只有在勾选操作时，才自动勾选所有子节点
-                                        if (e.checked && e.node && newIds.length > 0) {
-                                            const childKeys = getAllChildKeys(e.node.key, folderTreeData)
-                                            // 合并父节点和子节点的ID
-                                            newIds = [...new Set([...newIds, ...childKeys.filter(key => !currentIds.includes(String(key)))])]
-                                        }
-
-                                        // 获取默认权限类型（第一个权限类型或'VIEW'）
-                                        const defaultPermission = permissionTypes.length > 0 ? permissionTypes[0].code : 'VIEW'
-
-                                        // 添加新权限（使用数组存储）
-                                        newIds.forEach(id => handlePermissionChange(Number(id), [defaultPermission]))
-
-                                        // 移除权限时，同时移除所有子节点的权限
-                                        if (removedIds.length > 0) {
-                                            // 收集所有被移除节点及其子节点的 ID
-                                            let allRemovedIds = [...removedIds]
-                                            removedIds.forEach(id => {
-                                                const childKeys = getAllChildKeys(id, folderTreeData)
-                                                allRemovedIds = [...allRemovedIds, ...childKeys]
-                                            })
-                                            const removedSet = new Set(allRemovedIds.map(String))
-                                            setFolderPermissions(prev => {
-                                                const newPermissions = prev.filter(p => !removedSet.has(String(p.folderId)))
-                                                return newPermissions
-                                            })
-                                            // 移除后更新分页和总数
-                                            setFolderPagination(prev => {
-                                                const newTotal = prev.total - removedSet.size
-                                                const maxPage = Math.ceil(newTotal / prev.pageSize) || 1
-                                                return {
-                                                    ...prev,
-                                                    total: newTotal,
-                                                    current: prev.current > maxPage ? maxPage : prev.current
-                                                }
-                                            })
-                                        }
-
-                                        // 添加后更新分页总数
-                                        if (newIds.length > 0) {
-                                            setFolderPagination(prev => ({
-                                                ...prev,
-                                                total: prev.total + newIds.length
-                                            }))
-                                        }
-                                    }}
-                                    treeData={folderTreeData}
-                                />
+                    {/* 权限树：文件夹后直接显示权限，支持行内编辑 */}
+                    <div className={style.permTreeWrap}>
+                        {!folderPermissionModalReadOnly && (
+                            <div className={style.permHint}>
+                                <InfoCircleOutlined />
+                                <span>勾选/取消某一权限会同步应用到该文件夹及其所有子文件夹；「可编辑」或「可删除」自动包含「可阅读」。</span>
                             </div>
-                        </div>
-
-                        {/* 右侧：权限配置 */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <h4 style={{ marginBottom: 12 }}>权限配置 ({folderPermissions.length})</h4>
-                            <div className={style.scrollbar} style={{ flex: 1, overflow: 'auto' }}>
-                                {folderPermissions.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-ink-muted)' }}>
-                                        请在左侧选择文件夹
-                                    </div>
-                                ) : (
-                                    <>
-                                        {folderPermissions
-                                            .slice((folderPagination.current - 1) * folderPagination.pageSize, folderPagination.current * folderPagination.pageSize)
-                                            .map(item => (
-                                                <div key={item.folderId} style={{ marginBottom: 12, padding: '8px', border: '1px solid var(--color-border-light)', borderRadius: 4 }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                                        <strong>{getFolderName(item.folderId, folderTreeData)}</strong>
-                                                    </div>
-                                                    <Checkbox.Group
-                                                        value={item.permissions}
-                                                        onChange={(checkedValues) => handlePermissionChange(item.folderId, checkedValues)}
-                                                        style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}
-                                                    >
-                                                        {permissionTypes.length > 0 ? (
-                                                            permissionTypes.map(type => {
-                                                                const isView = type.code === 'VIEW'
-                                                                const hasEditOrDelete = item.permissions.includes('EDIT') || item.permissions.includes('DELETE')
-                                                                // VIEW 在 EDIT 或 DELETE 勾选时禁用（由上级权限自动获得）
-                                                                const disabled = (isView && hasEditOrDelete) || folderPermissionModalReadOnly
-                                                                return (
-                                                                    <Tooltip key={type.code} title={isView && hasEditOrDelete ? `${type.name}（由可编辑/可删除权限自动获得）` : type.name}>
-                                                                        <Checkbox value={type.code} disabled={disabled}>
-                                                                            {type.name}
-                                                                        </Checkbox>
-                                                                    </Tooltip>
-                                                                )
-                                                            })
-                                                        ) : (
-                                                            // 默认fallback选项
-                                                            <>
-                                                                <Checkbox value="VIEW" disabled={folderPermissionModalReadOnly}>可阅读</Checkbox>
-                                                                <Checkbox value="EDIT" disabled={folderPermissionModalReadOnly}>可编辑</Checkbox>
-                                                                <Checkbox value="DELETE" disabled={folderPermissionModalReadOnly}>可删除</Checkbox>
-                                                            </>
-                                                        )}
-                                                        {!folderPermissionModalReadOnly && (
-                                                            <Button
-                                                                type="link"
-                                                                danger
-                                                                size="small"
-                                                                icon={<DeleteOutlined />}
-                                                                onClick={() => handleRemovePermission(item.folderId)}
-                                                                style={{ marginLeft: 'auto' }}
-                                                            >
-                                                                删除
-                                                            </Button>
-                                                        )}
-                                                    </Checkbox.Group>
-                                                </div>
-                                            ))}
-                                        {/* 分页 */}
-                                        {folderPermissions.length > folderPagination.pageSize && (
-                                            <Pagination
-                                                style={{ marginTop: 16, textAlign: 'right' }}
-                                                current={folderPagination.current}
-                                                pageSize={folderPagination.pageSize}
-                                                total={folderPagination.total}
-                                                showSizeChanger
-                                                showQuickJumper
-                                                showTotal={(total) => `共 ${total} 条`}
-                                                locale={{
-                                                    items_per_page: ' 条/页',
-                                                    jump_to: '跳至',
-                                                    jump_to_confirm: '确定',
-                                                    page: '页'
-                                                }}
-                                                onChange={(page, pageSize) => {
-                                                    setFolderPagination({ ...folderPagination, current: page, pageSize })
-                                                }}
-                                            />
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                        )}
+                        <div className={`${style.scrollbar} ${style.permTreeBody}`}>
+                            <Tree
+                                defaultExpandAll
+                                blockNode
+                                treeData={renderPermissionTreeData(folderTreeData, folderPermissionModalReadOnly)}
+                            />
                         </div>
                     </div>
                 </Modal>
