@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef, useLayoutEffect } from 'react'
-import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Transfer, Tree, Radio, Pagination, Checkbox, Spin, Avatar, TreeSelect } from 'antd'
+import { theme, Layout, FloatButton, Tooltip, Tabs, Table, Button, Modal, Form, Input, Select, Tag, Space, Popconfirm, Tree, Checkbox, Spin, Avatar, TreeSelect } from 'antd'
 import { RollbackOutlined, UserOutlined, TeamOutlined, SafetyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, FolderOutlined, ImportOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
@@ -66,6 +66,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     const [targetKeys, setTargetKeys] = useState([])
     const [availableRoles, setAvailableRoles] = useState([])
     const [permissionLoading, setPermissionLoading] = useState(false)
+    const [permissionRoleSearch, setPermissionRoleSearch] = useState('') // 单个用户分配角色列表搜索关键词
 
     // 批量分配角色状态
     const [batchPermissionModalVisible, setBatchPermissionModalVisible] = useState(false)
@@ -73,6 +74,8 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     const [batchAvailableRoles, setBatchAvailableRoles] = useState([])
     const [batchPermissionLoading, setBatchPermissionLoading] = useState(false)
     const [selectedUserNames, setSelectedUserNames] = useState([]) // 存储选中的用户名
+    const [batchExistingRoles, setBatchExistingRoles] = useState([]) // 选中用户现有角色的并集（带计数）
+    const [batchRoleSearch, setBatchRoleSearch] = useState('') // 新增角色列表搜索关键词
 
     // 防抖 / 加载状态（防止重复提交）
     const [roleSubmitLoading, setRoleSubmitLoading] = useState(false)
@@ -91,14 +94,11 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
     // 多角色批量文件夹权限状态
     const [batchFolderModalVisible, setBatchFolderModalVisible] = useState(false)
     const [batchFolderSelectedRoles, setBatchFolderSelectedRoles] = useState([]) // 选中的角色
-    const [batchFolderPermissions, setBatchFolderPermissions] = useState([]) // 交集权限 {folderId, permissions}
     const [batchFolderLoading, setBatchFolderLoading] = useState(false)
     const [batchFolderReadOnly, setBatchFolderReadOnly] = useState(false) // 选中角色含系统角色时只读
-    const [batchFolderPagination, setBatchFolderPagination] = useState({
-        current: 1,
-        pageSize: 10,
-        total: 0
-    })
+    const [batchCommonPerms, setBatchCommonPerms] = useState({}) // 交集（所有角色共同拥有）{folderId: [权限]}
+    const [batchPermHints, setBatchPermHints] = useState({}) // 各权限被多少角色拥有 {folderId: {permission: {count, roleNames}}}
+    const [batchFolderGrants, setBatchFolderGrants] = useState({}) // 本次新增授权 {folderId: [权限]}
 
     // 导入弹窗状态
     const [importUserModalVisible, setImportUserModalVisible] = useState(false)
@@ -492,9 +492,10 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             const mergedRoles = Array.from(allRolesMap.values())
             setAvailableRoles(mergedRoles)
 
-            // 设置已分配的角色ID列表
-            const assignedRoleIds = assignedRoles.map(role => role.roleId)
+            // 设置已分配的角色ID列表（统一为字符串，便于复选框状态对比）
+            const assignedRoleIds = assignedRoles.map(role => role.roleId.toString())
             setTargetKeys(assignedRoleIds)
+            setPermissionRoleSearch('')
 
             setPermissionModalVisible(true)
         } catch (e) {
@@ -595,8 +596,30 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
             const allRolesRes = await getRoleList({ current: 1, pageSize: 100 })
             const allRoles = allRolesRes.data?.records || []
 
+            // 并行获取每个选中用户现有角色，聚合出"并集 + 计数 + 拥有者"用于回显
+            const userMap = new Map(selectedUsers.map(u => [String(u.id), u.username]))
+            const existingLists = await Promise.all(selectedUserIds.map(async uid => {
+                const res = await getUserRoles(uid)
+                return { userId: uid, list: res.data || [] }
+            }))
+            const countMap = new Map()
+            existingLists.forEach(({ userId, list }) => {
+                const username = userMap.get(String(userId)) || String(userId)
+                list.forEach(role => {
+                    const key = String(role.roleId)
+                    if (!countMap.has(key)) {
+                        countMap.set(key, { roleId: role.roleId, roleName: role.roleName, count: 0, users: [] })
+                    }
+                    countMap.get(key).count++
+                    countMap.get(key).users.push(username)
+                })
+            })
+            const existingRoles = Array.from(countMap.values())
+            setBatchExistingRoles(existingRoles)
+
             // 直接更新状态并打开弹窗
             setBatchTargetKeys([])
+            setBatchRoleSearch('')
             setBatchAvailableRoles(allRoles)
             setBatchPermissionModalVisible(true)
         } catch (e) {
@@ -772,31 +795,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
 
 
-    // 处理权限级别变更（支持多选）
-    // 规则：EDIT 或 DELETE 勾选时自动勾选 VIEW（由 EDIT/DELETE 自动获得只读能力）
-    // EDIT 和 DELETE 相互独立，不互相自动勾选
-    // 通用实现，供单角色/多角色弹窗复用（setter 指向各自的 permissions 状态）
-    const updateFolderPermissions = (setter, folderId, permissions) => {
-        const hasEditOrDelete = permissions.includes('EDIT') || permissions.includes('DELETE')
-        // 自动添加 VIEW（若 EDIT 或 DELETE 被勾选）
-        let effectivePermissions = permissions
-        if (hasEditOrDelete && !effectivePermissions.includes('VIEW')) {
-            effectivePermissions = ['VIEW', ...effectivePermissions]
-        }
-
-        setter(prev => {
-            const exists = prev.find(p => p.folderId === folderId)
-            if (exists) {
-                return prev.map(p => p.folderId === folderId ? { ...p, permissions: effectivePermissions } : p)
-            }
-            return [...prev, { folderId, permissions: effectivePermissions }]
-        })
-    }
-
-    const handleBatchFolderPermissionChange = (folderId, permissions) => {
-        updateFolderPermissions(setBatchFolderPermissions, folderId, permissions)
-    }
-
     // 递归获取所有子节点的key
     const getAllChildKeys = (node, treeData) => {
         const keys = []
@@ -821,22 +819,6 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         }
         findChildren(node, treeData)
         return keys
-    }
-
-    // 获取文件夹名称
-    const getFolderName = (folderId, treeData) => {
-        if (!treeData || !Array.isArray(treeData)) return '未知文件夹'
-
-        for (const node of treeData) {
-            if (String(node.key) === String(folderId)) {
-                return node.title
-            }
-            if (node.children && node.children.length > 0) {
-                const found = getFolderName(folderId, node.children)
-                if (found !== '未知文件夹') return found
-            }
-        }
-        return '未知文件夹'
     }
 
     // ---- 文件夹权限树（行内权限） ----
@@ -937,7 +919,7 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
     // ---- 多角色批量文件夹权限 ----
 
-    // 打开多角色批量文件夹权限弹窗，回显多角色权限交集
+    // 打开多角色批量文件夹权限弹窗：拉取每个角色权限，本地计算交集（共同）与个别差异
     const openBatchFolderPermission = async () => {
         if (selectedRoleIds.length === 0) {
             error({
@@ -954,20 +936,51 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
         setBatchFolderLoading(true)
         setBatchFolderModalVisible(true)
-        setBatchFolderPagination({ current: 1, pageSize: 10, total: 0 })
+        setBatchFolderGrants({})
         try {
             // 如果文件夹树还未加载，先加载文件夹树
             if (!folderTreeData || folderTreeData.length === 0) {
                 await loadFolderTree()
             }
-            // 获取多角色权限交集（系统角色视为拥有全部权限，交集即另一角色权限）
-            const res = await getRoleFolderIntersection({ roleIds: selectedRoleIds })
-            const permissions = groupFolderPermissions(res.data || [])
-            setBatchFolderPermissions(permissions)
-            setBatchFolderPagination(prev => ({ ...prev, total: permissions.length }))
+            // 共同权限（交集）：交给后端计算（系统角色视为拥有全部权限，交集即另一角色权限）
+            const interRes = await getRoleFolderIntersection({ roleIds: selectedRoleIds })
+            const common = {}
+            groupFolderPermissions(interRes.data || []).forEach(item => {
+                common[String(item.folderId)] = item.permissions
+            })
+
+            // 逐个拉取每个角色的权限，用于标注"个别角色另有"
+            const rolePermLists = await Promise.all(selectedRoleIds.map(async rid => {
+                const res = await getRoleFolderPermissions(rid)
+                return groupFolderPermissions(res.data || [])
+            }))
+            const perFolder = {} // folderId -> { 角色下标: [权限] }
+            rolePermLists.forEach((perms, idx) => {
+                perms.forEach(item => {
+                    const k = String(item.folderId)
+                    if (!perFolder[k]) perFolder[k] = {}
+                    perFolder[k][idx] = item.permissions
+                })
+            })
+            // 统计每个文件夹下各权限被多少角色拥有（用于"×N 位已拥有"标注）
+            const permHints = {}
+            Object.keys(perFolder).forEach(k => {
+                const hintMap = {}
+                Object.entries(perFolder[k]).forEach(([idx, perms]) => {
+                    perms.forEach(p => {
+                        if (!hintMap[p]) hintMap[p] = { count: 0, roleNames: [] }
+                        hintMap[p].count++
+                        hintMap[p].roleNames.push(selectedRoles[Number(idx)].name)
+                    })
+                })
+                permHints[k] = hintMap
+            })
+
+            setBatchCommonPerms(common)
+            setBatchPermHints(permHints)
         } catch (e) {
             error({
-                content: e.response?.data?.message || '获取角色权限交集失败'
+                content: e.response?.data?.message || '获取角色权限失败'
             })
             setBatchFolderModalVisible(false)
         } finally {
@@ -975,61 +988,131 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
         }
     }
 
-    // 多角色弹窗文件夹树勾选处理（级联子节点 + 默认权限类型）
-    const handleBatchFolderTreeCheck = (checkedKeysObj, e) => {
-        const checkedKeys = checkedKeysObj.checked || []
-        const currentIds = batchFolderPermissions.map(p => String(p.folderId))
-
-        // 找出新增的ID
-        let newIds = checkedKeys.filter(key => !currentIds.includes(String(key)))
-        // 找出移除的ID
-        const removedIds = currentIds.filter(id => !checkedKeys.includes(String(id)))
-
-        // 只有在勾选操作时，才自动勾选所有子节点
-        if (e.checked && e.node && newIds.length > 0) {
-            const childKeys = getAllChildKeys(e.node.key, folderTreeData)
-            newIds = [...new Set([...newIds, ...childKeys.filter(key => !currentIds.includes(String(key)))])]
-        }
-
-        // 获取默认权限类型（第一个权限类型或'VIEW'）
-        const defaultPermission = permissionTypes.length > 0 ? permissionTypes[0].code : 'VIEW'
-
-        // 添加新权限（使用数组存储）
-        newIds.forEach(id => handleBatchFolderPermissionChange(Number(id), [defaultPermission]))
-
-        // 移除权限时，同时移除所有子节点的权限
-        if (removedIds.length > 0) {
-            let allRemovedIds = [...removedIds]
-            removedIds.forEach(id => {
-                const childKeys = getAllChildKeys(id, folderTreeData)
-                allRemovedIds = [...allRemovedIds, ...childKeys]
+    // 批量弹窗行内权限变更：勾选 = 授予给全部角色（只增），级联应用到子文件夹
+    const handleBatchInlinePermissionChange = (folderId, code, checked) => {
+        setBatchFolderGrants(prev => {
+            const targetKeys = [String(folderId), ...getAllChildKeys(folderId, folderTreeData)]
+            const next = { ...prev }
+            targetKeys.forEach(k => {
+                const perms = next[k] ? [...next[k]] : []
+                if (checked) {
+                    if (!perms.includes(code)) perms.push(code)
+                    // 隐含只读：EDIT/DELETE 自动获得 VIEW
+                    if ((code === 'EDIT' || code === 'DELETE') && !perms.includes('VIEW')) {
+                        perms.unshift('VIEW')
+                    }
+                } else {
+                    const idx = perms.indexOf(code)
+                    if (idx >= 0) perms.splice(idx, 1)
+                }
+                if (perms.length > 0) next[k] = perms
+                else delete next[k]
             })
-            const removedSet = new Set(allRemovedIds.map(String))
-            setBatchFolderPermissions(prev => prev.filter(p => !removedSet.has(String(p.folderId))))
-            setBatchFolderPagination(prev => {
-                const newTotal = prev.total - removedSet.size
-                const maxPage = Math.ceil(newTotal / prev.pageSize) || 1
-                return { ...prev, total: newTotal, current: prev.current > maxPage ? maxPage : prev.current }
-            })
-        }
-
-        // 添加后更新分页总数
-        if (newIds.length > 0) {
-            setBatchFolderPagination(prev => ({ ...prev, total: prev.total + newIds.length }))
-        }
+            return next
+        })
     }
 
-    // 提交多角色批量文件夹权限
+    // 批量弹窗：渲染单个文件夹的行内权限（共同锁定 + 可勾选授予）
+    const renderBatchInlinePermissions = (folderId, readOnly) => {
+        const key = String(folderId)
+        const common = batchCommonPerms[key] || []
+        const granted = batchFolderGrants[key] || []
+        const hasEditOrDelete = common.includes('EDIT') || common.includes('DELETE') || granted.includes('EDIT') || granted.includes('DELETE')
+        const types = permissionTypes.length > 0 ? permissionTypes : [
+            { code: 'VIEW', name: '可阅读' },
+            { code: 'EDIT', name: '可编辑' },
+            { code: 'DELETE', name: '可删除' }
+        ]
+
+        return (
+            <>
+                {types.map(type => {
+                    const isView = type.code === 'VIEW'
+                    const isCommon = common.includes(type.code)
+                    const isGranted = granted.includes(type.code)
+                    const impliedView = isView && hasEditOrDelete
+                    const checked = isCommon || isGranted || impliedView
+                    const disabled = isCommon || impliedView || readOnly
+                    const tooltip = isCommon
+                        ? `${type.name}（所有选中角色共同拥有）`
+                        : (impliedView ? `${type.name}（由可编辑/可删除权限自动获得）` : type.name)
+                    return (
+                        <Tooltip key={type.code} title={tooltip}>
+                            <Checkbox
+                                checked={checked}
+                                disabled={disabled}
+                                onChange={(e) => handleBatchInlinePermissionChange(folderId, type.code, e.target.checked)}
+                            >
+                                {type.name}
+                            </Checkbox>
+                        </Tooltip>
+                    )
+                })}
+            </>
+        )
+    }
+
+    // 批量弹窗：渲染"×N 位已拥有"标注（放在文件夹名后，悬停显示具体角色）
+    const renderBatchPermHints = (folderId) => {
+        const key = String(folderId)
+        const hints = batchPermHints[key] || {}
+        const types = permissionTypes.length > 0 ? permissionTypes : [
+            { code: 'VIEW', name: '可阅读' },
+            { code: 'EDIT', name: '可编辑' },
+            { code: 'DELETE', name: '可删除' }
+        ]
+        const nameOf = (code) => {
+            const t = types.find(x => x.code === code)
+            return t ? t.name : code
+        }
+        const items = types.filter(t => {
+            const h = hints[t.code]
+            return h && h.count > 0 && h.count < selectedRoleIds.length
+        })
+        if (items.length === 0) return null
+        return (
+            <span className={style.batchPermHints}>
+                {items.map(t => (
+                    <Tooltip key={t.code} title={`由 ${hints[t.code].roleNames.join('、')} 拥有`}>
+                        <span className={style.batchPermHint}>×{hints[t.code].count}位已拥有{nameOf(t.code)}</span>
+                    </Tooltip>
+                ))}
+            </span>
+        )
+    }
+
+    // 批量弹窗：将文件夹树转换为携带行内权限控件的树数据
+    const renderBatchPermissionTreeData = (nodes, readOnly) => {
+        if (!nodes || !Array.isArray(nodes)) return []
+        return nodes.map(node => ({
+            key: node.key,
+            title: (
+                <div className={style.permNode}>
+                    <FolderOutlined className={style.permNodeIcon} />
+                    <span className={style.permNodeName} style={{ flex: '0 1 auto' }} title={node.title}>{node.title}</span>
+                    {renderBatchPermHints(node.key)}
+                    <div className={style.permNodeToggles} onClick={(e) => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
+                        {renderBatchInlinePermissions(node.key, readOnly)}
+                    </div>
+                </div>
+            ),
+            children: node.children && node.children.length > 0
+                ? renderBatchPermissionTreeData(node.children, readOnly)
+                : undefined
+        }))
+    }
+
+    // 提交多角色批量文件夹权限（共同权限 + 新增授权 → 授予全部角色）
     const handleBatchFolderPermissionSubmit = async () => {
         if (batchFolderLoading) return
         setBatchFolderLoading(true)
         try {
-            // 摊平为 [{folderId, permissionType}] 列表
+            // 合并共同权限与新增授权，摊平为 [{folderId, permissionType}] 列表
             const flatPairs = []
-            batchFolderPermissions.forEach(item => {
-                item.permissions.forEach(p => {
-                    flatPairs.push({ folderId: item.folderId, permissionType: p })
-                })
+            const allKeys = new Set([...Object.keys(batchCommonPerms), ...Object.keys(batchFolderGrants)])
+            allKeys.forEach(k => {
+                const perms = [...new Set([...(batchCommonPerms[k] || []), ...(batchFolderGrants[k] || [])])]
+                perms.forEach(p => flatPairs.push({ folderId: Number(k), permissionType: p }))
             })
 
             await batchAssignRoleFolderPermissions({
@@ -1657,70 +1740,184 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
 
                 {/* 权限分配模态框 */}
                 <Modal
-                    title={`为用户 "${selectedUser?.username}" 分配角色`}
+                    title={`为用户「${selectedUser?.username}」分配角色`}
                     open={permissionModalVisible}
                     onOk={handlePermissionSubmit}
                     onCancel={() => setPermissionModalVisible(false)}
                     okText="确定"
                     cancelText="取消"
                     confirmLoading={permissionLoading}
-                    width={1000}
+                    width={960}
                     destroyOnClose
                 >
-                    <Transfer
-                        dataSource={availableRoles.map(r => ({
-                            key: r.id,
-                            title: r.roleName,
-                            description: r.description || ''
-                        }))}
-                        titles={['可选角色', '已分配角色']}
-                        targetKeys={targetKeys}
-                        onChange={setTargetKeys}
-                        render={item => (
-                            <Tooltip title={item.description || item.title} placement="topLeft">
-                                <span>{item.title}</span>
-                            </Tooltip>
-                        )}
-                        listStyle={{
-                            width: 440,
-                            height: 500,
-                        }}
-                    />
+                    <div className={style.batchRoleWrap}>
+                        <div className={style.batchRoleUsers}>
+                            <span className={style.batchRoleUsersLabel}>已选用户</span>
+                            <span className={style.batchRoleUsersNames}>{selectedUser?.username || '-'}</span>
+                        </div>
+
+                        <div className={style.batchSection}>
+                            <div className={style.batchSectionTitle}>
+                                当前已拥有（可修改）
+                                <span className={style.batchSectionHint}>勾选即保留，取消即移除</span>
+                            </div>
+                            <div className={style.batchChips}>
+                                {availableRoles.filter(r => targetKeys.includes(r.id.toString())).length === 0 ? (
+                                    <span className={style.batchEmpty}>该用户暂无角色</span>
+                                ) : (
+                                    availableRoles.filter(r => targetKeys.includes(r.id.toString())).map(r => (
+                                        <span key={r.id} className={style.batchChip}>
+                                            {r.roleName}
+                                        </span>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div className={`${style.batchSection} ${style.batchSectionGrow}`}>
+                            <div className={style.batchSectionTitle}>角色（勾选后生效）</div>
+                            <Input.Search
+                                placeholder="搜索角色名"
+                                allowClear
+                                value={permissionRoleSearch}
+                                onChange={(e) => setPermissionRoleSearch(e.target.value)}
+                                style={{ marginBottom: 8 }}
+                            />
+                            <div className={`${style.scrollbar} ${style.batchRoleList}`}>
+                                {availableRoles.filter(r =>
+                                    !permissionRoleSearch || r.roleName.toLowerCase().includes(permissionRoleSearch.toLowerCase())
+                                ).map(role => {
+                                    const isChecked = targetKeys.includes(role.id.toString())
+                                    return (
+                                        <div key={role.id} className={style.batchRoleItem}>
+                                            <Checkbox
+                                                checked={isChecked}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setTargetKeys(prev => [...new Set([...prev, role.id.toString()])])
+                                                    } else {
+                                                        setTargetKeys(prev => prev.filter(k => k !== role.id.toString()))
+                                                    }
+                                                }}
+                                            >
+                                                <span className={style.batchRoleName}>{role.roleName}</span>
+                                            </Checkbox>
+                                            {role.description && (
+                                                <Tooltip title={role.description}>
+                                                    <span className={style.batchRoleDesc}>ⓘ</span>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                                {availableRoles.length === 0 && (
+                                    <div className={style.batchEmptyList}>暂无角色</div>
+                                )}
+                            </div>
+                            <div className={style.batchFooter}>
+                                已选 <strong>{targetKeys.length}</strong> 个角色
+                            </div>
+                        </div>
+                    </div>
                 </Modal>
 
                 {/* 批量分配角色模态框 */}
                 <Modal
-                    title={`为 ${selectedUserNames.join('、')}  ${selectedUserIds.length} 个用户批量分配角色`}
+                    title={`为 ${selectedUserIds.length} 位用户批量分配角色`}
                     open={batchPermissionModalVisible}
                     onOk={handleBatchPermissionSubmit}
                     onCancel={() => setBatchPermissionModalVisible(false)}
                     okText="确定"
                     cancelText="取消"
                     confirmLoading={batchPermissionLoading}
-                    width={1000}
+                    width={960}
                     destroyOnClose
                 >
-                    <Transfer
-                        dataSource={batchAvailableRoles.map(r => ({
-                            key: r.id.toString(),
-                            title: r.roleName,
-                            description: r.description || ''
-                        }))}
-                        titles={['可选角色', '已分配角色']}
-                        targetKeys={batchTargetKeys}
-                        onChange={(targetKeys) => {
-                            setBatchTargetKeys(targetKeys)
-                        }}
-                        render={item => (
-                            <Tooltip title={item.description || item.title} placement="topLeft">
-                                <span>{item.title}</span>
-                            </Tooltip>
-                        )}
-                        listStyle={{
-                            width: 440,
-                            height: 500,
-                        }}
-                    />
+                    <div className={style.batchRoleWrap}>
+                        <div className={style.batchRoleUsers}>
+                            <span className={style.batchRoleUsersLabel}>已选用户</span>
+                            <span className={style.batchRoleUsersNames}>{selectedUserNames.join(' · ') || '-'}</span>
+                        </div>
+
+                        <div className={style.batchSection}>
+                            <div className={style.batchSectionTitle}>
+                                当前已拥有（将保留）
+                                <span className={style.batchSectionHint}>仅展示，不会受影响</span>
+                            </div>
+                            <div className={style.batchChips}>
+                                {batchExistingRoles.length === 0 ? (
+                                    <span className={style.batchEmpty}>所选用户暂无角色</span>
+                                ) : (
+                                    batchExistingRoles.map(r => (
+                                        <Tooltip key={r.roleId} title={`由 ${(r.users || []).join('、')} 拥有`}>
+                                            <span className={style.batchChip}>
+                                                {r.roleName}
+                                                <em className={style.batchChipCount}>×{r.count}</em>
+                                            </span>
+                                        </Tooltip>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div className={`${style.batchSection} ${style.batchSectionGrow}`}>
+                            <div className={style.batchSectionTitle}>新增角色（勾选后提交）</div>
+                            <Input.Search
+                                placeholder="搜索角色名"
+                                allowClear
+                                value={batchRoleSearch}
+                                onChange={(e) => setBatchRoleSearch(e.target.value)}
+                                style={{ marginBottom: 8 }}
+                            />
+                            <div className={`${style.scrollbar} ${style.batchRoleList}`}>
+                                {batchAvailableRoles.filter(r =>
+                                    !batchRoleSearch || r.roleName.toLowerCase().includes(batchRoleSearch.toLowerCase())
+                                ).map(role => {
+                                    const existing = batchExistingRoles.find(r => String(r.roleId) === String(role.id))
+                                    const ownedByAll = !!existing && existing.count === selectedUserIds.length
+                                    const ownedBySome = !!existing && !ownedByAll
+                                    const isChecked = batchTargetKeys.includes(role.id.toString())
+                                    return (
+                                        <div key={role.id} className={style.batchRoleItem}>
+                                            <Checkbox
+                                                checked={isChecked || ownedByAll}
+                                                disabled={ownedByAll}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setBatchTargetKeys(prev => [...new Set([...prev, role.id.toString()])])
+                                                    } else {
+                                                        setBatchTargetKeys(prev => prev.filter(k => k !== role.id.toString()))
+                                                    }
+                                                }}
+                                            >
+                                                <span className={style.batchRoleName}>{role.roleName}</span>
+                                            </Checkbox>
+                                            {ownedByAll ? (
+                                                <Tooltip title={`由 ${(existing.users || []).join('、')} 拥有`}>
+                                                    <span className={style.batchRoleBadge}>已全部拥有</span>
+                                                </Tooltip>
+                                            ) : ownedBySome ? (
+                                                <Tooltip title={`由 ${(existing.users || []).join('、')} 拥有`}>
+                                                    <span className={style.batchRoleBadge}>{existing.count} 位已有</span>
+                                                </Tooltip>
+                                            ) : null}
+                                            {role.description && (
+                                                <Tooltip title={role.description}>
+                                                    <span className={style.batchRoleDesc}>ⓘ</span>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                                {batchAvailableRoles.length === 0 && (
+                                    <div className={style.batchEmptyList}>暂无角色</div>
+                                )}
+                            </div>
+                            <div className={style.batchFooter}>
+                                将新增 <strong>{batchTargetKeys.length}</strong> 项角色，每位用户保留原有角色
+                            </div>
+                        </div>
+                    </div>
                 </Modal>
 
                 {/* 文件夹权限管理模态框 */}
@@ -1765,100 +1962,24 @@ const Administrator = ({ embedded = false, activeTab: propActiveTab = 'users' })
                     cancelText="取消"
                     confirmLoading={batchFolderLoading}
                     okButtonProps={batchFolderReadOnly ? { style: { display: 'none' } } : {}}
-                    width="90%"
+                    width={960}
                     style={{ top: 25 }}
                     destroyOnClose
                 >
-                    <div style={{ display: 'flex', gap: 24, height: 'calc(88vh - 80px)' }}>
-                        {/* 左侧：选择文件夹 */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <h4 style={{ marginBottom: 12 }}>选择文件夹</h4>
-                            <div
-                                className={style.scrollbar}
-                                style={{ border: '1px solid var(--color-border-card)', borderRadius: 4, padding: 8, flex: 1, overflow: 'auto' }}
-                            >
-                                <Tree
-                                    checkable={!batchFolderReadOnly}
-                                    checkStrictly
-                                    defaultExpandAll
-                                    checkedKeys={batchFolderPermissions.map(p => String(p.folderId))}
-                                    onCheck={handleBatchFolderTreeCheck}
-                                    treeData={folderTreeData}
-                                />
+                    {/* 权限树：共同权限锁定 + 个别差异标注 + 勾选授予全部角色 */}
+                    <div className={style.permTreeWrap}>
+                        {!batchFolderReadOnly && (
+                            <div className={style.permHint}>
+                                <InfoCircleOutlined />
+                                <span>勾选某权限 = 授予给所选全部角色（只增，不影响现有）；「可编辑」或「可删除」自动包含「可阅读」。</span>
                             </div>
-                        </div>
-
-                        {/* 右侧：权限配置 */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <h4 style={{ marginBottom: 12 }}>权限配置（交集回显，{batchFolderPermissions.length}）</h4>
-                            <div className={style.scrollbar} style={{ flex: 1, overflow: 'auto' }}>
-                                {batchFolderPermissions.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-ink-muted)' }}>
-                                        请在左侧选择文件夹
-                                    </div>
-                                ) : (
-                                    <>
-                                        {batchFolderPermissions
-                                            .slice((batchFolderPagination.current - 1) * batchFolderPagination.pageSize, batchFolderPagination.current * batchFolderPagination.pageSize)
-                                            .map(item => (
-                                                <div key={item.folderId} style={{ marginBottom: 12, padding: '8px', border: '1px solid var(--color-border-light)', borderRadius: 4 }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                                        <strong>{getFolderName(item.folderId, folderTreeData)}</strong>
-                                                    </div>
-                                                    <Checkbox.Group
-                                                        value={item.permissions}
-                                                        onChange={(checkedValues) => handleBatchFolderPermissionChange(item.folderId, checkedValues)}
-                                                        style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}
-                                                    >
-                                                        {permissionTypes.length > 0 ? (
-                                                            permissionTypes.map(type => {
-                                                                const isView = type.code === 'VIEW'
-                                                                const hasEditOrDelete = item.permissions.includes('EDIT') || item.permissions.includes('DELETE')
-                                                                // VIEW 在 EDIT 或 DELETE 勾选时禁用（由上级权限自动获得）
-                                                                const disabled = (isView && hasEditOrDelete) || batchFolderReadOnly
-                                                                return (
-                                                                    <Tooltip key={type.code} title={isView && hasEditOrDelete ? `${type.name}（由可编辑/可删除权限自动获得）` : type.name}>
-                                                                        <Checkbox value={type.code} disabled={disabled}>
-                                                                            {type.name}
-                                                                        </Checkbox>
-                                                                    </Tooltip>
-                                                                )
-                                                            })
-                                                        ) : (
-                                                            // 默认fallback选项
-                                                            <>
-                                                                <Checkbox value="VIEW" disabled={batchFolderReadOnly}>可阅读</Checkbox>
-                                                                <Checkbox value="EDIT" disabled={batchFolderReadOnly}>可编辑</Checkbox>
-                                                                <Checkbox value="DELETE" disabled={batchFolderReadOnly}>可删除</Checkbox>
-                                                            </>
-                                                        )}
-                                                    </Checkbox.Group>
-                                                </div>
-                                            ))}
-                                        {/* 分页 */}
-                                        {batchFolderPermissions.length > batchFolderPagination.pageSize && (
-                                            <Pagination
-                                                style={{ marginTop: 16, textAlign: 'right' }}
-                                                current={batchFolderPagination.current}
-                                                pageSize={batchFolderPagination.pageSize}
-                                                total={batchFolderPagination.total}
-                                                showSizeChanger
-                                                showQuickJumper
-                                                showTotal={(total) => `共 ${total} 条`}
-                                                locale={{
-                                                    items_per_page: ' 条/页',
-                                                    jump_to: '跳至',
-                                                    jump_to_confirm: '确定',
-                                                    page: '页'
-                                                }}
-                                                onChange={(page, pageSize) => {
-                                                    setBatchFolderPagination({ ...batchFolderPagination, current: page, pageSize })
-                                                }}
-                                            />
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                        )}
+                        <div className={`${style.scrollbar} ${style.permTreeBody}`}>
+                            <Tree
+                                defaultExpandAll
+                                blockNode
+                                treeData={renderBatchPermissionTreeData(folderTreeData, batchFolderReadOnly)}
+                            />
                         </div>
                     </div>
                 </Modal>

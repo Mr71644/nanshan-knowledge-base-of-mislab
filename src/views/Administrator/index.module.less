@@ -371,3 +371,184 @@
         }
     }
 }
+
+/* ========== 批量分配角色 ========== */
+.batchRoleWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: calc(85vh - 140px);
+}
+
+.batchRoleUsers {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(var(--color-accent-rgb), 0.06) 0%, rgba(var(--color-accent-rgb), 0.015) 100%);
+    border: 1px solid var(--color-border-card);
+    flex-shrink: 0;
+}
+
+.batchRoleUsersLabel {
+    font-size: 12px;
+    color: var(--color-ink-muted);
+    flex-shrink: 0;
+}
+
+.batchRoleUsersNames {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.batchSection {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex-shrink: 0;
+}
+
+.batchSectionGrow {
+    flex: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.batchSectionTitle {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.batchSectionHint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-ink-muted);
+}
+
+.batchChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px dashed var(--color-border-card);
+    border-radius: 10px;
+    background: var(--color-card-bg);
+    min-height: 38px;
+}
+
+.batchChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--color-ink-secondary);
+    background: var(--color-table-header-bg-start);
+    border: 1px solid var(--color-border-card);
+}
+
+.batchChipCount {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+.batchEmpty {
+    font-size: 12.5px;
+    color: var(--color-ink-muted);
+}
+
+.batchRoleList {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--color-border-card);
+    border-radius: 10px;
+    padding: 6px 8px;
+}
+
+.batchRoleItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: rgba(var(--color-accent-rgb), 0.05);
+    }
+}
+
+.batchRoleName {
+    font-size: 13.5px;
+    color: var(--color-ink);
+}
+
+.batchRoleBadge {
+    font-size: 11.5px;
+    color: var(--color-ink-muted);
+    background: var(--color-table-header-bg-start);
+    border: 1px solid var(--color-border-card);
+    border-radius: 999px;
+    padding: 1px 8px;
+    white-space: nowrap;
+}
+
+.batchRoleDesc {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--color-ink-muted);
+    cursor: help;
+}
+
+.batchEmptyList {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+}
+
+.batchFooter {
+    margin-top: 10px;
+    text-align: right;
+    font-size: 12.5px;
+    color: var(--color-ink-muted);
+
+    strong {
+        color: var(--color-accent);
+        font-size: 14px;
+    }
+}
+
+/* ========== 批量分配文件夹权限：文件夹名后的 ×N 位已拥有 标注 ========== */
+.batchPermHints {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding-left: 4px;
+}
+
+.batchPermHint {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--color-ink-muted);
+    background: var(--color-table-header-bg-start);
+    border: 1px dashed var(--color-border-card);
+    border-radius: 999px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    cursor: help;
+}
