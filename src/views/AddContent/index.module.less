@@ -59,3 +59,53 @@
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
 }
+
+/* ---- 保存并退出浮动按钮 ---- */
+.floatBtns {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editFloatBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--gradient-accent, linear-gradient(135deg, #d4a84c, #c49a3e));
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-float-btn, 0 4px 16px rgba(212, 168, 76, 0.3));
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float-btn-hover, 0 6px 24px rgba(212, 168, 76, 0.4));
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-float-btn, 0 4px 16px rgba(212, 168, 76, 0.3));
+    transition: all 0.1s ease;
+  }
+}
+
+.editFloatBtnIcon {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+}
+
+.editFloatBtnText {
+  white-space: nowrap;
+}

@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useEffect } from 'react'
-import { theme, Layout, Form, Input, FloatButton, Spin, Tooltip } from 'antd'
-import { CheckOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
+import { theme, Layout, Form, Input, Spin } from 'antd'
+import { SaveOutlined, UpOutlined, DownOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage';
 import { addContent } from '@/apis/content';
@@ -138,24 +138,14 @@ const AddContent = () => {
                             </div>
                         ) : <Spin size='large' className={style.spin} />
                     }
-                    <FloatButton.Group
-                        shape="circle"
-                        style={{
-                            insetInlineEnd: 24,
-                            bottom: 24,
-                        }}
-                    >
-                        <Tooltip title="保存文档" placement="left">
-                            <FloatButton
-                                type="primary"
-                                icon={<CheckOutlined />}
-                                onClick={add}
-                                style={{
-                                    boxShadow: 'var(--shadow-float-btn)',
-                                }}
-                            />
-                        </Tooltip>
-                    </FloatButton.Group>
+                    <div className={style.floatBtns}>
+                        <div className={style.editFloatBtn} onClick={add}>
+                            <span className={style.editFloatBtnIcon}>
+                                <SaveOutlined />
+                            </span>
+                            <span className={style.editFloatBtnText}>保存并退出</span>
+                        </div>
+                    </div>
                 </Content>
             </Layout>
         </>

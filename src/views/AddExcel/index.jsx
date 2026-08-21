@@ -1,7 +1,7 @@
 import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Drawer, Form, Input, Space, FloatButton, Modal, Spin, Tooltip, Tree, Empty } from 'antd';
-import { RollbackOutlined, SaveOutlined, VerticalAlignBottomOutlined, UpOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined } from '@ant-design/icons'
+import { Drawer, Form, Input, Modal, Spin, Tooltip, Tree, Empty } from 'antd';
+import { SaveOutlined, VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined } from '@ant-design/icons'
 import * as XLSX from 'xlsx'
 import { MemoSheet } from '@/components/UniverSheet';
 import { useMessage } from '@/hooks/useMessage';
@@ -46,10 +46,8 @@ const collectTreeKeys = (nodes = []) => {
 
 const AddExcel = () => {
     const { success, error, contextHolder } = useMessage()
-    const [open, setOpen] = useState(false);
     const [data] = useState({})
     const [loading, setLoading] = useState(false)
-    const [btnLoading, setBtnLoading] = useState(false)
     const [fileDrawerOpen, setFileDrawerOpen] = useState(false)
     const [fileKeyword, setFileKeyword] = useState('')
     const [searchedKeyword, setSearchedKeyword] = useState('')
@@ -74,21 +72,14 @@ const AddExcel = () => {
     const getFileLink = (fileItem = {}) => {
         return fileItem.url || fileItem.link || fileItem.fileUrl || fileItem.previewUrl || ''
     }
-    const back = () => {
-        if (param.folder === 'main') navigate('/home')
-        else navigate(`/home/list/${param.folder}`)
-    }
     // 新增逻辑
-    const showDrawer = () => {
-        setOpen(true);
-    };
-    const onClose = () => {
-        setOpen(false);
-    };
     const add = async () => {
+        if (!excelName.current?.trim()) {
+            error({ content: '请输入表格名称' })
+            return
+        }
         try {
             setLoading(true)
-            setBtnLoading(true)
             let folder = ''
             if (param.folder !== 'main') folder = param.folder
             await addExcel({
@@ -96,14 +87,12 @@ const AddExcel = () => {
                 url: JSON.stringify(univerRef.current?.getData()),
                 folderId: folder
             })
-            setBtnLoading(false)
             if (param.folder === 'main') navigate('/home')
             else navigate(`/home/list/${param.folder}`)
         } catch (e) {
             error({
                 content: e.response?.data?.message || '新增失败',
                 callBack: () => {
-                    setBtnLoading(false)
                     setLoading(false)
                 }
             })
@@ -269,79 +258,35 @@ const AddExcel = () => {
             {
                 loading ?
                     <Spin size='large' className={style.spin} /> :
-                    <>
+                    <div className={style.excelContainer}>
+                        <div className={style.titleBar}>
+                            <Input
+                                variant="borderless"
+                                className={style.titleBarInput}
+                                placeholder="请输入表格名称"
+                                onChange={(e) => { excelName.current = e.target.value }}
+                            />
+                            <div className={style.titleBarActions}>
+                                <Tooltip title="保存并退出">
+                                    <button className={style.titleBarBtn} onClick={add}>
+                                        <SaveOutlined />
+                                    </button>
+                                </Tooltip>
+                                <Tooltip title="导出表格">
+                                    <button className={style.titleBarBtn} onClick={showModal}>
+                                        <VerticalAlignBottomOutlined />
+                                    </button>
+                                </Tooltip>
+                                <Tooltip title="插入文件链接">
+                                    <button className={style.titleBarBtn} onClick={handleOpenFileDrawer}>
+                                        <LinkOutlined />
+                                    </button>
+                                </Tooltip>
+                            </div>
+                        </div>
                         <MemoSheet style={{ flex: 1 }} ref={univerRef} data={data} />
-                        <FloatButton.Group
-                            shape="circle"
-                            trigger="hover"
-                            icon={<UpOutlined />}
-                            style={{
-                                insetInlineEnd: 24,
-                                bottom: 24,
-                            }}
-                        >
-                            <Tooltip title="保存 Excel" placement="left">
-                                <FloatButton
-                                    type="primary"
-                                    icon={<SaveOutlined />}
-                                    onClick={showDrawer}
-                                    style={{
-                                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
-                                    }}
-                                />
-                            </Tooltip>
-                            <Tooltip title="导出 Excel" placement="left">
-                                <FloatButton
-                                    icon={<VerticalAlignBottomOutlined />}
-                                    onClick={showModal}
-                                    style={{
-                                        color: '#fff',
-                                        boxShadow: '0 4px 12px rgba(82, 196, 26, 0.3)',
-                                    }}
-                                />
-                            </Tooltip>
-                            <Tooltip title="插入文件链接" placement="left">
-                                <FloatButton
-                                    icon={<LinkOutlined />}
-                                    onClick={handleOpenFileDrawer}
-                                />
-                            </Tooltip>
-                            <Tooltip title="返回" placement="left">
-                                <FloatButton
-                                    icon={<RollbackOutlined />}
-                                    onClick={back}
-                                    style={{
-                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                                    }}
-                                />
-                            </Tooltip>
-                        </FloatButton.Group>
-                    </>
+                    </div>
             }
-            <Drawer
-                title="请输入Excel名称"
-                placement={'right'}
-                closable={false}
-                onClose={onClose}
-                open={open}
-            >
-                <Form validateTrigger='onChange'>
-                    <Form.Item name={'excel'}
-                        rules={[() => ({
-                            validator(_, value) {
-                                excelName.current = value
-                                return Promise.resolve()
-                            }
-                        })]}
-                    >
-                        <Input />
-                    </Form.Item>
-                </Form>
-                <Space size={130} style={{ width: '100%' }}>
-                    <Button onClick={add} type='primary' style={{ width: 100 }} loading={btnLoading}>确认</Button>
-                    <Button onClick={onClose} danger style={{ width: 100 }}>取消</Button>
-                </Space>
-            </Drawer>
             <Modal title="请输入下载 Excel 文件的名称：" open={isModalOpen} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
                 <Form validateTrigger='onChange'>
                     <Form.Item name={'excel'}
