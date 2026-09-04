@@ -52,7 +52,7 @@ const AddContent = () => {
             })
             if (param.folder === 'main') navigate('/home')
             else navigate(`/home/list/${param.folder}`)
-        } catch (e) {
+        } catch {
             error({
                 content: '添加论文失败',
                 callBack: () => setPageLoading(false)
@@ -130,6 +130,7 @@ const AddContent = () => {
                                         editable={true}
                                         onChange={(v) => setValue(v)}
                                         folderId={param.folder}
+                                        isNewDoc
                                         onError={(msg) => error({ content: msg, delayTime: 3000 })}
                                         onUploading={handleUploading}
                                         fullHeight

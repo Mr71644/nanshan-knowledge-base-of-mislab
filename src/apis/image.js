@@ -1,27 +1,34 @@
 import { request } from "@/utils";
 
 // 上传 Markdown 图片
-const uploadMarkdownImage = ({ id = '', folderId = '', file }) => {
+// 已有在线文档：POST /minio/upload/markdown，需携带 X-Editor-Resource-Id（文档 ID，仅用于锁鉴权）
+//               与 X-Editor-Lock-Token；form-data 的 id 仍是文件夹 ID（图片归集/权限/清理用），两者不可互换。
+// 新建文档（无资源 ID）：POST /minio/upload/markdown/new，只传 form-data 的 id=folderId，不验锁但必须传归属。
+const uploadMarkdownImage = ({ folderId = '', file, documentId, lockToken, isNew = false }) => {
   let data = new FormData()
-  if (id !== undefined && id !== null && id !== '') {
-    const intId = parseInt(id, 10)
-    if (!isNaN(intId)) {
-      data.append('id', intId)
-    }
-  }
   if (folderId !== undefined && folderId !== null && folderId !== '') {
     const intFolderId = parseInt(folderId, 10)
     if (!isNaN(intFolderId)) {
-      data.append('folderId', intFolderId)
+      data.append('id', intFolderId)
     }
   }
   if (file) {
     data.append('file', file)
   }
+  const headers = {}
+  if (!isNew) {
+    if (documentId !== undefined && documentId !== null && documentId !== '') {
+      headers['X-Editor-Resource-Id'] = documentId
+    }
+    if (lockToken) {
+      headers['X-Editor-Lock-Token'] = lockToken
+    }
+  }
   return request({
-    url: '/minio/upload/markdown',
+    url: isNew ? '/minio/upload/markdown/new' : '/minio/upload/markdown',
     method: 'POST',
-    data
+    data,
+    headers
   })
 }
 

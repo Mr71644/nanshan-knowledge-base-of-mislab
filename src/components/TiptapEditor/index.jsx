@@ -10,7 +10,7 @@ import style from './index.module.css'
 
 const lowlight = createLowlight(common)
 
-const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight, contentType: initialContentType = 'prosemirror' }) => {
+const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, onUploading, fullHeight, lockToken, resourceId, isNewDoc, contentType: initialContentType = 'prosemirror' }) => {
     const lastEditorMd = useRef(content)
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange
@@ -28,7 +28,7 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
     const editor = useEditor({
         extensions: [
             ...createBaseExtensions({ lowlight }),
-            ImageUpload.configure({ folderId, onError, onUploading }),
+            ImageUpload.configure({ folderId, onError, onUploading, lockToken, resourceId, isNewDoc }),
         ],
         content: initialContentType === 'prosemirror'
             ? (content ? JSON.parse(content) : { type: 'doc', content: [] })
@@ -74,8 +74,11 @@ const TiptapEditor = ({ content, editable = true, onChange, folderId, onError, o
             ext.options.folderId = folderId
             ext.options.onError = onError
             ext.options.onUploading = onUploading
+            ext.options.lockToken = lockToken
+            ext.options.resourceId = resourceId
+            ext.options.isNewDoc = isNewDoc
         }
-    }, [editor, folderId, onError, onUploading])
+    }, [editor, folderId, onError, onUploading, lockToken, resourceId, isNewDoc])
 
     // 处理 data-minio-src 属性的图片（用于只读模式）
     useEffect(() => {

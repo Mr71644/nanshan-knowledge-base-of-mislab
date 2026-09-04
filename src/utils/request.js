@@ -29,6 +29,13 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use((response) => {
     return response.data
 }, (error) => {
+    // 附加统一错误字段（保留原始 error 及 response 供调用处读取）
+    // 只有 acquire 的 423 响应包含占用者信息（owner / ownedByCurrentUser）
+    const payload = error.response?.data
+    error.httpStatus = error.response?.status
+    error.apiMessage = payload?.message
+    error.lockOwner = payload?.data?.owner
+    error.lockOwnedByCurrentUser = payload?.data?.ownedByCurrentUser
     // 统一处理鉴权失败：服务端返回 401（未登录 / token 过期）
     if (error.response && error.response.status === 401) {
         // 清理 redux store 与 token 存储

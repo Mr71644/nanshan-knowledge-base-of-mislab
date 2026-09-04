@@ -78,6 +78,69 @@
     flex-shrink: 0;
 }
 
+/* ---- 保存状态文案（统一文案：已保存 / 有未保存修改 / 保存中... / 保存失败） ---- */
+
+.statusIndicator {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+    margin-left: 12px;
+}
+
+/* ---- 返回列表按钮 ---- */
+
+.returnBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px;
+    height: 36px;
+    border: 1px solid var(--color-border-table);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--color-ink-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: #ffffff;
+    }
+}
+
+/* ---- 表格容器 + 锁状态覆盖层 ---- */
+
+.sheetArea {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.lockOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(2px);
+    color: var(--color-accent, #d4a84c);
+    font-size: 16px;
+    font-weight: 600;
+    pointer-events: auto;
+    user-select: none;
+}
+
+.lockOverlayError {
+    color: #d64545;
+    background: rgba(255, 255, 255, 0.8);
+}
+
 .titleBarBtn {
     display: inline-flex;
     align-items: center;

@@ -13,7 +13,7 @@ const getExcelDetail = (id) => {
     })
 }
 
-const updateExcel = ({ id, title, url }) => {
+const updateExcel = ({ id, title, url, lockToken }) => {
     return request({
         url: '/excel/update',
         method: 'PUT',
@@ -21,7 +21,9 @@ const updateExcel = ({ id, title, url }) => {
             id,
             title,
             url
-        }
+        },
+        // 编辑态保存携带锁凭证，由后端原子校验并续租当前锁
+        headers: lockToken ? { 'X-Editor-Lock-Token': lockToken } : {}
     })
 }
 

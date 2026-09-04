@@ -15,13 +15,21 @@ function extractFileId(uploadRes) {
     return null
 }
 
-async function uploadFile(file, folderId) {
+async function uploadFile(file, options = {}) {
+    const { folderId, lockToken, resourceId, isNewDoc } = options
+    // 已有文档（非新建）上传必须持有锁凭证，锁失效/只读时禁止上传
+    if (!isNewDoc && !lockToken) {
+        throw new Error('编辑锁已失效，无法上传')
+    }
+
     const parsedId = parseInt(folderId, 10)
     if (isNaN(parsedId) || parsedId <= 0) {
         throw new Error('无效的文件夹ID')
     }
 
-    const uploadRes = await uploadMarkdownImage({ id: parsedId, folderId: parsedId, file })
+    // 已有文档：form-data id=folderId，锁鉴权信息通过请求头携带
+    // 新建文档：走 /minio/upload/markdown/new，不验锁但必须传 id=folderId 作为图片归属
+    const uploadRes = await uploadMarkdownImage({ folderId: parsedId, file, documentId: resourceId, lockToken, isNew: isNewDoc })
 
     const fileId = extractFileId(uploadRes)
     if (!fileId) {
@@ -38,6 +46,9 @@ const ImageUpload = Extension.create({
             folderId: '',
             onError: null,
             onUploading: null,
+            lockToken: '',
+            resourceId: '',
+            isNewDoc: false,
         }
     },
 
@@ -63,7 +74,7 @@ const ImageUpload = Extension.create({
                     extension.storage.isUploading = true
                     extension.options.onUploading?.(true)
                     try {
-                        const src = await uploadFile(file, extension.options.folderId)
+                        const src = await uploadFile(file, extension.options)
                         editor.chain().focus().insertContent({
                             type: 'image',
                             attrs: { src, alt: '图片描述' },
@@ -103,7 +114,7 @@ const ImageUpload = Extension.create({
             extension.storage.isUploading = true
             extension.options.onUploading?.(true)
             try {
-                const src = await uploadFile(file, extension.options.folderId)
+                const src = await uploadFile(file, extension.options)
                 const node = editor.schema.nodes.image.create({ src, alt: '图片描述' })
                 const docSize = editor.view.state.doc.content.size
                 const safePos = Math.max(0, Math.min(pos, docSize))

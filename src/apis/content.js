@@ -7,7 +7,7 @@ const getContentDetail = (id) => {
     })
 }
 
-const editContent = ({ title, author, content, id, contentType = 'prosemirror' } = {}) => {
+const editContent = ({ title, author, content, id, contentType = 'prosemirror', lockToken } = {}) => {
     const data = {
         title,
         author,
@@ -18,7 +18,9 @@ const editContent = ({ title, author, content, id, contentType = 'prosemirror' }
     return request({
         url: 'text/update',
         method: 'PUT',
-        data
+        data,
+        // 编辑态保存携带锁凭证，由后端原子校验并续租当前锁
+        headers: lockToken ? { 'X-Editor-Lock-Token': lockToken } : {}
     })
 }
 
