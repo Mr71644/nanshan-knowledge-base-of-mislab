@@ -2,7 +2,7 @@ import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Drawer, Form, Input, Spin, Modal, Tooltip, Tree, Empty } from 'antd';
-import { SaveOutlined, VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, RollbackOutlined, HighlightOutlined, LogoutOutlined } from '@ant-design/icons'
+import { SaveOutlined, VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined } from '@ant-design/icons'
 import { MemoSheet } from '@/components/UniverSheet';
 /**
  * Excel 视图说明
@@ -431,16 +431,6 @@ const Excel = () => {
     // 也没有运行时收起工具栏的官方 API。预览态工具栏按钮的修改操作由工作簿权限拦截，
     // 弹窗文案已在 UniverSheet 中统一改为预览提示。
 
-    // 返回列表：无未保存修改直接 release + 返回；有未保存修改走导航拦截三选项确认
-    const handleBackToList = () => {
-        if (isDirty) {
-            navigate(listPath)
-        } else {
-            lock.release()
-            navigate(listPath)
-        }
-    }
-
     // 编辑变化：立即置脏（不防抖），屏蔽编辑器初始化导致的 onChange，预览态/只读态不置脏
     const handleChange = () => {
         if (isInitializingRef.current) return
@@ -554,10 +544,6 @@ const Excel = () => {
                                             <VerticalAlignBottomOutlined />
                                         </button>
                                     </Tooltip>
-                                    <button className={style.returnBtn} onClick={handleBackToList} style={actionStyle(actionDisabled)}>
-                                        <RollbackOutlined />
-                                        <span>返回列表</span>
-                                    </button>
                                     {!inEditUi && (
                                         <button className={style.primaryBtn} onClick={handleEnterEdit} style={actionStyle(lock.status === 'acquiring')}>
                                             <HighlightOutlined />
