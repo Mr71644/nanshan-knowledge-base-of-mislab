@@ -1,8 +1,5 @@
-:global {
-    .univer-toolbar {
-        opacity: 0;
-    }
-}
+/* 说明：Univer 0.15 的 DOM 中不存在 .univer-toolbar 类，此前的隐藏/透明度处理均未生效，
+   预览态的编辑拦截由工作簿权限 + UniverSheet 中改写的权限弹窗文案承担。 */
 
 .spin {
     position: absolute;
@@ -112,6 +109,30 @@
     }
 }
 
+/* ---- 编辑表格入口按钮（预览态主操作，强调色） ---- */
+
+.primaryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gradient-accent, linear-gradient(135deg, #d4a84c, #c49a3e));
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        filter: brightness(1.05);
+        box-shadow: var(--shadow-float-btn, 0 4px 16px rgba(212, 168, 76, 0.3));
+    }
+}
+
 /* ---- 表格容器 + 锁状态覆盖层 ---- */
 
 .sheetArea {
@@ -132,7 +153,8 @@
     color: var(--color-accent, #d4a84c);
     font-size: 16px;
     font-weight: 600;
-    pointer-events: auto;
+    /* 仅作视觉提示，不阻挡选择/复制 —— 只读由 editable prop 驱动，便于抢救内容 */
+    pointer-events: none;
     user-select: none;
 }
 

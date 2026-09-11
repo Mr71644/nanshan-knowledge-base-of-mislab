@@ -19,6 +19,8 @@ import UniverPresetSheetsSortZhCN from '@univerjs/preset-sheets-sort/locales/zh-
 import { OpenFindDialogOperation } from '@univerjs/find-replace';
 import { SmartToggleSheetsFilterCommand } from '@univerjs/sheets-filter';
 import { forwardRef, useEffect, useImperativeHandle, useRef, memo } from 'react';
+// 项目未安装 prop-types 依赖，组件 props 不做运行时校验（与其他组件一致）
+/* eslint-disable react/prop-types, react/display-name */
 
 /**
  * UniverSheet - 基于最新 Univer API 的编辑器组件
@@ -38,13 +40,18 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, memo } from 'react'
  * @param {Object} props
  * @param {IWorkbookData} props.data - 工作簿数据，符合 Univer IWorkbookData 格式
  * @param {Function} props.onChange - 编辑内容变化时的回调函数（可选）
+ * @param {boolean} props.editable - 是否可编辑（默认 true；预览态传 false，通过 FWorkbook.setEditable 切换）
  * @param {React.Ref} ref - 暴露 getData() 方法给父组件
  */
-const UniverSheet = forwardRef(({ data, onChange }, ref) => {
+const UniverSheet = forwardRef(({ data, onChange, editable = true }, ref) => {
     const univerRef = useRef(null);
     const univerAPIRef = useRef(null);
     const containerRef = useRef(null);
     const workbookIdRef = useRef(null);
+    // 实时持有最新的 onChange：onCellChange / DOM 监听器只在 init 时注册一次，
+    // 直接捕获 onChange 会闭包过期（调用方 handler 内读取的渲染级状态将永远停留在挂载时的值）
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
 
     useImperativeHandle(ref, () => ({
         getData,
@@ -69,7 +76,21 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
                     UniverPresetSheetsHyperLinkZhCN,
                     UniverPresetSheetsFindReplaceZhCN,
                     UniverPresetSheetsFilterZhCN,
-                    UniverPresetSheetsSortZhCN
+                    UniverPresetSheetsSortZhCN,
+                    // 工作簿只读（预览态）时触发 Univer 权限弹窗，统一展示为预览提示
+                    {
+                        permission: {
+                            dialog: {
+                                alert: '提示',
+                                alertContent: '当前为预览状态，请点击编辑按钮进行编辑',
+                                editErr: '当前为预览状态，请点击编辑按钮进行编辑',
+                                commonErr: '当前为预览状态，请点击编辑按钮进行编辑',
+                                pasteErr: '当前为预览状态，请点击编辑按钮进行编辑',
+                                setStyleErr: '当前为预览状态，请点击编辑按钮进行编辑',
+                                copyErr: '当前为预览状态，请点击编辑按钮进行编辑',
+                            },
+                        },
+                    }
                 ),
             },
             presets: [
@@ -94,6 +115,8 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
         // 创建工作簿
         const workbook = univerAPI.createWorkbook(workbookData);
         workbookIdRef.current = workbook.getId();
+        // 初建即应用编辑权限，避免预览态闪烁为可编辑
+        workbook.setEditable(editable);
         
         univerAPI.createMenu({
             id: 'custom-find-replace-btn',
@@ -126,17 +149,17 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
      * 在用户完成编辑（按回车/Tab）时立即触发，而不需要等待切换单元格
      */
     const setupFacadeListener = (workbook) => {
-        if (!onChange) return;
-        
+        if (!onChangeRef.current) return;
+
         try {
-            // 监听单元格值变化事件
-            const disposable = workbook.onCellChange((params) => {
-                onChange();
+            // 监听单元格值变化事件（通过 onChangeRef 调用最新回调，避免闭包过期）
+            const disposable = workbook.onCellChange(() => {
+                onChangeRef.current?.();
             });
-            
+
             // 保存 disposable 以便清理
             univerRef.current._facadeDisposable = disposable;
-        } catch (error) {
+        } catch {
             setupDOMListener();
         }
     };
@@ -145,7 +168,7 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
      * 降级方案：使用 DOM 事件监听
      */
     const setupDOMListener = () => {
-        if (!onChange || !containerRef.current) return;
+        if (!onChangeRef.current || !containerRef.current) return;
         
         // 监听编辑完成相关的事件
         const events = [
@@ -166,9 +189,9 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
                 return;
             }
             
-            onChange();
+            onChangeRef.current?.();
         };
-        
+
         // 添加事件监听器
         events.forEach(event => {
             containerRef.current.addEventListener(event, handleChange, true);
@@ -225,11 +248,21 @@ const UniverSheet = forwardRef(({ data, onChange }, ref) => {
 
     useEffect(() => {
         init(data);
-        
+
         return () => {
             destroyUniver();
         };
     }, [data]);
+
+    // editable 变化或工作簿重建后原地切换工作簿编辑权限（预览 ⇄ 编辑），不重建工作簿。
+    // 延迟断言一次：createWorkbook 后 Univer 的 SheetPermissionInitController 仍会异步初始化权限点，
+    // 立即调用的 setEditable 可能被其覆盖（表现为初次进入预览仍可输入）。
+    useEffect(() => {
+        const apply = () => univerAPIRef.current?.getActiveWorkbook()?.setEditable(editable)
+        apply()
+        const timer = setTimeout(apply, 300)
+        return () => clearTimeout(timer)
+    }, [editable, data])
 
     return <div ref={containerRef} className={style.univerContainer} />;
 });

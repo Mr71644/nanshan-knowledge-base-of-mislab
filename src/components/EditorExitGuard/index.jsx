@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Modal, Button } from 'antd'
 import { useBlocker } from 'react-router-dom'
+import UnsavedChangesModal from '@/components/UnsavedChangesModal'
 // 项目未安装 prop-types 依赖，组件 props 不做运行时校验（与其他组件一致）
 /* eslint-disable react/prop-types */
 
@@ -20,7 +20,8 @@ import { useBlocker } from 'react-router-dom'
  * @param {() => Promise<boolean>} onSaveAndExit 保存并退出，返回是否成功
  * @param {() => Promise<any>} onDiscard 不保存退出（通常为 release）
  */
-const EditorExitGuard = ({ enabled, onSaveAndExit, onDiscard }) => {    const [visible, setVisible] = useState(false)
+const EditorExitGuard = ({ enabled, onSaveAndExit, onDiscard }) => {
+    const [visible, setVisible] = useState(false)
     const [saving, setSaving] = useState(false)
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
@@ -72,20 +73,14 @@ const EditorExitGuard = ({ enabled, onSaveAndExit, onDiscard }) => {    const [v
     }
 
     return (
-        <Modal
+        <UnsavedChangesModal
             open={visible}
-            title="有未保存的修改"
-            closable={false}
-            maskClosable={false}
+            saving={saving}
+            description="离开当前页面将丢失未保存的修改，是否保存并退出？"
             onCancel={handleCancel}
-            footer={[
-                <Button key="cancel" onClick={handleCancel} disabled={saving}>取消</Button>,
-                <Button key="discard" danger onClick={handleDiscard} disabled={saving}>不保存退出</Button>,
-                <Button key="save" type="primary" onClick={handleSaveExit} loading={saving}>保存并退出</Button>,
-            ]}
-        >
-            <div>离开当前页面将丢失未保存的修改，是否保存并退出？</div>
-        </Modal>
+            onDiscard={handleDiscard}
+            onSave={handleSaveExit}
+        />
     )
 }
 

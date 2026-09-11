@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect } from 'react'
-import { theme, Layout, Form, Input, Spin, ConfigProvider, Modal, Button } from 'antd'
+import { theme, Layout, Form, Input, Spin, ConfigProvider } from 'antd'
 import { HighlightOutlined, SaveOutlined, UpOutlined, DownOutlined, VerticalAlignTopOutlined, LogoutOutlined } from '@ant-design/icons'
 import { useParams } from 'react-router-dom'
 import { formatDate } from '@/utils';
@@ -7,6 +7,7 @@ import { useMessage } from '@/hooks/useMessage';
 import { getContentDetail, editContent } from '@/apis/content';
 import { useEditorLock } from '@/hooks/useEditorLock';
 import EditorExitGuard from '@/components/EditorExitGuard';
+import UnsavedChangesModal from '@/components/UnsavedChangesModal';
 import TiptapEditor from '@/components/TiptapEditor'
 import themeConfig from '#theme'
 import style from './index.module.less'
@@ -74,7 +75,7 @@ const Area = () => {
         setValue(detail.content)
     }
 
-    // 显式保存：携带锁凭证，只有用户点击「保存 / 保存并退出」才发起，不做任何自动保存
+    // 显式保存：携带锁凭证，只有用户点击「保存」或在退出确认中选择「保存并退出」才发起，不做任何自动保存
     const handleSave = async () => {
         if (lock.status !== 'editing' || !lock.lockToken) {
             return { ok: false, reason: 'no-lock' }
@@ -134,17 +135,17 @@ const Area = () => {
         }
     }
 
-    // 退出编辑回预览：必须释放锁并删除 sessionStorage token
-    const exitToPreview = async () => {
+    // 退出编辑回预览：必须释放锁并删除 sessionStorage token；refresh 为 true 时重新拉取服务器内容回显已保存版本
+    const exitToPreview = async ({ refresh = false } = {}) => {
         setIsDirty(false)
         setSaveState('saved')
         await lock.release()
-    }
-
-    const handleSaveAndExit = async () => {
-        const res = await handleSave()
-        if (res.ok) {
-            await exitToPreview()
+        if (refresh) {
+            try {
+                await getDetail(param.id)
+            } catch {
+                error({ content: '文档内容刷新失败' })
+            }
         }
     }
 
@@ -153,7 +154,8 @@ const Area = () => {
         if (isDirty && lock.status === 'editing') {
             setExitPromptOpen(true)
         } else {
-            exitToPreview()
+            // 放弃退出（含锁失效态丢弃未保存修改）→ 回显服务器版本
+            exitToPreview({ refresh: isDirty })
         }
     }
 
@@ -170,7 +172,7 @@ const Area = () => {
 
     const handleExitDiscard = async () => {
         setExitPromptOpen(false)
-        await exitToPreview()
+        await exitToPreview({ refresh: true })
     }
 
     const handleExitCancel = () => {
@@ -422,17 +424,6 @@ const Area = () => {
                                 <span className={style.editFloatBtnText}>保存</span>
                             </div>
                             <div
-                                className={style.editFloatBtn}
-                                onClick={handleSaveAndExit}
-                                title="保存并退出"
-                                style={actionStyle(actionDisabled)}
-                            >
-                                <span className={style.editFloatBtnIcon}>
-                                    <SaveOutlined />
-                                </span>
-                                <span className={style.editFloatBtnText}>保存并退出</span>
-                            </div>
-                            <div
                                 className={style.exitFloatBtn}
                                 onClick={handleRequestExit}
                                 title="退出编辑"
@@ -441,7 +432,7 @@ const Area = () => {
                                 <span className={style.editFloatBtnIcon}>
                                     <LogoutOutlined />
                                 </span>
-                                <span className={style.editFloatBtnText}>退出编辑</span>
+                                <span className={style.editFloatBtnText}>退出</span>
                             </div>
                         </>
                     ) : (
@@ -450,7 +441,7 @@ const Area = () => {
                                 <span className={style.editFloatBtnIcon}>
                                     <LogoutOutlined />
                                 </span>
-                                <span className={style.editFloatBtnText}>退出编辑</span>
+                                <span className={style.editFloatBtnText}>退出</span>
                             </div>
                         ) : (
                             <div
@@ -479,20 +470,14 @@ const Area = () => {
                 </div>
             </Layout >
             {/* 页内「退出编辑」三选项确认（有未保存修改时） */}
-            <Modal
+            <UnsavedChangesModal
                 open={exitPromptOpen}
-                title="有未保存的修改"
-                closable={false}
-                maskClosable={false}
+                saving={exitSaving}
+                description="退出编辑将丢失未保存的修改，是否保存并退出？"
                 onCancel={handleExitCancel}
-                footer={[
-                    <Button key="cancel" onClick={handleExitCancel} disabled={exitSaving}>取消</Button>,
-                    <Button key="discard" danger onClick={handleExitDiscard} disabled={exitSaving}>不保存退出</Button>,
-                    <Button key="save" type="primary" onClick={handleExitSave} loading={exitSaving}>保存并退出</Button>,
-                ]}
-            >
-                <div>退出编辑将丢失未保存的修改，是否保存并退出？</div>
-            </Modal>
+                onDiscard={handleExitDiscard}
+                onSave={handleExitSave}
+            />
         </ConfigProvider>
     )
 }
