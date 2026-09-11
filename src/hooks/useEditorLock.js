@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { acquireEditorLock, heartbeatEditorLock, releaseEditorLock } from '@/apis/editorLock'
+import { getToken } from '@/utils'
 
 /**
  * useEditorLock - 独占编辑锁状态机
@@ -223,9 +224,21 @@ export function useEditorLock({ resourceType, resourceId }) {
         }
     }
 
+    // 恢复失败 / 锁已不存在时的统一收尾：清残留凭证、回到预览态（区别于 markLockLost 的 lockLost 态）
+    const fallbackToPreview = () => {
+        clearStored()
+        setLockToken(null)
+        tokenRef.current = null
+        leaseDeadlineRef.current = 0
+        setStatus('idle')
+    }
+
     /**
-     * Content 挂载恢复：先 heartbeat，成功后自动恢复编辑态
-     * heartbeat 返回 423 → 删除残留 token 回预览；网络错误有限重试后回预览
+     * Content/Excel 挂载恢复：先 heartbeat，成功后自动恢复编辑态
+     * - heartbeat 成功：锁仍在（unload 时 release 未发出/失败），直接恢复
+     * - heartbeat 423：锁已被本页 unload 时的 keepalive release 释放（典型为刷新场景）
+     *   → 用相同 clientSessionId 幂等重新 acquire，成功自动回到编辑态；被他人抢占则落预览
+     * - 401/403 → 清残留 token 回预览；网络错误有限重试后回预览
      */
     async function restore(token) {
         tokenRef.current = token
@@ -238,13 +251,34 @@ export function useEditorLock({ resourceType, resourceId }) {
                 startHeartbeat()
                 return { ok: true }
             } catch (e) {
-                if (e.httpStatus === 423 || e.httpStatus === 401 || e.httpStatus === 403) {
-                    clearStored()
-                    setLockToken(null)
-                    tokenRef.current = null
-                    leaseDeadlineRef.current = 0
-                    setStatus('idle')
-                    return { ok: false, reason: e.httpStatus === 423 ? 'lost' : (e.httpStatus === 401 ? 'unauthorized' : 'forbidden') }
+                if (e.httpStatus === 423) {
+                    // 刷新场景：本页离开时已释放锁，用相同 clientSessionId 幂等重新 acquire
+                    try {
+                        const res2 = await acquireEditorLock({ resourceType, resourceId: rid, clientSessionId: getClientSessionId() })
+                        const d2 = res2.data
+                        if (d2 && d2.acquired) {
+                            enterEditing(d2.lockToken, d2.remainingMs)
+                            startHeartbeat()
+                            return { ok: true }
+                        }
+                        setOwner(d2?.owner || '')
+                        setOwnedByCurrentUser(!!d2?.ownedByCurrentUser)
+                        fallbackToPreview()
+                        return { ok: false, reason: 'occupied', owner: d2?.owner, ownedByCurrentUser: !!d2?.ownedByCurrentUser }
+                    } catch (err) {
+                        if (err.httpStatus === 423) {
+                            setOwner(err.lockOwner || '')
+                            setOwnedByCurrentUser(!!err.lockOwnedByCurrentUser)
+                            fallbackToPreview()
+                            return { ok: false, reason: 'occupied', owner: err.lockOwner, ownedByCurrentUser: !!err.lockOwnedByCurrentUser }
+                        }
+                        fallbackToPreview()
+                        return { ok: false, reason: 'lost' }
+                    }
+                }
+                if (e.httpStatus === 401 || e.httpStatus === 403) {
+                    fallbackToPreview()
+                    return { ok: false, reason: e.httpStatus === 401 ? 'unauthorized' : 'forbidden' }
                 }
                 if (attempt < RECONNECT_DELAYS.length) {
                     await sleep(RECONNECT_DELAYS[attempt])
@@ -252,11 +286,7 @@ export function useEditorLock({ resourceType, resourceId }) {
                     continue
                 }
                 // 网络重试耗尽：清除残留 token 回预览，用户可自行点击“编辑文档”重新 acquire
-                clearStored()
-                setLockToken(null)
-                tokenRef.current = null
-                leaseDeadlineRef.current = 0
-                setStatus('idle')
+                fallbackToPreview()
                 return { ok: false, reason: 'network' }
             }
         }
@@ -338,6 +368,36 @@ export function useEditorLock({ resourceType, resourceId }) {
             document.removeEventListener('visibilitychange', onVisibility)
         }
     }, [])
+
+    // 页面关闭/刷新时立即释放锁：keepalive fetch 可在页面销毁后继续完成
+    // （sendBeacon 无法携带 Authorization 头，故不用）。
+    // 不清 sessionStorage：刷新场景需要 clientSessionId 幂等重取（见 restore）；
+    // 标签页关闭时 sessionStorage 自然销毁。发送失败由服务端租约超时兜底。
+    useEffect(() => {
+        const releaseOnLeave = () => {
+            const token = tokenRef.current
+            if (!token) return
+            try {
+                fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/editor-locks/release`, {
+                    method: 'POST',
+                    keepalive: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${getToken()}`,
+                    },
+                    body: JSON.stringify({ resourceType, resourceId: rid, lockToken: token }),
+                })
+            } catch {
+                /* 发送失败由服务端租约超时兜底 */
+            }
+        }
+        window.addEventListener('pagehide', releaseOnLeave)
+        window.addEventListener('beforeunload', releaseOnLeave)
+        return () => {
+            window.removeEventListener('pagehide', releaseOnLeave)
+            window.removeEventListener('beforeunload', releaseOnLeave)
+        }
+    }, [resourceType, rid])
 
     // 组件卸载（应用内离开）时停止心跳定时器，避免锁被无限续租。
     // 不清除 sessionStorage、不主动 release：刷新场景下挂载时需按 §2.1 恢复流程先 heartbeat 再恢复编辑态，
