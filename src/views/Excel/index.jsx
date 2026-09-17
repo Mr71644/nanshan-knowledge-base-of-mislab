@@ -521,27 +521,31 @@ const Excel = () => {
                                     {isEdit && (
                                         <Tooltip title="保存表格">
                                             <button className={style.titleBarBtn} onClick={handleSave} style={actionStyle(actionDisabled)}>
-                                                <SaveOutlined />
+                                                <SaveOutlined style={{ marginRight: '4px' }} />
+                                                保存表格
                                             </button>
                                         </Tooltip>
                                     )}
                                     {inEditUi && (
                                         <Tooltip title="退出编辑">
                                             <button className={style.titleBarBtn} onClick={handleRequestExit} style={actionStyle(actionDisabled)}>
-                                                <LogoutOutlined />
+                                                <LogoutOutlined style={{ marginRight: '4px' }} />
+                                                退出编辑
                                             </button>
                                         </Tooltip>
                                     )}
                                     {inEditUi && (
                                         <Tooltip title="插入文件链接">
                                             <button className={style.titleBarBtn} onClick={handleOpenFileDrawer} style={actionStyle(actionDisabled || !isEdit)}>
-                                                <LinkOutlined />
+                                                <LinkOutlined style={{ marginRight: '4px' }} />
+                                                插入文件链接
                                             </button>
                                         </Tooltip>
                                     )}
                                     <Tooltip title="导出表格">
                                         <button className={style.titleBarBtn} onClick={showModal} style={actionStyle(actionDisabled)}>
-                                            <VerticalAlignBottomOutlined />
+                                            <VerticalAlignBottomOutlined style={{ marginRight: '4px' }} />
+                                            导出表格
                                         </button>
                                     </Tooltip>
                                     {!inEditUi && (

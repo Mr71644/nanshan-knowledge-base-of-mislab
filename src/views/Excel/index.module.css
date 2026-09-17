@@ -128,34 +128,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  width: auto;
+  padding: 0 12px;
   height: 36px;
   border: none;
   border-radius: 8px;
   background: #C4A04D;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .titleBarBtn:hover {
   background: #D4B05D;
-}
-:global {
-  /* 只改工具栏最右侧这四个按钮 */
-}
-:global button[data-u-command="sheet.command.add-range-protection-from-toolbar"],
-:global button[data-u-command="base-ui.operation.toggle-shortcut-panel"],
-:global button[data-u-command="custom-find-replace-btn"],
-:global button[data-u-command="custom-filter-btn"] {
-  background-color: #C4A04D !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 6px !important;
-}
-:global button[data-u-command="sheet.command.add-range-protection-from-toolbar"]:hover,
-:global button[data-u-command="base-ui.operation.toggle-shortcut-panel"]:hover,
-:global button[data-u-command="custom-find-replace-btn"]:hover,
-:global button[data-u-command="custom-filter-btn"]:hover {
-  background-color: #D4B05D !important;
 }
