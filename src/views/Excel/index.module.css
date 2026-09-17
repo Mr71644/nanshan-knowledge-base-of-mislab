@@ -1,31 +1,161 @@
-:global .univer-toolbar {
-  opacity: 0;
-}
-
+/* 说明：Univer 0.15 的 DOM 中不存在 .univer-toolbar 类，此前的隐藏/透明度处理均未生效，
+   预览态的编辑拦截由工作簿权限 + UniverSheet 中改写的权限弹窗文案承担。 */
 .spin {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
 }
-
 .drawerSpin {
   display: block;
   margin: 80px auto;
 }
-
 .fileLinkItem {
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
 .folderItem {
   cursor: default;
 }
-
-.fileName {
+.excelContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 24px;
+  height: 48px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: 0 1px 4px rgba(var(--color-accent-rgb), 0.06);
+  flex-shrink: 0;
+}
+.titleBarText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  margin-right: 16px;
+}
+.savingIndicator {
+  font-size: 13px;
   font-weight: 500;
-  text-align: center;
+  color: var(--color-accent);
+  white-space: nowrap;
+  margin-left: 12px;
+  animation: savingPulse 1.2s ease-in-out infinite;
+}
+@keyframes savingPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.titleBarActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+/* ---- 保存状态文案（统一文案：已保存 / 有未保存修改 / 保存中... / 保存失败） ---- */
+.statusIndicator {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+  margin-left: 12px;
+}
+/* ---- 编辑表格入口按钮（预览态主操作，强调色） ---- */
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: var(--gradient-accent, linear-gradient(135deg, #d4a84c, #c49a3e));
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.primaryBtn:hover {
+  filter: brightness(1.05);
+  box-shadow: var(--shadow-float-btn, 0 4px 16px rgba(212, 168, 76, 0.3));
+}
+/* ---- 表格容器 + 锁状态覆盖层 ---- */
+.sheetArea {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+  color: var(--color-accent, #d4a84c);
+  font-size: 16px;
+  font-weight: 600;
+  /* 仅作视觉提示，不阻挡选择/复制 —— 只读由 editable prop 驱动，便于抢救内容 */
+  pointer-events: none;
+  user-select: none;
+}
+.lockOverlayError {
+  color: #d64545;
+  background: rgba(255, 255, 255, 0.8);
+}
+.titleBarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #C4A04D;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.titleBarBtn:hover {
+  background: #D4B05D;
+}
+:global {
+  /* 只改工具栏最右侧这四个按钮 */
+}
+:global button[data-u-command="sheet.command.add-range-protection-from-toolbar"],
+:global button[data-u-command="base-ui.operation.toggle-shortcut-panel"],
+:global button[data-u-command="custom-find-replace-btn"],
+:global button[data-u-command="custom-filter-btn"] {
+  background-color: #C4A04D !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+}
+:global button[data-u-command="sheet.command.add-range-protection-from-toolbar"]:hover,
+:global button[data-u-command="base-ui.operation.toggle-shortcut-panel"]:hover,
+:global button[data-u-command="custom-find-replace-btn"]:hover,
+:global button[data-u-command="custom-filter-btn"]:hover {
+  background-color: #D4B05D !important;
 }
