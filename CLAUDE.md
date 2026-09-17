@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm install     # Install dependencies (requires pnpm >= 8, Node >= 18)
+pnpm install     # Install dependencies (requires pnpm >= 10 for lockfile v9 + build-script allowlist, Node >= 18)
 pnpm dev         # Start dev server at http://localhost:5173
 pnpm build       # Production build (output to dist/)
 pnpm lint        # ESLint check
