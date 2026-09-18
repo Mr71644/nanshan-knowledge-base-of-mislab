@@ -4,6 +4,7 @@ import { CloudUploadOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMessage } from '@/hooks/useMessage'
 import { uploadFilesBatch, uploadFile } from '@/apis/file'
+import { getFileList } from '@/apis/fileList'
 import style from './index.module.less'
 
 export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, className }) => {
@@ -57,18 +58,58 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
         onSuccess('success', file)
     }
 
+    // 已存在文件提示弹窗内容（沿用确认弹窗的文件列表样式）
+    const renderDuplicateList = (duplicates) => (
+        <div className={style.modalFileList}>
+            {duplicates.map(f => (
+                <div key={f.uid} className={style.modalFileItem}>
+                    <span>📄 {f.name}</span>
+                    <span>已存在</span>
+                </div>
+            ))}
+        </div>
+    )
+
     const handleConfirmUpload = async () => {
         if (selectedFiles.length === 0) {
             error({ content: '请先选择要上传的文件' })
             return
         }
 
-        setConfirmModalVisible(false)
         setLoading(true)
-        setUploadProgress(0)
 
         const id = getFolderId()
-        const files = selectedFiles.map(f => f.file)
+
+        // 重复预检：与当前文件夹已有条目同名的文件不再发起上传，收集后提示用户；
+        // 预检失败不阻塞上传，交由后端重复校验兜底
+        let duplicates = []
+        let toUpload = selectedFiles
+        try {
+            const listRes = await getFileList(id || '')
+            const existNames = new Set((listRes.data || []).map(item => item.name))
+            duplicates = selectedFiles.filter(f => existNames.has(f.name))
+            toUpload = selectedFiles.filter(f => !existNames.has(f.name))
+        } catch {
+            // 忽略预检异常
+        }
+
+        setConfirmModalVisible(false)
+
+        if (toUpload.length === 0) {
+            setLoading(false)
+            setSelectedFiles([])
+            Modal.info({
+                title: '所选文件均已存在，未重复上传',
+                width: 480,
+                okText: '知道了',
+                content: renderDuplicateList(duplicates)
+            })
+            return
+        }
+
+        setUploadProgress(0)
+
+        const files = toUpload.map(f => f.file)
 
         const progressInterval = setInterval(() => {
             setUploadProgress(prev => {
@@ -119,7 +160,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
             if (response && response.code === 200) {
                 const successCount = uploadResults.filter(r => r && r.id !== null).length
 
-                onChange?.(selectedFiles.map((file, index) => ({
+                onChange?.(toUpload.map((file, index) => ({
                     ...file,
                     response: uploadResults[index],
                     status: uploadResults[index]?.id !== null ? 'success' : 'error'
@@ -141,6 +182,15 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
                         }
                     }
                 })
+
+                if (duplicates.length > 0) {
+                    Modal.info({
+                        title: `另有 ${duplicates.length} 个文件已存在，未重复上传`,
+                        width: 480,
+                        okText: '知道了',
+                        content: renderDuplicateList(duplicates)
+                    })
+                }
             } else {
                 throw new Error('上传失败')
             }
