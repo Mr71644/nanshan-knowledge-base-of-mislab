@@ -2,7 +2,7 @@ import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Drawer, Form, Input, Spin, Modal, Tooltip, Tree, Empty } from 'antd';
-import { SaveOutlined, VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined } from '@ant-design/icons'
+import { VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined } from '@ant-design/icons'
 import { MemoSheet } from '@/components/UniverSheet';
 /**
  * Excel 视图说明
@@ -518,14 +518,6 @@ const Excel = () => {
                                     <span className={style.statusIndicator}>{inEditUi ? saveStatusText : '预览中'}</span>
                                 </span>
                                 <div className={style.titleBarActions}>
-                                    {isEdit && (
-                                        <Tooltip title="保存表格">
-                                            <button className={style.titleBarBtn} onClick={handleSave} style={actionStyle(actionDisabled)}>
-                                                <SaveOutlined style={{ marginRight: '4px' }} />
-                                                保存表格
-                                            </button>
-                                        </Tooltip>
-                                    )}
                                     {inEditUi && (
                                         <Tooltip title="退出编辑">
                                             <button className={style.titleBarBtn} onClick={handleRequestExit} style={actionStyle(actionDisabled)}>

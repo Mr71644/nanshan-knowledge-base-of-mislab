@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, useOutletContext } from 'react-rou
 import { Table, Dropdown, Spin, Modal, Form, Input, Checkbox, Popover, Empty, DatePicker } from 'antd';
 import { FolderOutlined, DeleteOutlined, DownloadOutlined, EllipsisOutlined, EditOutlined, TableOutlined, FileOutlined, PushpinOutlined, SwapOutlined, ExportOutlined, FilterOutlined, FilterFilled, CaretDownOutlined } from '@ant-design/icons';
 import { getFileList, togglePin } from '@/apis/fileList';
+import { getFolderTree } from '@/apis/folder';
 import { delBatch } from '@/apis/delete';
 import { downloadSingle, downloadBatch } from '@/utils/download'
 import { renameResource } from '@/apis/file'
@@ -45,6 +46,7 @@ const FileList = () => {
     const [currentRecord, setCurrentRecord] = useState(null)
     const [downloading, setDownloading] = useState(false)
     const newName = useRef('')
+    const [childCountMap, setChildCountMap] = useState({}) // 文件夹 id → 直接子项总数
 
     /**
      * 获取重命名弹窗中显示的初始名称
@@ -514,6 +516,7 @@ const FileList = () => {
             render: (text, record) => {
                 const iconStyle = getTypeStyle(record.status)
                 const clickable = !batchType
+                const childCount = record.status === 2 ? childCountMap[String(record.id)] : null
                 return (
                     <span style={{ display: 'inline-flex', alignItems: 'center', maxWidth: '100%' }}>
                         <span className={`${style.typeIcon} ${iconStyle.cls}`}>
@@ -528,6 +531,9 @@ const FileList = () => {
                         >
                             {highlightName(text)}
                         </span>
+                        {childCount > 0 && (
+                            <span className={style.childCount}>{childCount} 项</span>
+                        )}
                     </span>
                 )
             }
@@ -775,6 +781,29 @@ const FileList = () => {
             },
         },
     ];
+    /**
+     * 递归遍历文件树，统计每个文件夹的直接子项总数（含子文件夹、文档、Excel、普通文件）
+     */
+    const buildChildCountMap = (nodes, map = {}) => {
+        nodes.forEach(node => {
+            if (node.status === 2) {
+                map[String(node.id)] = (node.children || []).length
+            }
+            if (node.children?.length) buildChildCountMap(node.children, map)
+        })
+        return map
+    }
+
+    // 获取文件树并构建子项计数；失败时静默降级（仅数量标注缺失，不影响列表展示）
+    const fetchChildCounts = async () => {
+        try {
+            const res = await getFolderTree()
+            setChildCountMap(buildChildCountMap(res.data?.list || []))
+        } catch {
+            setChildCountMap({})
+        }
+    }
+
     const getList = async (id = '') => {
         try {
             setLoading(true)
@@ -962,13 +991,16 @@ const FileList = () => {
     };
 
     useEffect(() => {
+        fetchChildCounts()
         if (param.id === undefined) getList()
         else getList(param.id)
     }, [param.id])
     useEffect(() => {
-        if (location.state?.refresh)
+        if (location.state?.refresh) {
+            fetchChildCounts()
             if (param.id === undefined) getList()
             else getList(param.id)
+        }
     }, [location.state])
 
     // 从 Home 页功能框触发批量模式
