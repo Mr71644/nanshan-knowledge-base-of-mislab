@@ -17,6 +17,7 @@ import { getExcelDetail, updateExcel } from '@/apis/excel';
 import { useEditorLock } from '@/hooks/useEditorLock';
 import EditorExitGuard from '@/components/EditorExitGuard';
 import UnsavedChangesModal from '@/components/UnsavedChangesModal';
+import IdleTimeoutModal from '@/components/IdleTimeoutModal';
 import { getCommonFileList, queryCommonFileList } from '@/apis/file';
 import { convertToExcelFormat } from '@/utils';
 import style from './index.module.less'
@@ -64,7 +65,18 @@ const Excel = () => {
     const sheetAreaRef = useRef(null)
     const previewTipTimeRef = useRef(0)
     const { success, error, warn, contextHolder } = useMessage()
-    const lock = useEditorLock({ resourceType: 'EXCEL', resourceId: param.id })
+    // 空闲自动释放：5 分钟无编辑活动弹确认框，倒计时 30 秒到期自动保存（有修改）并退出
+    const IDLE_RELEASE_MS = 5 * 60 * 1000
+    const IDLE_COUNTDOWN_SECONDS = 30
+    const lock = useEditorLock({
+        resourceType: 'EXCEL',
+        resourceId: param.id,
+        idleReleaseMs: IDLE_RELEASE_MS,
+        onIdlePrompt: () => {
+            setIdleCountdown(IDLE_COUNTDOWN_SECONDS)
+            setIdlePromptOpen(true)
+        }
+    })
     const [data, setData] = useState(false);
     const [title, setTitle] = useState('')
     const [loading, setLoading] = useState(true)
@@ -72,6 +84,9 @@ const Excel = () => {
     const [saveState, setSaveState] = useState('saved') // saved | dirty | saving | failed
     const [exitPromptOpen, setExitPromptOpen] = useState(false)
     const [exitSaving, setExitSaving] = useState(false)
+    const [idlePromptOpen, setIdlePromptOpen] = useState(false)
+    const [idleCountdown, setIdleCountdown] = useState(0)
+    const [idleExiting, setIdleExiting] = useState(false)
     const [fileDrawerOpen, setFileDrawerOpen] = useState(false)
     const [fileKeyword, setFileKeyword] = useState('')
     const [searchedKeyword, setSearchedKeyword] = useState('')
@@ -133,6 +148,7 @@ const Excel = () => {
             })
             setIsDirty(false)
             setSaveState('saved')
+            lock.markActivity() // 保存成功视为编辑活动，重置空闲计时
             success({ content: '保存成功', delayTime: 1000 })
             return { ok: true }
         } catch (e) {
@@ -190,6 +206,7 @@ const Excel = () => {
 
     // 退出编辑按钮：可保存（editing）且有未保存修改时弹三选项确认；锁失效/重连等不可保存状态直接退出
     const handleRequestExit = () => {
+        lock.markActivity() // 主动操作视为活动，避免决定期间触发空闲弹窗
         if (isDirty && lock.status === 'editing') {
             setExitPromptOpen(true)
         } else {
@@ -216,11 +233,46 @@ const Excel = () => {
 
     const handleExitCancel = () => {
         setExitPromptOpen(false)
+        lock.markActivity()
     }
+
+    // 空闲超时弹窗：继续编辑重置计时；退出/倒计时到期按修改状态自动保存后释放锁回预览
+    const handleIdleContinue = () => {
+        setIdlePromptOpen(false)
+        lock.markActivity()
+    }
+
+    const handleIdleExit = async () => {
+        if (idleExiting) return
+        setIdleExiting(true)
+        setIdlePromptOpen(false)
+        lock.markActivity() // 保存失败留在编辑态时重新计时，下个空闲周期重试
+        if (isDirty) {
+            await handleSaveAndExit()
+        } else {
+            await exitToPreview()
+        }
+        setIdleExiting(false)
+    }
+
+    // 空闲确认倒计时（setTimeout 链避免 interval 漂移/堆积）
+    useEffect(() => {
+        if (!idlePromptOpen || idleCountdown <= 0) return undefined
+        const timer = setTimeout(() => setIdleCountdown(c => c - 1), 1000)
+        return () => clearTimeout(timer)
+    }, [idlePromptOpen, idleCountdown])
+
+    useEffect(() => {
+        if (idlePromptOpen && idleCountdown === 0) {
+            handleIdleExit()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- handleIdleExit 每次渲染重建
+    }, [idlePromptOpen, idleCountdown])
     // 导出逻辑
     const [isModalOpen, setIsModalOpen] = useState(false);
     const ExportExcelName = useRef('MISLab-Excel')
     const showModal = () => {
+        lock.markActivity() // 主动操作视为活动
         // 打开对话框时，将当前 Excel 标题设置为默认导出名称
         ExportExcelName.current = title || 'MISLab-Excel';
         setIsModalOpen(true);
@@ -277,6 +329,7 @@ const Excel = () => {
         }
     }
     const handleOpenFileDrawer = () => {
+        lock.markActivity() // 主动操作视为活动
         setFileDrawerOpen(true)
         setFileKeyword('')
         setSearchedKeyword('')
@@ -444,6 +497,7 @@ const Excel = () => {
     const handleChange = () => {
         if (isInitializingRef.current) return
         if (lock.status !== 'editing') return
+        lock.markActivity() // 编辑活动：重置空闲计时
         setIsDirty(true)
         setSaveState('dirty')
     }
@@ -595,6 +649,15 @@ const Excel = () => {
                 onCancel={handleExitCancel}
                 onDiscard={handleExitDiscard}
                 onSave={handleSaveAndExit}
+            />
+            {/* 空闲超时确认：长时间未编辑时询问是否继续，倒计时到期自动保存（有修改）并退出 */}
+            <IdleTimeoutModal
+                open={idlePromptOpen}
+                seconds={idleCountdown}
+                saving={idleExiting}
+                hasUnsavedChanges={isDirty}
+                onContinue={handleIdleContinue}
+                onExit={handleIdleExit}
             />
             <Drawer
                 title={(

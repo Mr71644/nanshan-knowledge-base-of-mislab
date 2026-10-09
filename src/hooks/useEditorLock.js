@@ -16,6 +16,8 @@ import { getToken } from '@/utils'
  * - restore：Content 挂载恢复 —— 先 heartbeat 再决定是否恢复编辑态，不能先 acquire
  * - heartbeat：每 20s 续租 + 页面显隐/focus 时立即续租；423/401/403 视为锁失效
  * - release：best-effort 释放，网络失败不阻塞页面离开
+ * - idleReleaseMs / onIdlePrompt / markActivity：编辑态空闲超时提醒——超过阈值无编辑活动时
+ *   通知父组件弹确认框，是否保存/释放由父组件决定（hook 不持有内容状态）
  */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const HEARTBEAT_INTERVAL = 20 * 1000 // 默认租约 120s，每 20s 续租一次
@@ -29,7 +31,7 @@ const makeUUID = () => {
     return `sid-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-export function useEditorLock({ resourceType, resourceId }) {
+export function useEditorLock({ resourceType, resourceId, idleReleaseMs = 0, onIdlePrompt }) {
     const rid = Number(resourceId)
     const key = `${resourceType}:${rid}`
     const sessionKey = `editor-lock-session:${key}`
@@ -52,6 +54,30 @@ export function useEditorLock({ resourceType, resourceId }) {
     const reconnectTimerRef = useRef(null)
     const reconnectRetryRef = useRef(0)
     const heartbeatRef = useRef(null)
+
+    // 空闲自动释放：optionsRef 每次渲染更新，心跳定时器闭包经它读取最新配置（防闭包过期）；
+    // idlePromptActiveRef 保证同一空闲周期只通知一次，由 markActivity 重置
+    const optionsRef = useRef({})
+    optionsRef.current = { idleReleaseMs, onIdlePrompt }
+    const lastActivityRef = useRef(0)
+    const idlePromptActiveRef = useRef(false)
+
+    // 编辑活动打点：任何编辑操作（内容/标题/保存等）由父组件调用，重置空闲计时并允许下次空闲提醒
+    const markActivity = () => {
+        lastActivityRef.current = performance.now()
+        idlePromptActiveRef.current = false
+    }
+
+    // 空闲检查：搭心跳定时器运行。编辑态下超过阈值无编辑活动 → 通知父组件弹确认框
+    // （是否保存/如何释放由父组件决定，hook 不持有内容状态）
+    function checkIdleRelease() {
+        const { idleReleaseMs: threshold, onIdlePrompt: prompt } = optionsRef.current
+        if (!threshold || idlePromptActiveRef.current) return
+        if (statusRef.current !== 'editing') return
+        if (performance.now() - lastActivityRef.current < threshold) return
+        idlePromptActiveRef.current = true
+        prompt?.()
+    }
 
     // 资源切换时重置全部本地状态
     useEffect(() => {
@@ -90,6 +116,7 @@ export function useEditorLock({ resourceType, resourceId }) {
         tokenRef.current = token
         // 使用单调时钟记录本地租约截止时间，不直接与 Date.now() 比较（防时钟偏差）
         leaseDeadlineRef.current = performance.now() + Math.max(0, remainingMs || 0)
+        markActivity() // 进入编辑即置空闲基线
         setStatus('editing')
     }
 
@@ -123,6 +150,8 @@ export function useEditorLock({ resourceType, resourceId }) {
         clearInterval(heartbeatTimerRef.current)
         heartbeatTimerRef.current = setInterval(() => {
             heartbeatRef.current?.()
+            // 空闲检查搭心跳定时器运行（后台标签页定时器被节流至 ≥1 次/分钟，仍可触发）
+            checkIdleRelease()
         }, HEARTBEAT_INTERVAL)
     }
 
@@ -422,5 +451,6 @@ export function useEditorLock({ resourceType, resourceId }) {
         heartbeat,
         release,
         markLockLost,
+        markActivity,
     }
 }
