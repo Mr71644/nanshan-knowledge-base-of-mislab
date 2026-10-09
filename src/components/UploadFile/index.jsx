@@ -130,6 +130,7 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
                 uploadResults = response?.data || []
             } catch (batchError) {
                 // 批量失败，改为单个上传
+                let lastSingleError = null
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i]
                     setUploadProgress(((i + 1) / files.length) * 100)
@@ -144,12 +145,19 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
                             updateTime: singleRes?.data?.updateTime
                         })
                     } catch (singleError) {
+                        lastSingleError = singleError
                         uploadResults.push({
                             id: null,
                             url: null,
                             name: file.name
                         })
                     }
+                }
+                // 全部失败（如路径无权限）：抛出真实错误，由外层展示接口返回的 message，
+                // 而不是伪造成功响应后显示"成功上传 0 个文件"
+                const allFailed = uploadResults.every(r => r.id === null || r.id === undefined)
+                if (allFailed) {
+                    throw lastSingleError || batchError
                 }
                 response = { code: 200, data: uploadResults }
             }
@@ -197,6 +205,9 @@ export const UploadFile = ({ value = [], onChange, maxCount = 10, folderId, clas
         } catch (e) {
             clearInterval(progressInterval)
             setUploadProgress(0)
+            // 上传失败时清空本次选择：否则文件残留在 selectedFiles 中，
+            // 再次选择同名文件会被 handleCustomRequest 误判为"已存在"
+            setSelectedFiles([])
             error({
                 content: e.response?.data?.message || e.message || '上传文件失败',
                 duration: 4,
