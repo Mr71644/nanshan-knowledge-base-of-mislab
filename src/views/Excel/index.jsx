@@ -2,7 +2,7 @@ import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Drawer, Form, Input, Spin, Modal, Tooltip, Tree, Empty } from 'antd';
-import { VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined, SaveOutlined } from '@ant-design/icons'
+import { MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined, SaveOutlined } from '@ant-design/icons'
 import { MemoSheet } from '@/components/UniverSheet';
 /**
  * Excel 视图说明
@@ -284,6 +284,14 @@ const Excel = () => {
         setAutoExpandParent(true)
         loadCommonFiles('')
     }
+    // 功能区「插入链接」入口：预览态下与表格编辑拦截行为一致，仅提示不打开抽屉
+    const openFileDrawerForInsert = () => {
+        if (!isEdit) {
+            warn({ content: '当前为预览状态，请点击编辑按钮进行编辑' })
+            return
+        }
+        handleOpenFileDrawer()
+    }
     const handleSearchCommonFile = (value) => {
         const keyword = value ?? ''
         setFileKeyword(keyword)
@@ -535,20 +543,6 @@ const Excel = () => {
                                             </button>
                                         </Tooltip>
                                     )}
-                                    {inEditUi && (
-                                        <Tooltip title="插入文件链接">
-                                            <button className={style.titleBarBtn} onClick={handleOpenFileDrawer} style={actionStyle(actionDisabled || !isEdit)}>
-                                                <LinkOutlined style={{ marginRight: '4px' }} />
-                                                插入文件链接
-                                            </button>
-                                        </Tooltip>
-                                    )}
-                                    <Tooltip title="导出表格">
-                                        <button className={style.titleBarBtn} onClick={showModal} style={actionStyle(actionDisabled)}>
-                                            <VerticalAlignBottomOutlined style={{ marginRight: '4px' }} />
-                                            导出表格
-                                        </button>
-                                    </Tooltip>
                                     {!inEditUi && (
                                         <button className={style.primaryBtn} onClick={handleEnterEdit} style={actionStyle(lock.status === 'acquiring')}>
                                             <HighlightOutlined />
@@ -558,7 +552,17 @@ const Excel = () => {
                                 </div>
                             </div>
                             <div ref={sheetAreaRef} className={style.sheetArea}>
-                                <MemoSheet style={{ flex: 1 }} ref={univerRef} data={data} editable={sheetEditable} onChange={handleChange} />
+                                <MemoSheet
+                                    style={{ flex: 1 }}
+                                    ref={univerRef}
+                                    data={data}
+                                    editable={sheetEditable}
+                                    onChange={handleChange}
+                                    extraMenus={[
+                                        { id: 'custom-insert-link-btn', title: '插入链接', tooltip: '插入文件链接', icon: 'LinkIcon', action: openFileDrawerForInsert },
+                                        { id: 'custom-export-btn', title: '导出表格', tooltip: '导出表格', icon: 'ExportIcon', action: showModal }
+                                    ]}
+                                />
                                 {overlayText && (
                                     <div className={`${style.lockOverlay} ${lock.status === 'lockLost' ? style.lockOverlayError : ''}`}>
                                         {overlayText}

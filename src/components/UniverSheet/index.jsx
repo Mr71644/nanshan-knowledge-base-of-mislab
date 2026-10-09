@@ -43,7 +43,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, memo } from 'react'
  * @param {boolean} props.editable - 是否可编辑（默认 true；预览态传 false，通过 FWorkbook.setEditable 切换）
  * @param {React.Ref} ref - 暴露 getData() 方法给父组件
  */
-const UniverSheet = forwardRef(({ data, onChange, editable = true }, ref) => {
+const UniverSheet = forwardRef(({ data, onChange, editable = true, extraMenus = [] }, ref) => {
     const univerRef = useRef(null);
     const univerAPIRef = useRef(null);
     const containerRef = useRef(null);
@@ -52,6 +52,9 @@ const UniverSheet = forwardRef(({ data, onChange, editable = true }, ref) => {
     // 直接捕获 onChange 会闭包过期（调用方 handler 内读取的渲染级状态将永远停留在挂载时的值）
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+    // 同 onChangeRef：功能区自定义按钮的 action 在 init 时注册一次，经 ref 转发到最新回调
+    const extraMenusRef = useRef(extraMenus);
+    extraMenusRef.current = extraMenus;
 
     useImperativeHandle(ref, () => ({
         getData,
@@ -137,6 +140,21 @@ const UniverSheet = forwardRef(({ data, onChange, editable = true }, ref) => {
                 univerAPI.executeCommand(SmartToggleSheetsFilterCommand.id);
             }
         }).appendTo('ribbon.start.others');
+
+        // 父组件注入的自定义功能区按钮（如插入链接 / 导出表格），与上方内置按钮同组、图标风格统一
+        (Array.isArray(extraMenus) ? extraMenus : []).forEach((m) => {
+            if (!m?.id || !m?.action) return;
+            univerAPI.createMenu({
+                id: m.id,
+                title: m.title,
+                tooltip: m.tooltip,
+                icon: m.icon,
+                action: () => {
+                    // 经 ref 取最新配置，避免闭包过期
+                    extraMenusRef.current?.find((x) => x.id === m.id)?.action?.();
+                }
+            }).appendTo('ribbon.start.others');
+        });
 
         // 监听编辑事件 - 使用 Facade API
         if (onChange) {
