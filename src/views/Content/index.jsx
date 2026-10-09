@@ -159,7 +159,9 @@ const Area = () => {
         }
     }
 
-    const handleExitSave = async () => {
+    // 保存按钮与退出确认中的「保存并退出」共用：保存成功后退回预览态（exitToPreview 内释放锁）；
+    // 失败（如锁失效）→ 留在编辑页抢救内容
+    const handleSaveAndExit = async () => {
         setExitSaving(true)
         const res = await handleSave()
         setExitSaving(false)
@@ -167,7 +169,6 @@ const Area = () => {
             setExitPromptOpen(false)
             exitToPreview()
         }
-        // 失败（如锁失效）→ 留在编辑页抢救内容
     }
 
     const handleExitDiscard = async () => {
@@ -414,8 +415,8 @@ const Area = () => {
                         <>
                             <div
                                 className={style.editFloatBtn}
-                                onClick={handleSave}
-                                title="保存"
+                                onClick={handleSaveAndExit}
+                                title="保存并返回预览"
                                 style={actionStyle(actionDisabled)}
                             >
                                 <span className={style.editFloatBtnIcon}>
@@ -476,7 +477,7 @@ const Area = () => {
                 description="退出编辑将丢失未保存的修改，是否保存并退出？"
                 onCancel={handleExitCancel}
                 onDiscard={handleExitDiscard}
-                onSave={handleExitSave}
+                onSave={handleSaveAndExit}
             />
         </ConfigProvider>
     )

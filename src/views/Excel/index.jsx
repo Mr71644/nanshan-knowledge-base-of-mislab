@@ -2,7 +2,7 @@ import { memo, useRef, useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Drawer, Form, Input, Spin, Modal, Tooltip, Tree, Empty } from 'antd';
-import { VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined } from '@ant-design/icons'
+import { VerticalAlignBottomOutlined, LinkOutlined, MinusSquareOutlined, PlusSquareOutlined, FileOutlined, HighlightOutlined, LogoutOutlined, SaveOutlined } from '@ant-design/icons'
 import { MemoSheet } from '@/components/UniverSheet';
 /**
  * Excel 视图说明
@@ -197,7 +197,9 @@ const Excel = () => {
         }
     }
 
-    const handleExitSave = async () => {
+    // 保存按钮与退出确认中的「保存并退出」共用：保存成功后退回预览态（exitToPreview 内释放锁）；
+    // 失败（如锁失效）→ 留在编辑页抢救内容
+    const handleSaveAndExit = async () => {
         setExitSaving(true)
         const res = await handleSave()
         setExitSaving(false)
@@ -205,7 +207,6 @@ const Excel = () => {
             setExitPromptOpen(false)
             exitToPreview()
         }
-        // 失败（如锁失效）→ 留在编辑页抢救内容
     }
 
     const handleExitDiscard = async () => {
@@ -519,10 +520,18 @@ const Excel = () => {
                                 </span>
                                 <div className={style.titleBarActions}>
                                     {inEditUi && (
+                                        <Tooltip title="保存并返回预览">
+                                            <button className={style.titleBarBtn} onClick={handleSaveAndExit} style={actionStyle(actionDisabled || !isEdit)}>
+                                                <SaveOutlined style={{ marginRight: '4px' }} />
+                                                保存
+                                            </button>
+                                        </Tooltip>
+                                    )}
+                                    {inEditUi && (
                                         <Tooltip title="退出编辑">
                                             <button className={style.titleBarBtn} onClick={handleRequestExit} style={actionStyle(actionDisabled)}>
                                                 <LogoutOutlined style={{ marginRight: '4px' }} />
-                                                退出编辑
+                                                退出
                                             </button>
                                         </Tooltip>
                                     )}
@@ -581,7 +590,7 @@ const Excel = () => {
                 description="退出编辑将丢失未保存的修改，是否保存并退出？"
                 onCancel={handleExitCancel}
                 onDiscard={handleExitDiscard}
-                onSave={handleExitSave}
+                onSave={handleSaveAndExit}
             />
             <Drawer
                 title={(
